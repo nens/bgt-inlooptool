@@ -54,7 +54,11 @@ VERHARDINGSTYPE_ONVERHARD = 'onverhard'
 VERHARDINGSTYPE_OPEN_VERHARD = 'open verhard'
 VERHARDINGSTYPE_GESLOTEN_VERHARD = 'gesloten verhard'
 
-DB_TABEL_BGT_OPPERVLAK = 'bgt_oppervlak'
+SOURCE_PIPES_TABLE_NAME = "default_lijn"
+
+SURFACES_TABLE_NAME = 'bgt_oppervlak'
+PIPES_TABLE_NAME = 'pipes'
+RESULT_TABLE_NAME = 'bgt_inlooptabel'
 
 RESULT_TABLE_FIELD_ID = 'id'
 RESULT_TABLE_FIELD_LAATSTE_WIJZIGING = 'laatste_wijziging'
