@@ -1,4 +1,6 @@
-from osgeo import ogr, osr
+#from osgeo import ogr, osr
+import osr 
+import ogr
 
 ogr.UseExceptions()
 
@@ -26,7 +28,7 @@ ALL_USED_SURFACE_TYPES = {
     SURFACE_TYPE_OVERBRUGGINGSDEEL
 }
 
-out_gpkg_fn = 'C:/Users/leendert.vanwolfswin/Documents/bgtinlooptool/leeg.gpkg'
+out_gpkg_fn = 'C:/Users/chris.kerklaan/Documents/Github/bgt-inlooptool/leeg.gpkg'
 out_drv = ogr.GetDriverByName("GPKG")
 out_gpkg = out_drv.CreateDataSource(out_gpkg_fn)
 
@@ -34,12 +36,11 @@ out_gpkg = out_drv.CreateDataSource(out_gpkg_fn)
 # Load data
 for stype in ALL_USED_SURFACE_TYPES:
     print(stype)
-    src_fn = 'C:/Users/leendert.vanwolfswin/Documents/bgtinlooptool/test/extract/bgt_{}.gml'.format(stype)
+    src_fn = 'C:/Users/chris.kerklaan/Documents/Github/bgt-inlooptool/test-data/extract/bgt_{}.gml'.format(stype)
     src_ds = ogr.Open(src_fn)
     src_lyr = src_ds.GetLayer(0)
     print(src_lyr.GetFeatureCount())
     out_gpkg.CopyLayer(src_layer=src_lyr, new_name=stype)
-
 out_gpkg = None
 
 ##################################################################

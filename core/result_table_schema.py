@@ -1,5 +1,5 @@
 import ogr
-from constants import *
+from core.constants import *
 
 FIELDS = {
     RESULT_TABLE_FIELD_ID: ogr.OFTInteger,
