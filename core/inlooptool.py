@@ -191,7 +191,7 @@ class BGTInloopTool:
                                            ;
                                         """.format(p = PIPES_TABLE_NAME,
                                                    s = SURFACES_TABLE_NAME,
-                                                   search_dist=parameters.max_afstand_vlak_afwateringsvoorziening)
+                                                   search_dist = parameters.max_afstand_vlak_afwateringsvoorziening)
 
         pipe_distance_layer = self._database.mem_database.ExecuteSQL(calculate_distance_pipe_sql)
         self._database.mem_database.CopyLayer(pipe_distance_layer, "pipe_distances")
@@ -367,10 +367,36 @@ class Database:
         gwsw_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(gwsw_gpkg_abspath):
             raise FileNotFoundError('GWSW GeoPackage niet gevonden: {}'.format(gwsw_gpkg_abspath))
+            
         lines_ds = ogr.Open(file_path)
+        lines_layer = lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME)
+        lines_defn = lines_layer.GetLayerDefn()
+        
         # TODO more thorough checks of validity of input geopackage
         try:
-            self.mem_database.CopyLayer(lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME)
+            out_layer = self.mem_database.CreateLayer(PIPES_TABLE_NAME, 
+                                                      self.srs, 
+                                                      lines_layer.GetGeomType())
+
+            for i in range(lines_defn.GetFieldCount()):
+                out_layer.CreateField(lines_defn.GetFieldDefn(i))
+                
+            for i, feature in enumerate(lines_layer):
+                if feature: 
+                    new_feature = ogr.Feature(out_layer.GetLayerDefn())
+                    for key in feature.keys():
+                        new_feature[key] = feature[key]
+                    new_feature.SetGeometry(feature.geometry())                    
+                    out_layer.CreateFeature(new_feature)
+                    feature = None
+
+            out_layer = None
+            lines_ds = None
+            
+            #self.mem_database.CopyLayer(lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME)
+
+            
+            
         except Exception:
             # TODO more specific exception
             raise FileInputError('Ongeldige input: {} is geen geldige GWSW GeoPackage'.format(gwsw_gpkg_abspath))
@@ -586,7 +612,67 @@ class Database:
 
     def _write_to_disk(self, file_path):
         """Copy self.mem_database to file_path"""
-        GPKG_DRIVER.CopyDataSource(self.mem_database, file_path)
+        self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, file_path)
+
+def calculate_distances(parameters):
+        """
+        For all BGT Surfaces, calculate the distance to the nearest pipe of each type and nearest surface water
+        :param parameters: input parameters
+        :return: None
+        """
+        
+        parameters = InputParameters()
+        it = BGTInloopTool(parameters)
+        it.import_surfaces(file_path=SURFACES_INPUT_FILENAME)
+        it.import_pipes(file_path=PIPES_INPUT_FILENAME)
+        
+        surfaces = it._database.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
+        pipes = it._database.mem_database.GetLayerByName(PIPES_TABLE_NAME)              
+
+        
+        out_layer = it._database.mem_database.CreateLayer(
+                                                  'pipe_distances', 
+                                                  it._database.srs, 
+                                                  pipes.GetGeomType()
+                                                  ) 
+        
+        out_layer.CreateField(ogr.FieldDefn('surface_lokaalid', ogr.OFTString))
+        out_layer.CreateField(ogr.FieldDefn('leiding_naam', ogr.OFTString))
+        out_layer.CreateField(ogr.FieldDefn('leiding_typenaam', ogr.OFTString))
+        out_layer.CreateField(ogr.FieldDefn('distance', ogr.OFTReal))
+        defn = out_layer.GetLayerDefn()
+
+        pipes.ResetReading()
+        for pipe in pipes:
+            if pipe:
+                pipe_geom = pipe.geometry() 
+                buffered = pipe_geom.Buffer(parameters.max_afstand_vlak_afwateringsvoorziening)
+                surfaces.SetSpatialFilter(buffered)
+                for surface in surfaces:
+                    append_feature(out_layer, 
+                                   defn, 
+                                   pipe_geom,
+                                   { 
+                                       'surface_lokaalid': surface['identificatie_lokaalid'],
+                                       'leiding_naam': pipe['Naam'],
+                                       'leiding_typenaam': pipe['TypeNaam'],
+                                       'distance': pipe_geom.Distance(surface.geometry())    
+                                       }
+                                   )
+        out_layer = None
+        
+        path = "C:/Users/chris.kerklaan/Documents/Github/bgt-inlooptool/test-data/runoff.gpkg"
+        out_db = GPKG_DRIVER.CopyDataSource(it._database.mem_database, path)
+
+def append_feature(layer, layer_defn, geometry, attributes):
+    """ Append geometry and attributes as new feature. """
+    feature = ogr.Feature(layer_defn)
+    feature.SetGeometry(geometry)
+    for key, value in attributes.items():
+        feature[str(key)] = value
+    layer.CreateFeature(feature)
+    feature = None
+    return layer
 
 if __name__ == "__main__":
     pass
