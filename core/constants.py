@@ -79,3 +79,12 @@ TARGET_TYPE_NIET_AANGESLOTEN = 'niet_aangesloten'
 
 FYSIEK_VOORKOMEN_VERHARD = 'verhard'
 
+
+
+DISTANCE_TYPE_NAAM = {
+    'Gemengd riool':     'gemengd_riool',
+    'Hemelwaterriool': 'hemelwaterriool',
+    'Vuilwaterriool': 'vuilwaterriool',
+    'Drain': 'infiltratievoorziening'
+    }
+
