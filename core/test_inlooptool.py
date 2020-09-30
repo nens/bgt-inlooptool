@@ -16,10 +16,11 @@ import ogr
 import unittest
 
 # Globals
+
 DATA_PATH = os.path.join(os.path.dirname(__file__), "../test-data")
 SURFACES_INPUT_FILENAME = os.path.join(DATA_PATH, 'extract.zip')
 PIPES_INPUT_FILENAME = os.path.join(DATA_PATH, 'getGeoPackage_1134.gpkg')
-
+BUILDINGS_INPUT_FILENAME = os.path.join(DATA_PATH, 'bag.gpkg')
 # Find package
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 # sys.path.append(os.path.dirname(__file__))
@@ -182,5 +183,19 @@ class UnitDatabase(unittest.TestCase):
         # self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
 
 
+    def test_add_buildings(self):
+        parameters = InputParameters()
+        it = BGTInloopTool(parameters)
+        it.import_surfaces(file_path=SURFACES_INPUT_FILENAME)
+        it.import_buildings(file_path=BUILDINGS_INPUT_FILENAME)
+        it._database.add_build_year_to_surface()
+        
+        for surface in it._database.bgt_surfaces:
+            if surface['surface_type'] == 'pand':
+                self.AssertTrue(surface['build_year'] is not None,
+                                """ surface of type pand does not have a build year"""
+                                )
+                
+        
 if __name__ == '__main__':
     unittest.main()

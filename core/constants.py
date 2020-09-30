@@ -56,8 +56,10 @@ VERHARDINGSTYPE_GESLOTEN_VERHARD = 'gesloten verhard'
 
 SOURCE_PIPES_TABLE_NAME = "default_lijn"
 
+
 SURFACES_TABLE_NAME = 'bgt_oppervlak'
 PIPES_TABLE_NAME = 'pipes'
+BUILDINGS_TABLE_NAME = 'buildings'
 RESULT_TABLE_NAME = 'bgt_inlooptabel'
 
 RESULT_TABLE_FIELD_ID = 'id'

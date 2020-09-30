@@ -106,6 +106,14 @@ class BGTInloopTool:
         :return: None
         """
         self._database.import_pipes(file_path=file_path)
+        
+    def import_buildings(self, file_path):
+        """
+        Import buildings to database
+        :param file_path: path to GWSW Geopackage that contains the pipes
+        :return: None
+        """
+        self._database.import_buildings(file_path=file_path)
 
     def decision_tree(self, surface, parameters):
         """
@@ -528,6 +536,13 @@ class Database:
         """
         return self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
 
+    @property
+    def buildings(self):
+        """Get reference to Pipes layer
+        :rtype ogr.Layer
+        """
+        return self.mem_database.GetLayerByName(BUILDINGS_TABLE_NAME)
+
     def register_epsg(self):
         """
         Register self.srs in self.mem_database
@@ -614,8 +629,30 @@ class Database:
                 )
             )
 
-    def import_buildings(self, datasource, field_map):
-        pass
+    def import_buildings(self, file_path):
+        """
+        Copy the required contents of the GWSW GeoPackage file to self.mem_database
+        :param file_path: GWSW GeoPackage
+        :return: None
+        """
+        gwsw_gpkg_abspath = os.path.abspath(file_path)
+        if not os.path.isfile(gwsw_gpkg_abspath):
+            raise FileNotFoundError(
+                "GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath)
+            )
+        bag_ds = ogr.Open(file_path)
+        # TODO more thorough checks of validity of input geopackage
+        try:
+            self.mem_database.CopyLayer(
+                bag_ds[0], BUILDINGS_TABLE_NAME 
+            )
+        except Exception:
+            # TODO more specific exception
+            raise FileInputError(
+                "Ongeldige input: {} is geen geldige GWSW GeoPackage".format(
+                    gwsw_gpkg_abspath
+                )
+            )
 
     def import_surfaces_raw(self, file_path: str):
         """
@@ -790,9 +827,27 @@ class Database:
                 layer.SetFeature(feature)
         layer = None
 
-    def add_build_year_to_surface(self):
-        pass
-
+    def add_build_year_to_surface(self, field_name='bouwjaar',use_index=USE_INDEX):
+        surfaces = self.bgt_surfaces
+        surfaces.CreateField(ogr.FieldDefn('build_year', ogr.OFTReal))
+        if use_index:
+            surface_idx = create_index(surfaces)
+        
+        for building in self.buildings:
+            centroid = building.geometry().Centroid()
+            if use_index:
+                for surface_id in surface_idx.intersection(centroid.GetEnvelope()):
+                    surface = surfaces.GetFeature(surface_id)                
+                    surface['build_year']  = building[field_name]
+                    surfaces.SetFeature(surface)                         
+            else:
+                 surfaces.SetSpatialFilter(centroid)
+                 for surface in surfaces:
+                     if surface.geometry().Intersects(centroid):
+                         surface['build_year']  = building[field_name]
+                         surfaces.SetFeature(surface)
+        surfaces = None
+        
     def merge_surfaces(self):
         """ Merge and standardize all imported surfaces to one layer"""
         dest_layer = self.mem_database.CreateLayer(
@@ -879,7 +934,6 @@ class Layer(object):
     def add_field(self, name, _type):
         self.layer.CreateField(ogr.FieldDefn(name, _type))
 
-
 def create_index(layer):
     layer.ResetReading()
     index = rtree.index.Index(interleaved=False)
@@ -890,7 +944,6 @@ def create_index(layer):
             index.insert(feature.GetFID(), (xmin, xmax, ymin, ymax))
         else:
             pass
-            # print('Skipping feature with id', fid1)
 
     return index
 
