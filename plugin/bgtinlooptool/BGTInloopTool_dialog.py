@@ -31,6 +31,7 @@ from qgis.PyQt import QtWidgets
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'BGTInloopTool_dialog_base.ui'))
 
+from .core.defaults import *
 
 class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     
@@ -43,23 +44,63 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+    
+        self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/repos/bgt-inlooptool/test-data/extract.zip')
+        self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/repos/bgt-inlooptool/test-data/getGeoPackage_1134.gpkg')
         
+        self.bgt_file.fileChanged.connect(self.bgt_file_changed)
+        self.pipe_file.fileChanged.connect(self.pipe_file_changed)
+    
         # Setting defaults
-        self.afstand_bgt_hemelwatervoorziening.setValue(40)
-        self.afstand_verhardingsvlak_oppwater.setValue(2)
-        self.afstand_pand_oppwater.setValue(6)
-        self.afstand_verhardingsvlak_kolk.setValue(30)
-        self.afstand_verhardingsvlak_kolk.setEnabled(False)
+        self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
+        self.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
+        self.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
+        self.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
+        self.max_afstand_vlak_kolk.setEnabled(False)
         
-        self.afstand_afgekoppeld_stelsel.setValue(3)
-        self.afstand_drievoudig_stelsel.setValue(4)
+        self.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
+        self.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
 
-        self.bouwjaar_binnenhuisriolering.setMaximum(10000)
-        self.bouwjaar_binnenhuisriolering.setValue(1992)
-        self.bouwjaar_binnenhuisriolering.setEnabled(False)
+        self.bouwjaar_gescheiden_binnenhuisriolering.setMaximum(10000)
+        self.bouwjaar_gescheiden_binnenhuisriolering.setValue(BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING)
+        self.bouwjaar_gescheiden_binnenhuisriolering.setEnabled(False)
+        
+        self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
+        self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         
         self.bag_panden_file.setEnabled(False)
         self.dem_file.setEnabled(False)
         self.kolken_file.setEnabled(False)
         
-        self.checkbox_hellende_daken.setEnabled(False)
+        self.afkoppelen_hellende_daken.setEnabled(AFKOPPELEN_HELLENDE_DAKEN)
+        
+        # Run button default disable
+        self.pushButtonRun.setEnabled(False)
+        self.validate()
+    
+    def bgt_file_changed(self):
+        self.validate()
+    
+    def pipe_file_changed(self):
+        self.validate()        
+        
+    def validate(self):
+        
+        valid = True
+        
+        # Check if zipfile
+        bgt_file = self.bgt_file.filePath()
+        if not os.path.isfile(bgt_file):
+            valid = False
+        elif os.path.splitext(bgt_file)[1] != '.zip':
+            valid = False
+        
+        # Check pipe file 
+        pipe_file = self.pipe_file.filePath()
+        if not os.path.isfile(pipe_file):
+            valid = False
+        elif os.path.splitext(pipe_file)[1] != '.gpkg':
+            valid = False
+        
+        self.pushButtonRun.setEnabled(valid)
+        

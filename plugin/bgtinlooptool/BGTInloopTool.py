@@ -24,12 +24,18 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import Qgis, QgsProject
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
-import os.path
+import os.path, sys
+
+# Import the BGT Inlooptool core
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from core.inlooptool import *
+from .ogr2qgis import *
 
 
 class BGTInloopTool:
@@ -200,9 +206,52 @@ class BGTInloopTool:
 
    
     def on_run(self):
+        
+        # ipnut files            
+        bgt_file = self.dlg.bgt_file.filePath()
+        pipe_file =self.dlg.pipe_file.filePath() 
+                    
+        # Iniate bgt inlooptool class with parameters 
+        parameters = InputParameters(max_afstand_vlak_afwateringsvoorziening = self.dlg.max_afstand_vlak_afwateringsvoorziening.value(), 
+                                     max_afstand_vlak_oppwater = self.dlg.max_afstand_vlak_oppwater.value(), 
+                                     max_afstand_pand_oppwater = self.dlg.max_afstand_pand_oppwater.value(), 
+                                     max_afstand_vlak_kolk = self.dlg.max_afstand_vlak_kolk.value(), 
+                                     max_afstand_afgekoppeld = self.dlg.max_afstand_afgekoppeld.value(),
+                                     max_afstand_drievoudig = self.dlg.max_afstand_drievoudig.value(), 
+                                     afkoppelen_hellende_daken = self.dlg.afkoppelen_hellende_daken.isChecked(), 
+                                     bouwjaar_gescheiden_binnenhuisriolering = self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(), 
+                                     verhardingsgraad_erf = self.dlg.verhardingsgraad_erf.value(), 
+                                     verhardingsgraad_half_verhard = self.dlg.verhardingsgraad_half_verhard.value())
 
-        task = QgsTask.fromFunction('', BGT_inlooptool, on_finished=self.completed)
-        QgsApplication.taskManager().addTask(task)
+        
+        it = InloopTool(parameters)
+        
+        # Import surfaces and pipes
+        it.import_surfaces(bgt_file)
+        it.import_pipes(pipe_file)
+        
+        it.calculate_distances_new(parameters = parameters, use_index=USE_INDEX)
+        it.calculate_runoff_targets()
+        
+        # Write database to file 
+        it._database._write_to_disk('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg')
+        
+        # Exporteren output naar QGIS laag
+        ogr_lyr = it._database.mem_database.GetLayerByName('bgt_oppervlak')
+        if ogr_lyr is not None:
+            if ogr_lyr.GetFeatureCount() > 0:
+                qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Afwateringskenmerken')
+                project = QgsProject.instance()
+                project.addMapLayer(qgs_lyr)
+#                style = self.dlg.comboBoxCellsStyleType.currentData()
+#                style_kwargs = self.dlg.get_styling_parameters(output_type=style.output_type)
+#                style.apply(qgis_layer=qgs_lyr, style_kwargs=style_kwargs)
+
+        
+        # Add calculate distances as qgis task (for background processing)
+        
+        #task = QgsTask.fromFunction('', BGT_inlooptool, on_finished=self.completed)
+        #QgsApplication.taskManager().addTask(task)
                     
 
     def run(self):
@@ -213,7 +262,8 @@ class BGTInloopTool:
         if self.first_start == True:
             self.first_start = False
             self.dlg = BGTInloopToolDialog()
+            # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)
-
+            
         # show the dialog
         self.dlg.show()
