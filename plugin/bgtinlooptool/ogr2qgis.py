@@ -9,6 +9,8 @@ from qgis.core import (
 import time
 
 FIELD_TYPES = {
+    11: 'string',
+    12: 'integer',
     ogr.OFTInteger: 'integer',  # OFTInteger, Simple 32bit integer
     ogr.OFTReal: 'double',  # OFTReal, Double Precision floating point
     ogr.OFTString: 'string'  # OFTString, String of ASCII chars
@@ -20,7 +22,8 @@ GEOMETRY_TYPES = {  # See full list: https://gdal.org/doxygen/ogr__core_8h.html,
     3: 'Polygon',
     4: 'MultiPoint',
     5: 'MultiLinestring',
-    6: 'MultiPolygon'
+    6: 'MultiPolygon',
+    10: 'CurvePolygon'
 }
 
 
@@ -35,7 +38,7 @@ def field_defn_as_uri_param(field_defn):
     type = FIELD_TYPES[field_defn.GetType()]
     length = field_defn.GetWidth()
     precision = field_defn.GetPrecision()
-
+    
     uri_param = 'field=' + name + ':' + type
     if length is not None and length != 0:
         uri_param += '(' + str(length)
@@ -75,7 +78,7 @@ def layer_as_uri(layer, index=True):
     other_params += field_uris
 
     # index
-    if index:
+    if index == True:
         index_param = 'index=yes'
         other_params.append(index_param)
 
@@ -140,8 +143,8 @@ def as_qgis_memory_layer(ogr_layer, base_name):
     """
     # start_time = time.perf_counter()
     # f = open("C:\\Users\\leendert.vanwolfswin\\Downloads\\as_qgis_memory_layer.log", "w+")
-
     uri = layer_as_uri(ogr_layer)
+    
     qgs_vector_layer = QgsVectorLayer(
         path=uri,
         baseName=base_name,
@@ -154,14 +157,13 @@ def as_qgis_memory_layer(ogr_layer, base_name):
     for ogr_feature in ogr_layer:
         qgs_feature = ogr_feature_as_qgis_feature(ogr_feature, qgs_vector_layer)
         qgs_features.append(qgs_feature)
-
+    
     # delta_time=time.perf_counter() - start_time - delta_time
     # f.write('Created features. Time needed: {}\n'.format(str(delta_time)))
 
     #qgs_vector_layer.startEditing()
     qgs_vector_layer.dataProvider().addFeatures(qgs_features)
     #qgs_vector_layer.commitChanges()
-
     # delta_time = time.perf_counter() - start_time - delta_time
     # f.writelines('Added features. Time needed: {}\n'.format(str(delta_time)))
     # f.close()

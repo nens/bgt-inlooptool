@@ -37,6 +37,96 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from core.inlooptool import *
 from .ogr2qgis import *
 
+from qgis.core import (
+  QgsProcessingContext,
+  QgsTaskManager,
+  QgsTask,
+  QgsProcessingAlgRunnerTask,
+  Qgis,
+  QgsProcessingFeedback,
+  QgsApplication,
+  QgsMessageLog,
+)
+
+MESSAGE_CATEGORY = 'InloopToolTask'
+
+class InloopToolTask(QgsTask):
+    
+    def __init__(self, description, parameters, bgt_file, pipe_file, use_index):
+        super().__init__(description, QgsTask.CanCancel)
+        self.parameters = parameters
+        self.bgt_file = bgt_file
+        self.pipe_file = pipe_file
+        self.use_index = use_index
+        self.exception = None
+        
+    def run(self):
+        
+        QgsMessageLog.logMessage('Started "{}"'.format(
+                             self.description()),
+                         MESSAGE_CATEGORY, Qgis.Info)
+
+        
+        self.it = InloopTool(self.parameters)
+        
+        # Import surfaces and pipes
+        self.it.import_surfaces(self.bgt_file)
+
+        if self.isCanceled():
+            return(False)
+
+        self.it.import_pipes(self.pipe_file)    
+        
+        if self.isCanceled():
+            return(False)
+        
+        self.it.calculate_distances_new(parameters = self.parameters, use_index= self.use_index)
+        
+        if self.isCanceled():
+            return(False)
+        
+        #self.it._database.mem_database = ogr.Open('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg',1)
+        
+        self.it.calculate_runoff_targets()
+        
+        # Write database to file 
+        #self.it._database._write_to_disk('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg')
+        
+        return(True)
+            
+    def finished(self, result):
+        
+        if result:
+            QgsMessageLog.logMessage('Succesfully calculated runoff targets',MESSAGE_CATEGORY, Qgis.Success)
+            
+            # Exporteren output naar QGIS layer
+            ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
+            if ogr_lyr is not None:
+                if ogr_lyr.GetFeatureCount() > 0:
+                    qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Inlooptabel')
+                    project = QgsProject.instance()
+                    project.addMapLayer(qgs_lyr)
+        
+        else:
+            if self.exception is None:
+                QgsMessageLog.logMessage('Cancelled by user', MESSAGE_CATEGORY, Qgis.Warning)
+            else:
+                QgsMessageLog.logMessage(
+                    'RandomTask "{name}" Exception: {exception}'.format(
+                        name=self.description(),
+                        exception=self.exception),
+                    MESSAGE_CATEGORY, Qgis.Critical)
+                raise self.exception
+    
+    def cancel(self):
+        
+        QgsMessageLog.logMessage(
+            'Task was canceled'.format(
+                name=self.description()),
+            MESSAGE_CATEGORY, Qgis.Info)
+        super().cancel()
+    
+
 
 class BGTInloopTool:
     """QGIS Plugin Implementation."""
@@ -185,25 +275,7 @@ class BGTInloopTool:
                 action)
             self.iface.removeToolBarIcon(action)
 
-
-    def completed(self, exception, result=None):
-        """This is called when doSomething is finished.
-        Exception is not None if doSomething raises an exception.
-        result is the return value of doSomething."""
-        
-        if exception is None:
-            if result is None:
-                self.iface.messageBar().pushMessage("Canceled by user", level=Qgis.Info, duration=5)
-            else:
-                self.iface.messageBar().pushMessage("Sucess".format(iteraties=result['iteraties']), level=Qgis.Info, duration=5)
-                
-        else:
-            self.iface.messageBar().pushMessage("{ex}".format(ex=exception), level=Qgis.Critical, duration=5)
-            raise exception
             
-    def stopped(self,task):
-        self.iface.messageBar().pushMessage("Canceled by user", level=Qgis.Critical, duration=5)
-
    
     def on_run(self):
         
@@ -222,37 +294,16 @@ class BGTInloopTool:
                                      bouwjaar_gescheiden_binnenhuisriolering = self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(), 
                                      verhardingsgraad_erf = self.dlg.verhardingsgraad_erf.value(), 
                                      verhardingsgraad_half_verhard = self.dlg.verhardingsgraad_half_verhard.value())
+        
+        inlooptooltask = InloopToolTask(description = 'Inlooptool task', 
+                                        parameters = parameters,
+                                        bgt_file = bgt_file,
+                                        pipe_file = pipe_file,
+                                        use_index = USE_INDEX)
+        
+        QgsApplication.taskManager().addTask(inlooptooltask)
 
-        
-        it = InloopTool(parameters)
-        
-        # Import surfaces and pipes
-        it.import_surfaces(bgt_file)
-        it.import_pipes(pipe_file)
-        
-        it.calculate_distances_new(parameters = parameters, use_index=USE_INDEX)
-        it.calculate_runoff_targets()
-        
-        # Write database to file 
-        it._database._write_to_disk('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg')
-        
-        # Exporteren output naar QGIS laag
-        ogr_lyr = it._database.mem_database.GetLayerByName('bgt_oppervlak')
-        if ogr_lyr is not None:
-            if ogr_lyr.GetFeatureCount() > 0:
-                qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Afwateringskenmerken')
-                project = QgsProject.instance()
-                project.addMapLayer(qgs_lyr)
-#                style = self.dlg.comboBoxCellsStyleType.currentData()
-#                style_kwargs = self.dlg.get_styling_parameters(output_type=style.output_type)
-#                style.apply(qgis_layer=qgs_lyr, style_kwargs=style_kwargs)
-
-        
-        # Add calculate distances as qgis task (for background processing)
-        
-        #task = QgsTask.fromFunction('', BGT_inlooptool, on_finished=self.completed)
-        #QgsApplication.taskManager().addTask(task)
-                    
+                            
 
     def run(self):
         """Run method that performs all the real work"""

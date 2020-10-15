@@ -58,8 +58,17 @@ GPKG_DRIVER = ogr.GetDriverByName("GPKG")
 class InputParameters:
     """Parameters that determine the behaviour of the tool"""
 
-    def __init__(self, max_afstand_vlak_afwateringsvoorziening, max_afstand_vlak_oppwater, max_afstand_pand_oppwater, max_afstand_vlak_kolk, max_afstand_afgekoppeld,
-                 max_afstand_drievoudig, afkoppelen_hellende_daken, bouwjaar_gescheiden_binnenhuisriolering, verhardingsgraad_erf, verhardingsgraad_half_verhard):
+    def __init__(self, 
+                 max_afstand_vlak_afwateringsvoorziening = MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,  
+                 max_afstand_vlak_oppwater = MAX_AFSTAND_VLAK_OPPWATER, 
+                 max_afstand_pand_oppwater = MAX_AFSTAND_PAND_OPPWATER, 
+                 max_afstand_vlak_kolk = MAX_AFSTAND_VLAK_KOLK, 
+                 max_afstand_afgekoppeld = MAX_AFSTAND_AFGEKOPPELD,
+                 max_afstand_drievoudig = MAX_AFSTAND_DRIEVOUDIG, 
+                 afkoppelen_hellende_daken = AFKOPPELEN_HELLENDE_DAKEN, 
+                 bouwjaar_gescheiden_binnenhuisriolering = BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING, 
+                 verhardingsgraad_erf = VERHARDINGSGRAAD_ERF, 
+                 verhardingsgraad_half_verhard = VERHARDINGSGRAAD_HALF_VERHARD):
         
         self.max_afstand_vlak_afwateringsvoorziening= (max_afstand_vlak_afwateringsvoorziening)
         self.max_afstand_vlak_oppwater = max_afstand_vlak_oppwater 
@@ -129,79 +138,77 @@ class InloopTool:
             TARGET_TYPE_INFILTRATIEVOORZIENING: 0,
             TARGET_TYPE_NIET_AANGESLOTEN: 0,
         }
+                
+        for distance in ['distance_gemengd_riool', 'distance_hemelwaterriool', 'distance_vuilwaterriool', 'distance_infiltratievoorziening', 'distance_oppervlaktewater']:
+            if surface[distance] is None:
+                surface[distance] = 9999
 
         if surface.surface_type in NON_CONNECTABLE_SURFACE_TYPES:
+
             result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
-        elif not any(
-            [
-                surface.distance_hemelwaterriool,
-                surface.distance_vuilwaterriool,
-                surface.distance_infiltratievoorziening,
-                surface.distance_gemengd_riool,
-                surface.distance_oppervlaktewater,
-            ]
-        ):
+        elif min(surface.distance_hemelwaterriool,
+                 surface.distance_vuilwaterriool,
+                 surface.distance_infiltratievoorziening,
+                 surface.distance_gemengd_riool,
+                 surface.distance_oppervlaktewater) == 9999:
+
             result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
+        # Besliboom voor panden, nu hetzelfde als andere verhardingen
         elif surface.surface_type == SURFACE_TYPE_PAND:
-            pass
 
-        elif surface.bgt_fysiek_voorkomen == FYSIEK_VOORKOMEN_VERHARD:
-
-            if (
-                surface.distance_oppervlaktewater
-                or np.inf < parameters.max_afstand_vlak_oppwater
-            ):
+            if surface.distance_oppervlaktewater < parameters.max_afstand_vlak_oppwater:
+                    
+                    result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
+        
+            if min(surface.distance_gemengd_riool, surface.distance_infiltratievoorziening, surface.distance_hemelwaterriool) != 9999:
+                
+                if abs(surface.distance_gemengd_riool - min(surface.distance_hemelwaterriool, surface.distance_infiltratievoorziening)) < parameters.max_afstand_afgekoppeld:
+                    
+                    if surface.distance_hemelwaterriool <= surface.distance_infiltratievoorziening:
+                        result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                    else:
+                        result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                
+                elif surface.distance_hemelwaterriool <= min(surface.distance_gemengd_riool, surface.distance_infiltratievoorziening):
+                    result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                elif surface.distance_gemengd_riool < min(surface.distance_hemelwaterriool, surface.distance_infiltratievoorziening):
+                    result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+                else:
+                    result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                
+            else:
                 result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
-            elif (
-                surface.distance_gemengd_riool
-                or np.inf
-                - min(
-                    surface.distance_hemelwaterriool or np.inf,
-                    surface.distance_infiltratievoorziening or np.inf,
-                )
-                < parameters.max_afstand_afgekoppeld
-            ):
-
-                if (
-                    surface.distance_hemelwaterriool
-                    or np.inf < surface.distance_infiltratievoorziening
-                    or np.inf
-                ):
+        # Overige verharde oppervlakken
+        elif surface.bgt_fysiek_voorkomen in FYSIEK_VOORKOMEN_VERHARD:
+            
+            if surface.distance_oppervlaktewater < parameters.max_afstand_vlak_oppwater:
+                    
+                    result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
+        
+            elif min(surface.distance_gemengd_riool, surface.distance_infiltratievoorziening, surface.distance_hemelwaterriool) != 9999:
+                
+                if abs(surface.distance_gemengd_riool - min(surface.distance_hemelwaterriool, surface.distance_infiltratievoorziening)) < parameters.max_afstand_afgekoppeld:
+                    
+                    if surface.distance_hemelwaterriool <= surface.distance_infiltratievoorziening:
+                        result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                    else:
+                        result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                
+                elif surface.distance_hemelwaterriool <= min(surface.distance_gemengd_riool, surface.distance_infiltratievoorziening):
                     result[TARGET_TYPE_HEMELWATERRIOOL] = 100
-                else:
-                    result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
-
-            elif (
-                surface.distance_gemengd_riool
-                or np.inf
-                - min(
-                    surface.distance_hemelwaterriool or np.inf,
-                    surface.distance_infiltratievoorziening or np.inf,
-                )
-                > parameters.max_afstand_afgekoppeld
-            ):
-
-                if surface.distance_gemengd_riool or np.inf < min(
-                    surface.distance_hemelwaterriool or np.inf,
-                    surface.distance_infiltratievoorziening or np.inf,
-                ):
+                elif surface.distance_gemengd_riool < min(surface.distance_hemelwaterriool, surface.distance_infiltratievoorziening):
                     result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-
-                elif (
-                    surface.distance_hemelwaterriool
-                    or np.inf < surface.distance_infiltratievoorziening
-                    or np.inf
-                ):
-                    result[TARGET_TYPE_HEMELWATERRIOOL] = 100
-
                 else:
                     result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                
+            else:
+                result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
         else:
-            pass
+            result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
         return result
 
@@ -462,7 +469,12 @@ class InloopTool:
         feature_defn = result_table.GetLayerDefn()
 
         for surface in bgt_surfaces:
+            
             feature = ogr.Feature(feature_defn)
+            surface_geometry = surface.GetGeometryRef()
+            fixed_geometry = ogr.ForceToPolygon(surface_geometry)
+            feature.SetGeometry(fixed_geometry)
+            
             afwatering = self.decision_tree(surface, self.parameters)
             # feature.SetField(RESULT_TABLE_FIELD_ID, val) --> is autoincrement field
             feature.SetField(
@@ -472,7 +484,8 @@ class InloopTool:
             feature.SetField(
                 RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
             )
-            # feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, val)
+            
+            #feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding)
             # feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, val)
             # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val)
             # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val)

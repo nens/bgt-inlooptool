@@ -262,8 +262,8 @@
   <widget class="QPushButton" name="pushButtonRun">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>539</y>
+     <x>540</x>
+     <y>540</y>
      <width>241</width>
      <height>28</height>
     </rect>
@@ -303,19 +303,6 @@
      <width>81</width>
      <height>22</height>
     </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButtonCancel">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>539</y>
-     <width>93</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Annuleren</string>
    </property>
   </widget>
   <widget class="QListWidget" name="listWidget">
