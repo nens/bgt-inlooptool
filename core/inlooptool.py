@@ -90,7 +90,7 @@ class InputParameters:
 
 
 class InloopTool:
-    def __init__(self, parameters: InputParameters):
+    def __init__(self, parameters):
         """Constructor."""
         self.parameters = parameters
         self._database = Database()
@@ -247,7 +247,7 @@ class InloopTool:
         self._database.mem_database.CopyLayer(pipe_distance_layer, "pipe_distances")
         self._database.mem_database.ReleaseResultSet(pipe_distance_layer)
 
-        calculate_distance_oppervlaktewater_sql = f""" SELECT  surface1.identificatie_lokaalid, 
+        calculate_distance_oppervlaktewater_sql = """ SELECT  surface1.identificatie_lokaalid, 
                                                     ST_Distance(surface1.geom, surface2.geom) AS distance
                                             FROM    bgt_surfaces AS surface1, 
                                                     bgt_surfaces as surface2
@@ -256,12 +256,12 @@ class InloopTool:
                                             AND     PtDistWithin(
                                                         surface1.geom, 
                                                         surface2.geom, 
-                                                        {parameters.max_afstand_vlak_afwateringsvoorziening}
+                                                        {max_afstand_vlak_afwateringsvoorziening}
                                                         )
                                             GROUP BY surface1.identificatie_lokaalid 
                                             ORDER BY ST_Distance(surface1.geom, surface2.geom) ASC
-                                            ;
-                                        """
+                                            ;""".format(SURFACE_TYPE_WATERDEEL=SURFACE_TYPE_WATERDEEL,
+                                            max_afstand_vlak_afwateringsvoorziening=parameters.max_afstand_vlak_afwateringsvoorziening)
 
         water_distance_layer = self._database.mem_database.ExecuteSQL(
             calculate_distance_oppervlaktewater_sql
@@ -666,7 +666,7 @@ class Database:
                 )
             )
 
-    def import_surfaces_raw(self, file_path: str):
+    def import_surfaces_raw(self, file_path):
         """
         Copy the required contents of the BGT zip file 'as is' to self.mem_database
         :param file_path:
@@ -681,10 +681,10 @@ class Database:
         try:
             for stype in ALL_USED_SURFACE_TYPES:
                 surface_source_fn = os.path.join(
-                    "/vsizip/" + file_path, f"bgt_{stype}.gml"
+                    "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
                 )
                 surface_source = ogr.Open(surface_source_fn)
-                src_layer = surface_source.GetLayerByName(f"{stype}")
+                src_layer = surface_source.GetLayerByName("{stype}".format(stype=stype))
                 self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
         except Exception:
             # TODO more specific exception
@@ -892,7 +892,7 @@ class Database:
             dest_layer.CreateField(field_name)
 
         for surface in ALL_USED_SURFACE_TYPES:
-            input_layer = self.mem_database.GetLayerByName(f"{surface}")
+            input_layer = self.mem_database.GetLayerByName("{surface}".format(surface=surface))
 
             for i in range(0, input_layer.GetFeatureCount()):
                 feature = input_layer.GetFeature(i)
@@ -907,7 +907,7 @@ class Database:
                         new_feature.SetField(
                             "identificatie_lokaalid", feature["identificatie.lokaalID"]
                         )
-                        new_feature.SetField("surface_type", f"{surface}")
+                        new_feature.SetField("surface_type", "{surface}".format(surface=surface))
 
                         if surface in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
                             new_feature["bgt_fysiek_voorkomen"] = feature[
