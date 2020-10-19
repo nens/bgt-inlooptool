@@ -182,10 +182,21 @@ class UnitDatabase(unittest.TestCase):
         # result = ogr.Open(out_gpkg_fn)
         # self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
 
+    def test_decision_tree(self):
+        parameters = InputParameters()
+        it = InloopTool(parameters)
+        it._database.mem_database = ogr.Open('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg',1)
+        test_surface = it._database.bgt_surfaces.GetFeature(1)
+        
+        test.surface.distance_oppervlaktewater
+        
+        it.decision_tree(test_surface, parameters)
+        
+        
 
     def test_add_buildings(self):
         parameters = InputParameters()
-        it = BGTInloopTool(parameters)
+        it = InloopTool(parameters)
         it.import_surfaces(file_path=SURFACES_INPUT_FILENAME)
         it.import_buildings(file_path=BUILDINGS_INPUT_FILENAME)
         it._database.add_build_year_to_surface()

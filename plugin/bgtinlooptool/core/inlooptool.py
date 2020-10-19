@@ -162,7 +162,7 @@ class InloopTool:
                     
                     result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
         
-            if min(surface.distance_gemengd_riool, surface.distance_infiltratievoorziening, surface.distance_hemelwaterriool) != 9999:
+            elif min(surface.distance_gemengd_riool, surface.distance_infiltratievoorziening, surface.distance_hemelwaterriool) != 9999:
                 
                 if abs(surface.distance_gemengd_riool - min(surface.distance_hemelwaterriool, surface.distance_infiltratievoorziening)) < parameters.max_afstand_afgekoppeld:
                     

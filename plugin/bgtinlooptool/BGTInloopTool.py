@@ -85,12 +85,7 @@ class InloopToolTask(QgsTask):
         if self.isCanceled():
             return(False)
         
-        #self.it._database.mem_database = ogr.Open('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg',1)
-        
         self.it.calculate_runoff_targets()
-        
-        # Write database to file 
-        #self.it._database._write_to_disk('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg')
         
         return(True)
             

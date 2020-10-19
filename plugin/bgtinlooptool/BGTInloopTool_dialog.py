@@ -44,10 +44,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-    
-        self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/repos/bgt-inlooptool/test-data/extract.zip')
-        self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/repos/bgt-inlooptool/test-data/getGeoPackage_1134.gpkg')
-        
+            
         self.bgt_file.fileChanged.connect(self.bgt_file_changed)
         self.pipe_file.fileChanged.connect(self.pipe_file_changed)
     
