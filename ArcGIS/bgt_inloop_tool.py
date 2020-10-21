@@ -10,10 +10,17 @@ import os
 if 'python.exe' in sys.executable:
     import arcview  # or arceditor, arcinfo
 import arcpy
+
+# Set path to Generic modules
+import clsGeneralUse
 from common import BaseTool, parameter
 
+# import bgt inlooptool
+# from inlooptool import BGTInloopTool
+from test_inlooptool import UnitDatabase
 
-class BGTInloopTool(BaseTool):
+
+class BGTInloopToolArcGIS(BaseTool):
     def __init__(self):
         """
         Initialization.
@@ -22,10 +29,6 @@ class BGTInloopTool(BaseTool):
         self.label = 'bgt inloop tool voor ArcGIS'
         self.description = '''bgt inloop tool voor ArcGIS'''
         self.canRunInBackground = True
-
-        # Set path to Generic modules
-        import clsGeneralUse
-        self.objTT = clsGeneralUse.TT_GeneralUse(sys, arcpy)
 
     def getParameterInfo(self):
         """ return Parameter definitions."""
@@ -45,24 +48,27 @@ class BGTInloopTool(BaseTool):
 
     def updateParameters(self, parameters):
 
-        super(BGTInloopTool, self).updateParameters(parameters)
+        super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
 
-        super(BGTInloopTool, self).updateMessages(parameters)
+        super(BGTInloopToolArcGIS, self).updateMessages(parameters)
 
     def execute(self, parameters, messages):
         try:
-            self.objTT.StartAnalyse()
+            self.arcgis_com = clsGeneralUse.TT_GeneralUse(sys, arcpy)
+            self.arcgis_com.StartAnalyse()
 
             param0 = parameters[0].value
             param1 = parameters[1].value
             param2 = parameters[2].valueAsText
 
+            inloop_obj = BGTInloopTool(self.arcgis_com)
+
         except Exception:
-            self.objTT.Traceback()
+            self.arcgis_com.Traceback()
         finally:
-            self.objTT.AddMessage("Klaar")
+            self.arcgis_com.AddMessage("Klaar")
         return
 
 
@@ -70,7 +76,7 @@ if __name__ == '__main__':
     # This is used for debugging. Using this separated structure makes it much
     # easier to debug using standard Python development tools.
 
-    tool = BGTInloopTool()
+    tool = BGTInloopToolArcGIS()
     params = tool.getParameterInfo()
 
     # param0
