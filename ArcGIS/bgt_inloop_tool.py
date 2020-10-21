@@ -17,7 +17,7 @@ from common import BaseTool, parameter
 
 # import bgt inlooptool
 # from inlooptool import BGTInloopTool
-from test_inlooptool import UnitDatabase
+# from test_inlooptool import UnitDatabase
 
 
 class BGTInloopToolArcGIS(BaseTool):
@@ -37,13 +37,14 @@ class BGTInloopToolArcGIS(BaseTool):
         parameters using commas.
         parameter(displayName, name, datatype, defaultValue=None, parameterType='Required', direction='Input')
         '''
-
+        # TODO volgende fase ook importeren als GDB of shapefiles
         self.parameters = [
-            parameter('AHN type', 'AHNtype', "String", parameterType="Required", direction="Input"),
-            parameter('AHN versie', 'AHNversie', "String", parameterType="Required", direction="Input"),
-            parameter('Gebiedsbegrenzing', 'InputArea', 'GPFeatureLayer', parameterType='Required', direction='Input')
+            parameter('BAG (als geopackage)', 'bag', "DEDatasetType", parameterType="Required", direction="Input"),
+            parameter('BGT (als zipfile)', 'bgt', "DEFile", parameterType="Required", direction="Input"),
+            parameter('Leidingen (als geopackage)', 'leidingen', 'DEDatasetType', parameterType='Required',
+                      direction='Input')
             ]
-
+        # DEFILE en GPType werken niet
         return self.parameters
 
     def updateParameters(self, parameters):
@@ -52,6 +53,22 @@ class BGTInloopToolArcGIS(BaseTool):
 
     def updateMessages(self, parameters):
 
+        bag = parameters[0]
+        bgt = parameters[1]
+        leidingen = parameters[2]
+
+        if bag.altered:
+            if bag.valueAsText[-5:] != ".gpkg":
+                bag.setErrorMessage('De input voor bag data moet een geopackage (.gpkg) zijn')
+
+        if bgt.altered:
+            if bgt.valueAsText[-4:] != ".zip":
+                bgt.setErrorMessage('De input voor bgt data moet een zip file zijn met .gml files')
+
+        if leidingen.altered:
+            if leidingen.valueAsText[-5:] != ".gpkg":
+                leidingen.setErrorMessage('De input voor leidingen data moet een geopackage (.gpkg) zijn')
+
         super(BGTInloopToolArcGIS, self).updateMessages(parameters)
 
     def execute(self, parameters, messages):
@@ -59,11 +76,11 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com = clsGeneralUse.TT_GeneralUse(sys, arcpy)
             self.arcgis_com.StartAnalyse()
 
-            param0 = parameters[0].value
-            param1 = parameters[1].value
-            param2 = parameters[2].valueAsText
+            bag = parameters[0].value
+            bgt = parameters[1].value
+            leidingen = parameters[2].valueAsText
 
-            inloop_obj = BGTInloopTool(self.arcgis_com)
+            # inloop_obj = BGTInloopTool(BAG_input, BGT_input, Leidingen_input, self.arcgis_com)
 
         except Exception:
             self.arcgis_com.Traceback()
@@ -80,10 +97,10 @@ if __name__ == '__main__':
     params = tool.getParameterInfo()
 
     # param0
-    params[0].value = ""
+    params[0].value = "test.shp"
     # param1
-    params[1].value = ""
+    params[1].value = "iets.zip2"
     # param2
-    params[2].value = r''
+    params[2].value = 'ja.gpkg2'
 
     tool.execute(parameters=params, messages=None)
