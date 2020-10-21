@@ -56,8 +56,10 @@ VERHARDINGSTYPE_GESLOTEN_VERHARD = 'gesloten verhard'
 
 SOURCE_PIPES_TABLE_NAME = "default_lijn"
 
+
 SURFACES_TABLE_NAME = 'bgt_oppervlak'
 PIPES_TABLE_NAME = 'pipes'
+BUILDINGS_TABLE_NAME = 'buildings'
 RESULT_TABLE_NAME = 'bgt_inlooptabel'
 
 RESULT_TABLE_FIELD_ID = 'id'
@@ -78,4 +80,13 @@ TARGET_TYPE_INFILTRATIEVOORZIENING = 'infiltratievoorziening'
 TARGET_TYPE_NIET_AANGESLOTEN = 'niet_aangesloten'
 
 FYSIEK_VOORKOMEN_VERHARD = 'verhard'
+
+
+
+DISTANCE_TYPE_NAAM = {
+    'Gemengd riool':     'gemengd_riool',
+    'Hemelwaterriool': 'hemelwaterriool',
+    'Vuilwaterriool': 'vuilwaterriool',
+    'Drain': 'infiltratievoorziening'
+    }
 
