@@ -170,17 +170,16 @@ class UnitDatabase(unittest.TestCase):
                             If features all fall out the search range, then this will give a error
                             """)
         
-        
-        # it.calculate_runoff_targets()
-        # out_gpkg_fn = os.path.join(DATA_PATH, 'calculated_result.gpkg')
-        # if os.path.exists(out_gpkg_fn):
-        #     os.remove(out_gpkg_fn)
-        # hard_gpkg_ds = GPKG_DRIVER.CreateDataSource(out_gpkg_fn)
-        # src_lyr = it._database.result_table
-        # hard_gpkg_ds.CopyLayer(src_lyr, RESULT_TABLE_NAME)
-        # hard_gpkg_ds = None
-        # result = ogr.Open(out_gpkg_fn)
-        # self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
+        it.calculate_runoff_targets()
+        out_gpkg_fn = os.path.join(DATA_PATH, 'calculated_result.gpkg')
+        if os.path.exists(out_gpkg_fn):
+             os.remove(out_gpkg_fn)
+        hard_gpkg_ds = GPKG_DRIVER.CreateDataSource(out_gpkg_fn)
+        src_lyr = it._database.result_table
+        hard_gpkg_ds.CopyLayer(src_lyr, RESULT_TABLE_NAME)
+        hard_gpkg_ds = None
+        result = ogr.Open(out_gpkg_fn)
+        self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
 
     def test_decision_tree(self):
         parameters = InputParameters()
