@@ -80,7 +80,7 @@ class InloopToolTask(QgsTask):
         if self.isCanceled():
             return(False)
         
-        self.it.calculate_distances_new(parameters = self.parameters, use_index= self.use_index)
+        self.it.calculate_distances(parameters = self.parameters, use_index= self.use_index)
         
         if self.isCanceled():
             return(False)

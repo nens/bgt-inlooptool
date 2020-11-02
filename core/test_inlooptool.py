@@ -127,7 +127,7 @@ class UnitDatabase(unittest.TestCase):
         it.import_pipes(file_path=PIPES_INPUT_FILENAME)
         
         # speed test
-        it.calculate_distances_new(parameters) # 7 minutes 30 secs
+        it.calculate_distances(parameters) # 7 minutes 30 secs
         
         
         distances = it._database.mem_database.GetLayerByName('pipe_distances')
@@ -149,7 +149,7 @@ class UnitDatabase(unittest.TestCase):
                             """)
 
         
-        it.calculate_distances_new(parameters, use_index=False) # 16minutes and 2 seconds
+        it.calculate_distances(parameters, use_index=False) # 16minutes and 2 seconds
         
                 
         distances = it._database.mem_database.GetLayerByName('pipe_distances')
