@@ -12,8 +12,8 @@ if 'python.exe' in sys.executable:
 import arcpy
 
 # Set path to Generic modules
-from ArcGIS.clsGeneralUse import TT_GeneralUse
-from ArcGIS.common import BaseTool, parameter
+from clsGeneralUse import TT_GeneralUse
+from common import BaseTool, parameter
 
 # import bgt inlooptool
 # core = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'core')
