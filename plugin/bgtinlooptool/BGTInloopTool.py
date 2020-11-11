@@ -24,12 +24,103 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import Qgis, QgsProject
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
-import os.path
+import os.path, sys
+
+# Import the BGT Inlooptool core
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from core.inlooptool import *
+from .ogr2qgis import *
+
+from qgis.core import (
+  QgsProcessingContext,
+  QgsTaskManager,
+  QgsTask,
+  QgsProcessingAlgRunnerTask,
+  Qgis,
+  QgsProcessingFeedback,
+  QgsApplication,
+  QgsMessageLog,
+)
+
+MESSAGE_CATEGORY = 'InloopToolTask'
+
+class InloopToolTask(QgsTask):
+    
+    def __init__(self, description, parameters, bgt_file, pipe_file, use_index):
+        super().__init__(description, QgsTask.CanCancel)
+        self.parameters = parameters
+        self.bgt_file = bgt_file
+        self.pipe_file = pipe_file
+        self.use_index = use_index
+        self.exception = None
+        
+    def run(self):
+        
+        QgsMessageLog.logMessage('Started "{}"'.format(
+                             self.description()),
+                         MESSAGE_CATEGORY, Qgis.Info)
+
+        
+        self.it = InloopTool(self.parameters)
+        
+        # Import surfaces and pipes
+        self.it.import_surfaces(self.bgt_file)
+
+        if self.isCanceled():
+            return(False)
+
+        self.it.import_pipes(self.pipe_file)    
+        
+        if self.isCanceled():
+            return(False)
+        
+        self.it.calculate_distances(parameters = self.parameters, use_index= self.use_index)
+        
+        if self.isCanceled():
+            return(False)
+        
+        self.it.calculate_runoff_targets()
+        
+        return(True)
+            
+    def finished(self, result):
+        
+        if result:
+            QgsMessageLog.logMessage('Succesfully calculated runoff targets',MESSAGE_CATEGORY, Qgis.Success)
+            
+            # Exporteren output naar QGIS layer
+            ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
+            if ogr_lyr is not None:
+                if ogr_lyr.GetFeatureCount() > 0:
+                    qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Inlooptabel')
+                    project = QgsProject.instance()
+                    project.addMapLayer(qgs_lyr)
+        
+        else:
+            if self.exception is None:
+                QgsMessageLog.logMessage('Cancelled by user', MESSAGE_CATEGORY, Qgis.Warning)
+            else:
+                QgsMessageLog.logMessage(
+                    'RandomTask "{name}" Exception: {exception}'.format(
+                        name=self.description(),
+                        exception=self.exception),
+                    MESSAGE_CATEGORY, Qgis.Critical)
+                raise self.exception
+    
+    def cancel(self):
+        
+        QgsMessageLog.logMessage(
+            'Task was canceled'.format(
+                name=self.description()),
+            MESSAGE_CATEGORY, Qgis.Info)
+        super().cancel()
+    
 
 
 class BGTInloopTool:
@@ -179,31 +270,35 @@ class BGTInloopTool:
                 action)
             self.iface.removeToolBarIcon(action)
 
-
-    def completed(self, exception, result=None):
-        """This is called when doSomething is finished.
-        Exception is not None if doSomething raises an exception.
-        result is the return value of doSomething."""
-        
-        if exception is None:
-            if result is None:
-                self.iface.messageBar().pushMessage("Canceled by user", level=Qgis.Info, duration=5)
-            else:
-                self.iface.messageBar().pushMessage("Sucess".format(iteraties=result['iteraties']), level=Qgis.Info, duration=5)
-                
-        else:
-            self.iface.messageBar().pushMessage("{ex}".format(ex=exception), level=Qgis.Critical, duration=5)
-            raise exception
             
-    def stopped(self,task):
-        self.iface.messageBar().pushMessage("Canceled by user", level=Qgis.Critical, duration=5)
-
    
     def on_run(self):
-
-        task = QgsTask.fromFunction('', BGT_inlooptool, on_finished=self.completed)
-        QgsApplication.taskManager().addTask(task)
+        
+        # ipnut files            
+        bgt_file = self.dlg.bgt_file.filePath()
+        pipe_file =self.dlg.pipe_file.filePath() 
                     
+        # Iniate bgt inlooptool class with parameters 
+        parameters = InputParameters(max_afstand_vlak_afwateringsvoorziening = self.dlg.max_afstand_vlak_afwateringsvoorziening.value(), 
+                                     max_afstand_vlak_oppwater = self.dlg.max_afstand_vlak_oppwater.value(), 
+                                     max_afstand_pand_oppwater = self.dlg.max_afstand_pand_oppwater.value(), 
+                                     max_afstand_vlak_kolk = self.dlg.max_afstand_vlak_kolk.value(), 
+                                     max_afstand_afgekoppeld = self.dlg.max_afstand_afgekoppeld.value(),
+                                     max_afstand_drievoudig = self.dlg.max_afstand_drievoudig.value(), 
+                                     afkoppelen_hellende_daken = self.dlg.afkoppelen_hellende_daken.isChecked(), 
+                                     bouwjaar_gescheiden_binnenhuisriolering = self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(), 
+                                     verhardingsgraad_erf = self.dlg.verhardingsgraad_erf.value(), 
+                                     verhardingsgraad_half_verhard = self.dlg.verhardingsgraad_half_verhard.value())
+        
+        inlooptooltask = InloopToolTask(description = 'Inlooptool task', 
+                                        parameters = parameters,
+                                        bgt_file = bgt_file,
+                                        pipe_file = pipe_file,
+                                        use_index = USE_INDEX)
+        
+        QgsApplication.taskManager().addTask(inlooptooltask)
+
+                            
 
     def run(self):
         """Run method that performs all the real work"""
@@ -213,7 +308,8 @@ class BGTInloopTool:
         if self.first_start == True:
             self.first_start = False
             self.dlg = BGTInloopToolDialog()
+            # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)
-
+            
         # show the dialog
         self.dlg.show()

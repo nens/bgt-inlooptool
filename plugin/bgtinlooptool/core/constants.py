@@ -38,13 +38,13 @@ NON_CONNECTABLE_SURFACE_TYPES = {
     SURFACE_TYPE_OVERBRUGGINGSDEEL
 }
 
-assert CONNECTABLE_SURFACE_TYPES.union(NON_CONNECTABLE_SURFACE_TYPES) == ALL_USED_SURFACE_TYPES
-
 SURFACE_TYPES_MET_FYSIEK_VOORKOMEN = {
     SURFACE_TYPE_WEGDEEL,
     SURFACE_TYPE_ONBEGROEIDTERREINDEEL,
     SURFACE_TYPE_ONDERSTEUNENDWEGDEEL
 }
+
+assert CONNECTABLE_SURFACE_TYPES.union(NON_CONNECTABLE_SURFACE_TYPES) == ALL_USED_SURFACE_TYPES
 
 ###############################
 
@@ -81,11 +81,12 @@ TARGET_TYPE_NIET_AANGESLOTEN = 'niet_aangesloten'
 
 FYSIEK_VOORKOMEN_VERHARD = ['verhard', 'open verharding', 'gesloten verharding', 'half verhard']
 
+
+
 DISTANCE_TYPE_NAAM = {
-    'Gemengd riool': 'gemengd_riool',
+    'Gemengd riool':     'gemengd_riool',
     'Hemelwaterriool': 'hemelwaterriool',
     'Vuilwaterriool': 'vuilwaterriool',
-    'Infiltratieriool': 'infiltratievoorziening',
-    # 'DIT-riool': # zou in dezelfde categorie moeten vallen als infiltratieriool, qua beslisboom
-}
+    'Drain': 'infiltratievoorziening'
+    }
 

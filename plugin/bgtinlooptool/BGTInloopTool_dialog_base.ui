@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>BGT Inlooptool</string>
   </property>
-  <widget class="QgsFileWidget" name="mQgsFileWidget">
+  <widget class="QgsFileWidget" name="bgt_file">
    <property name="geometry">
     <rect>
      <x>170</x>
@@ -23,7 +23,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QgsFileWidget" name="mQgsFileWidget_2">
+  <widget class="QgsFileWidget" name="pipe_file">
    <property name="geometry">
     <rect>
      <x>170</x>
@@ -69,7 +69,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Max. afstand BGT - Hemelwatervoorziening</string>
+    <string>Max. afstand afwateringsvoorziening</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_4">
@@ -137,7 +137,7 @@
     <string>Max. afstand drievoudig stelsel</string>
    </property>
   </widget>
-  <widget class="QgsDoubleSpinBox" name="afstand_bgt_hemelwatervoorziening">
+  <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_afwateringsvoorziening">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -147,7 +147,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QgsDoubleSpinBox" name="afstand_verhardingsvlak_oppwater">
+  <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_oppwater">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -157,7 +157,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QgsDoubleSpinBox" name="afstand_pand_oppwater">
+  <widget class="QgsDoubleSpinBox" name="max_afstand_pand_oppwater">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -167,7 +167,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QgsDoubleSpinBox" name="afstand_verhardingsvlak_kolk">
+  <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_kolk">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -177,7 +177,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QgsDoubleSpinBox" name="afstand_afgekoppeld_stelsel">
+  <widget class="QgsDoubleSpinBox" name="max_afstand_afgekoppeld">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -187,7 +187,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QgsDoubleSpinBox" name="afstand_drievoudig_stelsel">
+  <widget class="QgsDoubleSpinBox" name="max_afstand_drievoudig">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -201,7 +201,7 @@
    <property name="geometry">
     <rect>
      <x>450</x>
-     <y>289</y>
+     <y>390</y>
      <width>181</width>
      <height>16</height>
     </rect>
@@ -210,11 +210,11 @@
     <string>Afkoppelen hellende daken </string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkbox_hellende_daken">
+  <widget class="QCheckBox" name="afkoppelen_hellende_daken">
    <property name="geometry">
     <rect>
      <x>700</x>
-     <y>289</y>
+     <y>390</y>
      <width>81</width>
      <height>20</height>
     </rect>
@@ -227,7 +227,7 @@
    <property name="geometry">
     <rect>
      <x>450</x>
-     <y>339</y>
+     <y>440</y>
      <width>241</width>
      <height>16</height>
     </rect>
@@ -259,11 +259,11 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="pushButtonRun">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>539</y>
+     <x>540</x>
+     <y>540</y>
      <width>241</width>
      <height>28</height>
     </rect>
@@ -295,27 +295,14 @@
     </rect>
    </property>
   </widget>
-  <widget class="QSpinBox" name="bouwjaar_binnenhuisriolering">
+  <widget class="QSpinBox" name="bouwjaar_gescheiden_binnenhuisriolering">
    <property name="geometry">
     <rect>
      <x>700</x>
-     <y>339</y>
+     <y>440</y>
      <width>81</width>
      <height>22</height>
     </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_2">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>539</y>
-     <width>93</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Annuleren</string>
    </property>
   </widget>
   <widget class="QListWidget" name="listWidget">
@@ -362,6 +349,52 @@
    </property>
    <property name="text">
     <string>Kolken (.shp)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_15">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>290</y>
+     <width>201</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Verhardingsgraad erf</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_16">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>340</y>
+     <width>201</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Verhardingsgraad half verhard</string>
+   </property>
+  </widget>
+  <widget class="QgsDoubleSpinBox" name="verhardingsgraad_erf">
+   <property name="geometry">
+    <rect>
+     <x>700</x>
+     <y>290</y>
+     <width>90</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QgsDoubleSpinBox" name="verhardingsgraad_half_verhard">
+   <property name="geometry">
+    <rect>
+     <x>700</x>
+     <y>340</y>
+     <width>90</width>
+     <height>27</height>
+    </rect>
    </property>
   </widget>
  </widget>
