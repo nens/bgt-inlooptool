@@ -4,7 +4,7 @@ Description: BGT Inloop Toolbox voor ArcGIS
 Created By: Sjoerd Hoekstra
 Date: 29/09/2020
 """
-from bgt_inloop_tool import BGTInloopToolArcGIS
+from bgt_inloop_tool_ArcGIS import BGTInloopToolArcGIS
 
 
 class Toolbox(object):

@@ -40,8 +40,6 @@ class TT_GeneralUse():
             self.arcpy.AddWarning(strMessage)
         else:
             self.arcpy.AddMessage(strMessage)
-        if self.logPrint:
-            print(strMessage)
 
     def AddTimeMessage(self, strMessage, urg=0):
         """Urg = 1 is Error Message, Urg = 2 is Warning Message."""
