@@ -9,12 +9,18 @@ import sys
 import os
 import arcpy
 
+# Relative imports don't work well in arcgis, therefore paths are appended to sys
+bgt_inlooptool_dir = os.path.dirname(__file__)
+sys.path.append(bgt_inlooptool_dir)
+sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
+
 # Set path to Generic modules
-from common.clsGeneralUse import TT_GeneralUse
-from common.common import BaseTool, parameter
+from clsGeneralUse import TT_GeneralUse
+from common import BaseTool, parameter
 
 # import bgt inlooptool
-from core.inlooptool import InloopTool
+from inlooptool import InloopTool
+
 
 class BGTInloopToolArcGIS(BaseTool):
     def __init__(self):
