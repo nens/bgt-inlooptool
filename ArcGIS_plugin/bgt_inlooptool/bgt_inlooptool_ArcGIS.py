@@ -19,7 +19,17 @@ from clsGeneralUse import TT_GeneralUse
 from common import BaseTool, parameter
 
 # import bgt inlooptool
-from inlooptool import InloopTool
+from inlooptool import InloopTool, InputParameters
+from defaults import (MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
+                      MAX_AFSTAND_VLAK_OPPWATER,
+                      MAX_AFSTAND_PAND_OPPWATER,
+                      MAX_AFSTAND_VLAK_KOLK,
+                      MAX_AFSTAND_AFGEKOPPELD,
+                      MAX_AFSTAND_DRIEVOUDIG,
+                      AFKOPPELEN_HELLENDE_DAKEN,
+                      BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
+                      VERHARDINGSGRAAD_ERF,
+                      VERHARDINGSGRAAD_HALF_VERHARD)
 
 
 class BGTInloopToolArcGIS(BaseTool):
@@ -42,32 +52,81 @@ class BGTInloopToolArcGIS(BaseTool):
 
         # TODO volgende fase ook importeren als GDB of shapefiles
         self.parameters = [
-            parameter('BAG (als geopackage)', 'bag', "DEDatasetType",
-                      parameterType="Required", direction="Input"),
-            parameter('BGT (als zipfile)', 'bgt', "DEFile",
-                      parameterType="Required", direction="Input"),
-            parameter('Leidingen (als geopackage)', 'leidingen', 'DEDatasetType',
-                      parameterType='Required', direction='Input'),
-            parameter('maximale afstand vlak afwateringsvoorziening', 'max_vlak_afwatervoorziening', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('maximale afstand vlak oppervlaktewater', 'max_vlak_oppwater', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('maximale afstand pand oppervlaktewater', 'max_pand_opwater', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('maximale afstand vlak kolk', 'max_vlak_kolk', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('maximale afstand afgekoppeld', 'max_afgekoppeld', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('maximale afstand drievoudig', 'max_drievoudig', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('afkoppelen hellende daken', 'afkoppelen_daken', 'GPBoolean',
-                      parameterType='Required', direction='Input'),
-            parameter('bouwjaar gescheiden binnenhuisriolering', 'bouwjaar_riool', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('verhardingsgraad erf', 'verhardingsgraaf_erf', 'GPLong',
-                      parameterType='Required', direction='Input'),
-            parameter('verhardingsgraad half verhard', 'verhardingsgraad_half_verhard', 'GPLong',
-                      parameterType='Required', direction='Input')
+            parameter(displayName='BAG (als geopackage)',
+                      name='bag',
+                      datatype="DEDatasetType",
+                      parameterType="Required",
+                      direction="Input"),
+            parameter(displayName='BGT (als zipfile)',
+                      name='bgt',
+                      datatype="DEFile",
+                      parameterType="Required",
+                      direction="Input"),
+            parameter(displayName='Leidingen (als geopackage)',
+                      name='leidingen',
+                      datatype='DEDatasetType',
+                      parameterType='Required',
+                      direction='Input'),
+            parameter(displayName='maximale afstand vlak afwateringsvoorziening',
+                      name='max_vlak_afwatervoorziening',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING),
+            parameter(displayName='maximale afstand vlak oppervlaktewater',
+                      name='max_vlak_oppwater',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=MAX_AFSTAND_VLAK_OPPWATER),
+            parameter(displayName='maximale afstand pand oppervlaktewater',
+                      name='max_pand_opwater',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=MAX_AFSTAND_PAND_OPPWATER),
+            parameter(displayName='maximale afstand vlak kolk',
+                      name='max_vlak_kolk',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=MAX_AFSTAND_VLAK_KOLK),
+            parameter(displayName='maximale afstand afgekoppeld',
+                      name='max_afgekoppeld',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=MAX_AFSTAND_AFGEKOPPELD),
+            parameter(displayName='maximale afstand drievoudig',
+                      name='max_drievoudig',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=MAX_AFSTAND_DRIEVOUDIG),
+            parameter(displayName='afkoppelen hellende daken',
+                      name='afkoppelen_daken',
+                      datatype='GPBoolean',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=AFKOPPELEN_HELLENDE_DAKEN),
+            parameter(displayName='bouwjaar gescheiden binnenhuisriolering',
+                      name='bouwjaar_riool',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING),
+            parameter(displayName='verhardingsgraad erf',
+                      name='verhardingsgraaf_erf',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=VERHARDINGSGRAAD_ERF),
+            parameter(displayName='verhardingsgraad half verhard',
+                      name='verhardingsgraad_half_verhard',
+                      datatype='GPDouble',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=VERHARDINGSGRAAD_HALF_VERHARD)
             ]
 
         return self.parameters
@@ -102,18 +161,29 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.StartAnalyse()
             self.arcgis_com.AddMessage("Start analyse!")
 
-            bag_file = parameters[0].value
-            bgt_file = parameters[1].value
+            bag_file = parameters[0].valueAsText
+            bgt_file = parameters[1].valueAsText
             pipe_file = parameters[2].valueAsText
 
-            core_parameters = [parameters[x].value for x in range(3, 13)]
+            core_parameters = InputParameters(
+                    max_afstand_vlak_afwateringsvoorziening=parameters[3].value,
+                    max_afstand_vlak_oppwater=parameters[4].value,
+                    max_afstand_pand_oppwater=parameters[5].value,
+                    max_afstand_vlak_kolk=parameters[6].value,
+                    max_afstand_afgekoppeld=parameters[7].value,
+                    max_afstand_drievoudig=parameters[8].value,
+                    afkoppelen_hellende_daken=parameters[9].value,
+                    bouwjaar_gescheiden_binnenhuisriolering=parameters[10].value,
+                    verhardingsgraad_erf=parameters[11].value,
+                    verhardingsgraad_half_verhard=parameters[12].value)
+
             self.it = InloopTool(core_parameters)
 
             # Import surfaces and pipes
             self.it.import_surfaces(bgt_file)
             self.it.import_pipes(pipe_file)
 
-            self.it.calculate_distances(parameters=self.parameters, use_index=self.use_index)
+            self.it.calculate_distances(parameters=core_parameters)
 
             self.it.calculate_runoff_targets()
 
