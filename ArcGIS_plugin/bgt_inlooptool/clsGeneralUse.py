@@ -71,4 +71,4 @@ class TT_GeneralUse():
 
 if __name__ == '__main__':
 
-    print('klaar!')
+    pass

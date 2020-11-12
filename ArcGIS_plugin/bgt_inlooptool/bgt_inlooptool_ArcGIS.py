@@ -7,21 +7,14 @@ Date: 29/09/2020
 
 import sys
 import os
-if 'python.exe' in sys.executable:
-    import arcview  # or arceditor, arcinfo
 import arcpy
 
 # Set path to Generic modules
-from clsGeneralUse import TT_GeneralUse
-from common import BaseTool, parameter
+from common.clsGeneralUse import TT_GeneralUse
+from common.common import BaseTool, parameter
 
 # import bgt inlooptool
-# core = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'core')
-# sys.path.append(core)
 from core.inlooptool import InloopTool
-# from inlooptool import BGTInloopTool
-# from test_inlooptool import UnitDatabase
-
 
 class BGTInloopToolArcGIS(BaseTool):
     def __init__(self):
