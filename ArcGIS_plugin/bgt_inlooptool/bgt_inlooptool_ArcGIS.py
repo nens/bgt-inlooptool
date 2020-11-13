@@ -17,6 +17,10 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 # Set path to Generic modules
 from clsGeneralUse import TT_GeneralUse
 from common import BaseTool, parameter
+# installs the gdal wheel for python 2 if not installed?
+# TODO is python always installed for ArcGIS Pro?
+from installs.install_packages import try_install_gdal
+try_install_gdal()
 
 # import bgt inlooptool
 from inlooptool import InloopTool, InputParameters
@@ -33,6 +37,7 @@ from defaults import (MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
 
 
 class BGTInloopToolArcGIS(BaseTool):
+
     def __init__(self):
         """
         Initialization.
@@ -55,7 +60,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameter(displayName='BAG (als geopackage)',
                       name='bag',
                       datatype="DEDatasetType",
-                      parameterType="Required",
+                      parameterType="Optional",
                       direction="Input"),
             parameter(displayName='BGT (als zipfile)',
                       name='bgt',
@@ -166,16 +171,16 @@ class BGTInloopToolArcGIS(BaseTool):
             pipe_file = parameters[2].valueAsText
 
             core_parameters = InputParameters(
-                    max_afstand_vlak_afwateringsvoorziening=parameters[3].value,
-                    max_afstand_vlak_oppwater=parameters[4].value,
-                    max_afstand_pand_oppwater=parameters[5].value,
-                    max_afstand_vlak_kolk=parameters[6].value,
-                    max_afstand_afgekoppeld=parameters[7].value,
-                    max_afstand_drievoudig=parameters[8].value,
-                    afkoppelen_hellende_daken=parameters[9].value,
-                    bouwjaar_gescheiden_binnenhuisriolering=parameters[10].value,
-                    verhardingsgraad_erf=parameters[11].value,
-                    verhardingsgraad_half_verhard=parameters[12].value)
+                max_afstand_vlak_afwateringsvoorziening=parameters[3].value,
+                max_afstand_vlak_oppwater=parameters[4].value,
+                max_afstand_pand_oppwater=parameters[5].value,
+                max_afstand_vlak_kolk=parameters[6].value,
+                max_afstand_afgekoppeld=parameters[7].value,
+                max_afstand_drievoudig=parameters[8].value,
+                afkoppelen_hellende_daken=parameters[9].value,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[10].value,
+                verhardingsgraad_erf=parameters[11].value,
+                verhardingsgraad_half_verhard=parameters[12].value)
 
             self.it = InloopTool(core_parameters)
 
@@ -198,34 +203,38 @@ if __name__ == '__main__':
     # This is used for debugging. Using this separated structure makes it much
     # easier to debug using standard Python development tools.
 
-    tool = BGTInloopToolArcGIS()
-    params = tool.getParameterInfo()
+    try:
+        tool = BGTInloopToolArcGIS()
+        params = tool.getParameterInfo()
 
-    # bag_file
-    params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\Github\bgt-inlooptool\test-data\bag.gpkg"
-    # bgt_file
-    params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\Github\bgt-inlooptool\test-data\extract.zip"
-    # pipe_file
-    params[2].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\Github\bgt-inlooptool\test-data\getGeoPackage_1134.gpkg"
-    # maximale afstand vlak afwateringsvoorziening
-    params[3].value = 40
-    # maximale afstand vlak oppervlaktewater
-    params[4].value = 2
-    # maximale afstand pand oppervlaktewater
-    params[5].value = 6
-    # 'maximale afstand vlak kolk
-    params[6].value = 30
-    # maximale afstand afgekoppeld
-    params[7].value = 3
-    # maximale afstand drievoudig
-    params[8].value = 4
-    # afkoppelen hellende daken
-    params[9].value = True
-    # bouwjaar gescheiden binnenhuisriolering
-    params[10].value = 1992
-    # verhardingsgraad erf
-    params[11].value = 50
-    # verhardingsgraad half verhard
-    params[11].value = 50
+        # bag_file
+        params[0].value = r"C:\GIS\test_data_inlooptool\bag.gpkg"
+        # bgt_file
+        params[1].value = r"C:\GIS\test_data_inlooptool\extract.zip"
+        # pipe_file
+        params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
+        # maximale afstand vlak afwateringsvoorziening
+        params[3].value = 40
+        # maximale afstand vlak oppervlaktewater
+        params[4].value = 2
+        # maximale afstand pand oppervlaktewater
+        params[5].value = 6
+        # 'maximale afstand vlak kolk
+        params[6].value = 30
+        # maximale afstand afgekoppeld
+        params[7].value = 3
+        # maximale afstand drievoudig
+        params[8].value = 4
+        # afkoppelen hellende daken
+        params[9].value = True
+        # bouwjaar gescheiden binnenhuisriolering
+        params[10].value = 1992
+        # verhardingsgraad erf
+        params[11].value = 50
+        # verhardingsgraad half verhard
+        params[12].value = 50
 
-    tool.execute(parameters=params, messages=None)
+        tool.execute(parameters=params, messages=None)
+
+    except Exception as ex:
+        print('iets ging fout!')
