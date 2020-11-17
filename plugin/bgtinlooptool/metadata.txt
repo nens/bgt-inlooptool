@@ -12,8 +12,8 @@ email=emile.debadts@nelen-schuurmans.nl
 
 about=Bereken afwateringskenmerken BGT vlakken.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/nens/bgt-inlooptool/issues
+repository=https://github.com/nens/bgt-inlooptool
 # End of mandatory metadata
 
 # Recommended items:
@@ -40,7 +40,7 @@ deprecated=False
 # plugin_dependencies=
 
 Category of the plugin: Raster, Vector, Database or Web
-# category=
+# category=vector
 
 # If the plugin can run on QGIS Server.
 server=False
