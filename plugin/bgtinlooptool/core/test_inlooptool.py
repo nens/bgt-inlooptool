@@ -170,22 +170,32 @@ class UnitDatabase(unittest.TestCase):
                             If features all fall out the search range, then this will give a error
                             """)
         
-        
-        # it.calculate_runoff_targets()
-        # out_gpkg_fn = os.path.join(DATA_PATH, 'calculated_result.gpkg')
-        # if os.path.exists(out_gpkg_fn):
-        #     os.remove(out_gpkg_fn)
-        # hard_gpkg_ds = GPKG_DRIVER.CreateDataSource(out_gpkg_fn)
-        # src_lyr = it._database.result_table
-        # hard_gpkg_ds.CopyLayer(src_lyr, RESULT_TABLE_NAME)
-        # hard_gpkg_ds = None
-        # result = ogr.Open(out_gpkg_fn)
-        # self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
+        it.calculate_runoff_targets()
+        out_gpkg_fn = os.path.join(DATA_PATH, 'calculated_result.gpkg')
+        if os.path.exists(out_gpkg_fn):
+             os.remove(out_gpkg_fn)
+        hard_gpkg_ds = GPKG_DRIVER.CreateDataSource(out_gpkg_fn)
+        src_lyr = it._database.result_table
+        hard_gpkg_ds.CopyLayer(src_lyr, RESULT_TABLE_NAME)
+        hard_gpkg_ds = None
+        result = ogr.Open(out_gpkg_fn)
+        self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
 
+    def test_decision_tree(self):
+        parameters = InputParameters()
+        it = InloopTool(parameters)
+        it._database.mem_database = ogr.Open('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg',1)
+        test_surface = it._database.bgt_surfaces.GetFeature(1)
+        
+        test.surface.distance_oppervlaktewater
+        
+        it.decision_tree(test_surface, parameters)
+        
+        
 
     def test_add_buildings(self):
         parameters = InputParameters()
-        it = BGTInloopTool(parameters)
+        it = InloopTool(parameters)
         it.import_surfaces(file_path=SURFACES_INPUT_FILENAME)
         it.import_buildings(file_path=BUILDINGS_INPUT_FILENAME)
         it._database.add_build_year_to_surface()

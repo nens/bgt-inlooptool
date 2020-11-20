@@ -249,7 +249,7 @@
     <string>BAG panden (.gpkg)</string>
    </property>
   </widget>
-  <widget class="QgsFileWidget" name="bag_panden_file">
+  <widget class="QgsFileWidget" name="building_file">
    <property name="geometry">
     <rect>
      <x>170</x>
