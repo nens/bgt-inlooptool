@@ -21,6 +21,14 @@
  *                                                                         *
  ***************************************************************************/
 """
+import ogr
+import pip
+try:
+    import rtree
+except:
+    pip.main(['install', 'rtree'])
+    import rtree
+
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
@@ -48,52 +56,54 @@ from qgis.core import (
   QgsMessageLog,
 )
 
-MESSAGE_CATEGORY = 'InloopToolTask'
+MESSAGE_CATEGORY = 'BGT Inlooptool'
+USE_INDEX = True
 
 class InloopToolTask(QgsTask):
     
-    def __init__(self, description, parameters, bgt_file, pipe_file, use_index):
+    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, use_index):
         super().__init__(description, QgsTask.CanCancel)
+        
+        QgsMessageLog.logMessage("initalized task", MESSAGE_CATEGORY, level=Qgis.Info)
+
         self.parameters = parameters
         self.bgt_file = bgt_file
         self.pipe_file = pipe_file
+        self.building_file = building_file
         self.use_index = use_index
         self.exception = None
         
     def run(self):
-        
-        QgsMessageLog.logMessage('Started "{}"'.format(
-                             self.description()),
-                         MESSAGE_CATEGORY, Qgis.Info)
 
-        
+        QgsMessageLog.logMessage("started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)        
         self.it = InloopTool(self.parameters)
         
-        # Import surfaces and pipes
+        database_fn = 'C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/mem_database.gpkg'
+        #self.it._database.mem_database = ogr.Open(database_fn,1)
+        
+        # Import surfaces and pipes and calculate ruonff targets
+        QgsMessageLog.logMessage("importing pipes", MESSAGE_CATEGORY, level=Qgis.Info)        
         self.it.import_surfaces(self.bgt_file)
-
-        if self.isCanceled():
-            return(False)
-
+        QgsMessageLog.logMessage("importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info)        
         self.it.import_pipes(self.pipe_file)    
-        
-        if self.isCanceled():
-            return(False)
-        
-        self.it.calculate_distances(parameters = self.parameters, use_index= self.use_index)
-        
-        if self.isCanceled():
-            return(False)
-        
+        QgsMessageLog.logMessage("importing buildings", MESSAGE_CATEGORY, level=Qgis.Info)        
+        self.it.import_buildings(self.building_file)    
+        self.it._database.add_build_year_to_surface(use_index = self.use_index)
+        QgsMessageLog.logMessage("calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)        
+        self.it.calculate_distances(parameters = self.parameters, use_index = self.use_index)
+        QgsMessageLog.logMessage("calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)        
         self.it.calculate_runoff_targets()
+        
+        # Export database
+        self.it._database._write_to_disk(database_fn)
         
         return(True)
             
     def finished(self, result):
         
         if result:
-            QgsMessageLog.logMessage('Succesfully calculated runoff targets',MESSAGE_CATEGORY, Qgis.Success)
-            
+            QgsMessageLog.logMessage("successfully calculated runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
+    
             # Exporteren output naar QGIS layer
             ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
             if ogr_lyr is not None:
@@ -104,21 +114,14 @@ class InloopToolTask(QgsTask):
         
         else:
             if self.exception is None:
-                QgsMessageLog.logMessage('Cancelled by user', MESSAGE_CATEGORY, Qgis.Warning)
+                QgsMessageLog.logMessage("task failed: cancelled by user", MESSAGE_CATEGORY, level=Qgis.Critical)
             else:
-                QgsMessageLog.logMessage(
-                    'RandomTask "{name}" Exception: {exception}'.format(
-                        name=self.description(),
-                        exception=self.exception),
-                    MESSAGE_CATEGORY, Qgis.Critical)
+                QgsMessageLog.logMessage("task failed: {}".format(self.exception), MESSAGE_CATEGORY, level=Qgis.Critical)
                 raise self.exception
     
     def cancel(self):
-        
-        QgsMessageLog.logMessage(
-            'Task was canceled'.format(
-                name=self.description()),
-            MESSAGE_CATEGORY, Qgis.Info)
+    
+        QgsMessageLog.logMessage("task failed: cancelled by user", MESSAGE_CATEGORY, level=Qgis.Critical)
         super().cancel()
     
 
@@ -136,6 +139,8 @@ class BGTInloopTool:
         """
         # Save reference to the QGIS interface
         self.iface = iface
+        self.tm = QgsApplication.taskManager()
+
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
@@ -274,9 +279,10 @@ class BGTInloopTool:
    
     def on_run(self):
         
-        # ipnut files            
+        # input files            
         bgt_file = self.dlg.bgt_file.filePath()
         pipe_file =self.dlg.pipe_file.filePath() 
+        building_file = self.dlg.building_file.filePath()
                     
         # Iniate bgt inlooptool class with parameters 
         parameters = InputParameters(max_afstand_vlak_afwateringsvoorziening = self.dlg.max_afstand_vlak_afwateringsvoorziening.value(), 
@@ -294,9 +300,10 @@ class BGTInloopTool:
                                         parameters = parameters,
                                         bgt_file = bgt_file,
                                         pipe_file = pipe_file,
+                                        building_file  = building_file,
                                         use_index = USE_INDEX)
-        
-        QgsApplication.taskManager().addTask(inlooptooltask)
+     
+        self.tm.addTask(inlooptooltask)
 
                             
 

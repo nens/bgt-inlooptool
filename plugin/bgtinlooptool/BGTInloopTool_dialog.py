@@ -47,6 +47,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
             
         self.bgt_file.fileChanged.connect(self.bgt_file_changed)
         self.pipe_file.fileChanged.connect(self.pipe_file_changed)
+        self.building_file.fileChanged.connect(self.building_file_changed)
     
         # Setting defaults
         self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
@@ -65,7 +66,6 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         
-        self.bag_panden_file.setEnabled(False)
         self.dem_file.setEnabled(False)
         self.kolken_file.setEnabled(False)
         
@@ -80,7 +80,10 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     
     def pipe_file_changed(self):
         self.validate()        
-        
+    
+    def building_file_changed(self):
+        self.validate()
+    
     def validate(self):
         
         valid = True
@@ -97,6 +100,13 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         if not os.path.isfile(pipe_file):
             valid = False
         elif os.path.splitext(pipe_file)[1] != '.gpkg':
+            valid = False
+
+        # Check pipe file 
+        building_file = self.building_file.filePath()
+        if not os.path.isfile(building_file):
+            valid = False
+        elif os.path.splitext(building_file)[1] != '.gpkg':
             valid = False
         
         self.pushButtonRun.setEnabled(valid)
