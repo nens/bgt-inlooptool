@@ -153,7 +153,7 @@ class InloopTool:
                        surface.distance_vuilwaterriool,
                        surface.distance_infiltratievoorziening,
                        surface.distance_gemengd_riool,
-                       surface.distance_oppervlaktewater) == 9999
+                       surface.distance_oppervlaktewater) != 9999
 
         def is_bouwwerk():
             return surface.surface_type in [SURFACE_TYPE_PAND, SURFACE_TYPE_GEBOUWINSTALLATIE]
@@ -166,10 +166,14 @@ class InloopTool:
 
         def bij_gem_plus_hwa():
             """Ligt het oppervlak in de buurt van een straat waar naast gemengd ook rwa is gelegd?"""
-            return abs(surface.distance_gemengd_riool
-                       -
-                       min(surface.distance_hemelwaterriool,
-                           surface.distance_infiltratievoorziening)) <= parameters.max_afstand_afgekoppeld
+            
+            if surface.distance_gemengd_riool != 9999 and (surface.distance_hemelwaterriool != 9999 or surface.distance_infiltratievoorziening != 9999):            
+                return abs(surface.distance_gemengd_riool
+                           -
+                           min(surface.distance_hemelwaterriool,
+                               surface.distance_infiltratievoorziening)) <= parameters.max_afstand_afgekoppeld
+            else:
+                return False
 
         def gem_dichtst_bij():
             """Ligt het gemengde riool dichterbij dan HWA/VGS-HWA/Infiltratieriool?"""
@@ -179,7 +183,7 @@ class InloopTool:
         def hwa_dichterbij_dan_hwavgs_en_infiltr():
             """Ligt het HWA riool dichterbij dan het infiltratieriool?"""
             return surface.distance_hemelwaterriool < surface.distance_infiltratievoorziening
-
+            
         def bij_drievoudig_stelsel_crit1():
             return False
 
@@ -194,7 +198,10 @@ class InloopTool:
 
         def nieuw_pand():
             """Is het bouwjaar van het pand later dan de ondergrens voor gescheiden binnenhuis riolering?"""
-            return surface.build_year > parameters.bouwjaar_gescheiden_binnenhuisriolering
+            if surface.build_year is None:
+                return False
+            else:
+                return surface.build_year > parameters.bouwjaar_gescheiden_binnenhuisriolering
 
         def hellend_dak():
             return True
@@ -204,7 +211,7 @@ class InloopTool:
             if surface[distance] is None:
                 surface[distance] = 9999
 
-        if verhard():
+        if not verhard():
             result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
         elif not bij_hov():
@@ -214,54 +221,56 @@ class InloopTool:
         elif is_bouwwerk():
             if bij_water():
                 result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
-            else:
-                if bij_gem_plus_hwa():
-                    if self.parameters.afkoppelen_hellende_daken:
-                        if nieuw_pand():
-                            if hellend_dak():
-                                if bij_drievoudig_stelsel_crit1():
-                                    if bij_drievoudig_stelsel_crit2():
-                                        result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
-                                        result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                    else:
-                                        result[TARGET_TYPE_HEMELWATERRIOOL] = 50
-                                        result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                else:
-                                    if hwa_dichterbij_dan_hwavgs_en_infiltr():
-                                        result[TARGET_TYPE_HEMELWATERRIOOL] = 50
-                                        result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                    else:
-                                        if hwa_vgs_dichterbij_dan_infiltr():
-                                            result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 50
-                                            result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                        else:
-                                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
-                                            result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                            else:
-                                result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                            if surface.distance_hemelwaterriool < surface.distance_infiltratievoorziening:
-                                result[TARGET_TYPE_HEMELWATERRIOOL] = 100
-                            else:
-                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
-                        else:
-                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                else:
-                    if gem_dichtst_bij():
-                        result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                    else:
+            
+            elif bij_gem_plus_hwa():
+                if self.parameters.afkoppelen_hellende_daken:
+                    if nieuw_pand() and hellend_dak():
                         if bij_drievoudig_stelsel_crit1():
                             if bij_drievoudig_stelsel_crit2():
-                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
+                                result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                             else:
-                                result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                                result[TARGET_TYPE_HEMELWATERRIOOL] = 50
+                                result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                         else:
                             if hwa_dichterbij_dan_hwavgs_en_infiltr():
-                                result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                                result[TARGET_TYPE_HEMELWATERRIOOL] = 50
+                                result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                             else:
                                 if hwa_vgs_dichterbij_dan_infiltr():
-                                    pass
+                                    result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 50
+                                    result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                                 else:
-                                    result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                                    result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
+                                    result[TARGET_TYPE_GEMENGD_RIOOL] = 50
+                    
+                    else:
+                        if gem_dichtst_bij():
+                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+                        elif hwa_dichterbij_dan_hwavgs_en_infiltr():
+                            result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                        else:
+                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                else:
+                    result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+            else:
+                if gem_dichtst_bij():
+                    result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+                elif bij_drievoudig_stelsel_crit1():
+                    if bij_drievoudig_stelsel_crit2():
+                        result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                    else:
+                        result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                else:
+                    if hwa_dichterbij_dan_hwavgs_en_infiltr():
+                        result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                    else:
+                        if hwa_vgs_dichterbij_dan_infiltr():
+                            pass
+                        elif surface.distance_infiltratievoorziening != 9999:
+                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                        else:
+                            result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
         # Overige verharde oppervlakken
         elif verhard():
@@ -282,8 +291,10 @@ class InloopTool:
                         else:
                             if hwa_vgs_dichterbij_dan_infiltr():
                                 result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 100
-                            else:
+                            elif surface.distance_infiltratievoorziening != 9999:
                                 result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                            else:
+                                result[TARGET_TYPE_NIET_AANGESLOTEN] = 100                                
                 else:
                     result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
         return result
@@ -799,6 +810,7 @@ class Database:
         for feature in layer:
             if feature:
                 verhardingsgraad = None
+                verhardingstype = None 
                 if feature.surface_type == SURFACE_TYPE_PAND:
                     verhardingstype = VERHARDINGSTYPE_PAND
                 elif feature.surface_type == SURFACE_TYPE_WATERDEEL:

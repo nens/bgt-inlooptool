@@ -69,7 +69,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.dem_file.setEnabled(False)
         self.kolken_file.setEnabled(False)
         
-        self.afkoppelen_hellende_daken.setEnabled(AFKOPPELEN_HELLENDE_DAKEN)
+        self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
         
         # Run button default disable
         self.pushButtonRun.setEnabled(False)

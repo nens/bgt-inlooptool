@@ -59,6 +59,8 @@ from qgis.core import (
 MESSAGE_CATEGORY = 'BGT Inlooptool'
 USE_INDEX = True
 
+INLOOPTABEL_STYLE = os.path.join(__file__, 'bgt_inlooptabel.qml')
+
 class InloopToolTask(QgsTask):
     
     def __init__(self, description, parameters, bgt_file, pipe_file, building_file, use_index):
@@ -78,7 +80,7 @@ class InloopToolTask(QgsTask):
         QgsMessageLog.logMessage("started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)        
         self.it = InloopTool(self.parameters)
         
-        database_fn = 'C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/mem_database.gpkg'
+        #database_fn = 'C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/mem_database.gpkg'
         #self.it._database.mem_database = ogr.Open(database_fn,1)
         
         # Import surfaces and pipes and calculate ruonff targets
@@ -95,7 +97,7 @@ class InloopToolTask(QgsTask):
         self.it.calculate_runoff_targets()
         
         # Export database
-        self.it._database._write_to_disk(database_fn)
+        #self.it._database._write_to_disk(database_fn)
         
         return(True)
             
@@ -111,6 +113,8 @@ class InloopToolTask(QgsTask):
                     qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Inlooptabel')
                     project = QgsProject.instance()
                     project.addMapLayer(qgs_lyr)
+                    #qgs_lyr.loadNamedStyle(INLOOPTABEL_STYLE)
+                    #qgs_lyr.triggerRepaint()
         
         else:
             if self.exception is None:
