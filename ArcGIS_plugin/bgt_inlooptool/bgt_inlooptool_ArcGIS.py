@@ -17,6 +17,7 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 # Set path to Generic modules
 from clsGeneralUse import TT_GeneralUse
 from common import BaseTool, parameter
+from add_layers_ArcGIS import add_layers_to_map
 # installs the gdal wheel for python 2 if not installed?
 # TODO is python always installed for ArcGIS Pro?
 from installs.install_packages import try_install_gdal
@@ -71,6 +72,17 @@ class BGTInloopToolArcGIS(BaseTool):
             parameter(displayName='Leidingen (als geopackage)',
                       name='leidingen',
                       datatype='DEDatasetType',
+                      parameterType='Required',
+                      direction='Input'),
+            parameter(displayName='Bewaar de output',
+                      name='save_output',
+                      datatype='GPBoolean',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=False),
+            parameter(displayName='Opslag locatie',
+                      name='save_location',
+                      datatype='DEWorkspace',
                       parameterType='Required',
                       direction='Input'),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
@@ -139,6 +151,11 @@ class BGTInloopToolArcGIS(BaseTool):
 
     def updateParameters(self, parameters):
 
+        if parameters[3].value == True:
+            parameters[4].enabled = True  # Enable the output gdb
+        else:
+            parameters[4].enabled = False  # Disable the output gdb
+
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
@@ -172,16 +189,16 @@ class BGTInloopToolArcGIS(BaseTool):
             pipe_file = parameters[2].valueAsText
 
             core_parameters = InputParameters(
-                max_afstand_vlak_afwateringsvoorziening=parameters[3].value,
-                max_afstand_vlak_oppwater=parameters[4].value,
-                max_afstand_pand_oppwater=parameters[5].value,
-                max_afstand_vlak_kolk=parameters[6].value,
-                max_afstand_afgekoppeld=parameters[7].value,
-                max_afstand_drievoudig=parameters[8].value,
-                afkoppelen_hellende_daken=parameters[9].value,
-                bouwjaar_gescheiden_binnenhuisriolering=parameters[10].value,
-                verhardingsgraad_erf=parameters[11].value,
-                verhardingsgraad_half_verhard=parameters[12].value)
+                max_afstand_vlak_afwateringsvoorziening=parameters[5].value,
+                max_afstand_vlak_oppwater=parameters[6].value,
+                max_afstand_pand_oppwater=parameters[7].value,
+                max_afstand_vlak_kolk=parameters[8].value,
+                max_afstand_afgekoppeld=parameters[9].value,
+                max_afstand_drievoudig=parameters[10].value,
+                afkoppelen_hellende_daken=parameters[11].value,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[12].value,
+                verhardingsgraad_erf=parameters[13].value,
+                verhardingsgraad_half_verhard=parameters[14].value)
 
             self.it = InloopTool(core_parameters)
 
@@ -195,21 +212,21 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Calculating Runoff targets")
             self.it.calculate_runoff_targets()
 
-            # Add layers to map
-
-
-
+            # Export results
             self.arcgis_com.AddMessage("Exporting to GPKG")
-            database_fn = r'C:\GIS\test3.gpkg'
-            self.it._database._write_to_disk(database_fn)
+            save_database = r'C:\GIS\test3.gpkg'
+            self.it._database._write_to_disk(save_database)
             # import ogr
             # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
             # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
-            self.arcgis_com.AddMessage("Exporting to GDB")
-            database_fn = r'C:\GIS\test3.gdb'
-            self.it._database._write_to_disk(database_fn)
+            # TODO schrijven naar gdb werkend maken!
+            # self.arcgis_com.AddMessage("Exporting to GDB")
+            # database_fn = r'C:\GIS\test3.gdb'
+            # self.it._database._write_to_disk(database_fn)
 
-
+            # Add layers to the map
+            # TODO werkend maken van add_layers_to_map
+            add_layers_to_map(save_database)
 
 
         except Exception:
@@ -233,26 +250,32 @@ if __name__ == '__main__':
         params[1].value = r"C:\GIS\test_data_inlooptool\extract.zip"
         # pipe_file
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
+
+        # save output
+        params[3].value = True
+        # output_location
+        params[4].value = r"C:\GIS\test.gdb"
+
         # maximale afstand vlak afwateringsvoorziening
-        params[3].value = 40
+        params[5].value = 40
         # maximale afstand vlak oppervlaktewater
-        params[4].value = 2
+        params[6].value = 2
         # maximale afstand pand oppervlaktewater
-        params[5].value = 6
+        params[7].value = 6
         # 'maximale afstand vlak kolk
-        params[6].value = 30
+        params[8].value = 30
         # maximale afstand afgekoppeld
-        params[7].value = 3
+        params[9].value = 3
         # maximale afstand drievoudig
-        params[8].value = 4
+        params[10].value = 4
         # afkoppelen hellende daken
-        params[9].value = True
+        params[11].value = True
         # bouwjaar gescheiden binnenhuisriolering
-        params[10].value = 1992
+        params[12].value = 1992
         # verhardingsgraad erf
-        params[11].value = 50
+        params[13].value = 50
         # verhardingsgraad half verhard
-        params[12].value = 50
+        params[14].value = 50
 
         tool.execute(parameters=params, messages=None)
 
