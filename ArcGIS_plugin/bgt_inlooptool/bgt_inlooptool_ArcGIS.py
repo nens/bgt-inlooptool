@@ -23,17 +23,18 @@ from installs.install_packages import try_install_gdal
 try_install_gdal()
 
 # import bgt inlooptool
-from inlooptool import InloopTool, InputParameters
-from defaults import (MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
-                      MAX_AFSTAND_VLAK_OPPWATER,
-                      MAX_AFSTAND_PAND_OPPWATER,
-                      MAX_AFSTAND_VLAK_KOLK,
-                      MAX_AFSTAND_AFGEKOPPELD,
-                      MAX_AFSTAND_DRIEVOUDIG,
-                      AFKOPPELEN_HELLENDE_DAKEN,
-                      BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
-                      VERHARDINGSGRAAD_ERF,
-                      VERHARDINGSGRAAD_HALF_VERHARD)
+# TODO voor arcmap mogelijk zonder core.
+from core.inlooptool import InloopTool, InputParameters, Database
+from core.defaults import (MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
+                           MAX_AFSTAND_VLAK_OPPWATER,
+                           MAX_AFSTAND_PAND_OPPWATER,
+                           MAX_AFSTAND_VLAK_KOLK,
+                           MAX_AFSTAND_AFGEKOPPELD,
+                           MAX_AFSTAND_DRIEVOUDIG,
+                           AFKOPPELEN_HELLENDE_DAKEN,
+                           BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
+                           VERHARDINGSGRAAD_ERF,
+                           VERHARDINGSGRAAD_HALF_VERHARD)
 
 
 class BGTInloopToolArcGIS(BaseTool):
@@ -164,7 +165,7 @@ class BGTInloopToolArcGIS(BaseTool):
         try:
             self.arcgis_com = TT_GeneralUse(sys, arcpy)
             self.arcgis_com.StartAnalyse()
-            self.arcgis_com.AddMessage("Start analyse!")
+            self.arcgis_com.AddMessage("Start BGT Inlooptool!")
 
             bag_file = parameters[0].valueAsText
             bgt_file = parameters[1].valueAsText
@@ -185,12 +186,31 @@ class BGTInloopToolArcGIS(BaseTool):
             self.it = InloopTool(core_parameters)
 
             # Import surfaces and pipes
+            self.arcgis_com.AddMessage("Importing BGT files")
             self.it.import_surfaces(bgt_file)
+            self.arcgis_com.AddMessage("Importing pipe files")
             self.it.import_pipes(pipe_file)
-
+            self.arcgis_com.AddMessage("Calculating distances")
             self.it.calculate_distances(parameters=core_parameters)
-
+            self.arcgis_com.AddMessage("Calculating Runoff targets")
             self.it.calculate_runoff_targets()
+
+            # Add layers to map
+
+
+
+            self.arcgis_com.AddMessage("Exporting to GPKG")
+            database_fn = r'C:\GIS\test3.gpkg'
+            self.it._database._write_to_disk(database_fn)
+            # import ogr
+            # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
+            # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
+            self.arcgis_com.AddMessage("Exporting to GDB")
+            database_fn = r'C:\GIS\test3.gdb'
+            self.it._database._write_to_disk(database_fn)
+
+
+
 
         except Exception:
             self.arcgis_com.Traceback()
