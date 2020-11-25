@@ -79,12 +79,12 @@ class BGTInloopToolArcGIS(BaseTool):
                       datatype='GPBoolean',
                       parameterType='Required',
                       direction='Input',
-                      defaultValue=False),
-            parameter(displayName='Opslag locatie',
-                      name='save_location',
+                      defaultValue=True),
+            parameter(displayName='Opslag locatie gdb',
+                      name='output_gdb',
                       datatype='DEWorkspace',
                       parameterType='Required',
-                      direction='Input'),
+                      direction='Output'),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
                       name='max_vlak_afwatervoorziening',
                       datatype='GPDouble',
@@ -187,6 +187,8 @@ class BGTInloopToolArcGIS(BaseTool):
             bag_file = parameters[0].valueAsText
             bgt_file = parameters[1].valueAsText
             pipe_file = parameters[2].valueAsText
+            save_output = parameters[3].valueAsText
+            output_gdb = parameters[4].valueAsText
 
             core_parameters = InputParameters(
                 max_afstand_vlak_afwateringsvoorziening=parameters[5].value,
@@ -214,16 +216,22 @@ class BGTInloopToolArcGIS(BaseTool):
 
             # Export results
             self.arcgis_com.AddMessage("Exporting to GPKG")
-            save_database = r'C:\GIS\test3.gpkg'
-            self.it._database._write_to_disk(save_database)
+            temp = arcpy.GetSystemEnvironment("TEMP")
+            gpkg_path = os.path.join(temp, 'bgt_inlooptool.gpkg')
+            self.it._database._write_to_disk(gpkg_path)
             # import ogr
             # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
             # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
             # TODO schrijven naar gdb werkend maken!
             # self.arcgis_com.AddMessage("Exporting to GDB")
-            # database_fn = r'C:\GIS\test3.gdb'
-            # self.it._database._write_to_disk(database_fn)
-
+            # onderstaande lijkt niet te werken
+            # import ogr
+            # output_gdb = r'C:\GIS\output.gdb'
+            # gdb_driver = ogr.GetDriverByName("OpenFileGDB")
+            # gdb_driver.CopyDataSource(self.it._database.mem_database, output_gdb)
+            # http://pcjericks.github.io/py-gdalogr-cookbook/layers.html#filter-and-select-input-shapefile-to-new-output-shapefile-like-ogr2ogr-cli
+            # https://www.esri.com/arcgis-blog/products/product/data-management/how-to-use-ogc-geopackages-in-arcgis-pro/
+            # ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map
             add_layers_to_map(save_database)
