@@ -10,7 +10,6 @@ from datetime import datetime
 
 try:
     import rtree
-
     USE_INDEX = True
 except ImportError:
     USE_INDEX = False
@@ -37,7 +36,6 @@ SQL_DIR = os.path.join(__file__, "sql")
 
 # Exceptions
 gdal.UseExceptions()
-
 
 class DatabaseOperationError(Exception):
     """Raised when an invalid _database operation is requested"""

@@ -22,28 +22,13 @@
  ***************************************************************************/
 """
 import ogr
-import pip
-try:
-    import rtree
-except:
-    pip.main(['install', 'rtree'])
-    import rtree
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import Qgis, QgsProject
+from qgis.utils import iface
 
-# Initialize Qt resources from file resources.py
-from .resources import *
-# Import the code for the dialog
-from .BGTInloopTool_dialog import BGTInloopToolDialog
-import os.path, sys
-
-# Import the BGT Inlooptool core
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from core.inlooptool import *
-from .ogr2qgis import *
 
 from qgis.core import (
   QgsProcessingContext,
@@ -56,10 +41,19 @@ from qgis.core import (
   QgsMessageLog,
 )
 
-MESSAGE_CATEGORY = 'BGT Inlooptool'
-USE_INDEX = True
+# Initialize Qt resources from file resources.py
+from .resources import *
+# Import the code for the dialog
+from .BGTInloopTool_dialog import BGTInloopToolDialog
+import os.path, sys
 
-INLOOPTABEL_STYLE = os.path.join(__file__, 'bgt_inlooptabel.qml')
+# Import the BGT Inlooptool core
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from core.inlooptool import *
+from .ogr2qgis import *
+
+MESSAGE_CATEGORY = 'BGT Inlooptool'
+INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), 'bgt_inlooptabel.qml')
 
 class InloopToolTask(QgsTask):
     
@@ -113,8 +107,9 @@ class InloopToolTask(QgsTask):
                     qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Inlooptabel')
                     project = QgsProject.instance()
                     project.addMapLayer(qgs_lyr)
-                    #qgs_lyr.loadNamedStyle(INLOOPTABEL_STYLE)
-                    #qgs_lyr.triggerRepaint()
+                    layer =QgsProject.instance().mapLayersByName('BGT Inlooptabel')[0]
+                    layer.loadNamedStyle(INLOOPTABEL_STYLE)
+                    layer.triggerRepaint()
         
         else:
             if self.exception is None:
@@ -318,6 +313,10 @@ class BGTInloopTool:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
+            
+            if not USE_INDEX:
+                iface.messageBar().pushMessage("Error", "rtree not installed, performance will be slower than optimal", level=Qgis.Error)
+
             self.dlg = BGTInloopToolDialog()
             # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)

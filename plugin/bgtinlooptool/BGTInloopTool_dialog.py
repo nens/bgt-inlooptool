@@ -61,7 +61,6 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.bouwjaar_gescheiden_binnenhuisriolering.setMaximum(10000)
         self.bouwjaar_gescheiden_binnenhuisriolering.setValue(BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING)
-        self.bouwjaar_gescheiden_binnenhuisriolering.setEnabled(False)
         
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)

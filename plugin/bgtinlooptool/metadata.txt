@@ -6,14 +6,14 @@
 name=BGT Inlooptool
 qgisMinimumVersion=3.0
 description=BGT Inlooptool
-version=0.1
+version=0.4
 author=Emile de Badts
 email=emile.debadts@nelen-schuurmans.nl
 
 about=Bereken afwateringskenmerken BGT vlakken.
 
 tracker=https://github.com/nens/bgt-inlooptool/issues
-repository=https://github.com/nens/bgt-inlooptool
+repository=https://github.com/nens/bgt-inlooptool/plugin
 # End of mandatory metadata
 
 # Recommended items:
