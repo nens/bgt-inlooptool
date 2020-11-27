@@ -209,8 +209,11 @@ class BGTInloopToolArcGIS(BaseTool):
             self.it.import_surfaces(bgt_file)
             self.arcgis_com.AddMessage("Importing pipe files")
             self.it.import_pipes(pipe_file)
+            self.arcgis_com.AddMessage("Importing building files")
+            self.it.import_buildings(self.building_file)
+            self.it._database.add_build_year_to_surface(use_index=self.use_index)
             self.arcgis_com.AddMessage("Calculating distances")
-            self.it.calculate_distances(parameters=core_parameters)
+            self.it.calculate_distances(parameters=core_parameters, use_index=self.use_index)
             self.arcgis_com.AddMessage("Calculating Runoff targets")
             self.it.calculate_runoff_targets()
 
