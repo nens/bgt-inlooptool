@@ -129,7 +129,7 @@ class BGTInloopToolArcGIS(BaseTool):
                       defaultValue=AFKOPPELEN_HELLENDE_DAKEN),
             parameter(displayName='bouwjaar gescheiden binnenhuisriolering',
                       name='bouwjaar_riool',
-                      datatype='GPDouble',
+                      datatype='GPLong',
                       parameterType='Required',
                       direction='Input',
                       defaultValue=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING),
@@ -263,7 +263,7 @@ if __name__ == '__main__':
         # save output
         params[3].value = True
         # output_location
-        params[4].value = r"C:\GIS\test.gpkg"
+        params[4].value = r"C:\GIS\bgt_inlooptool1.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[5].value = 40
