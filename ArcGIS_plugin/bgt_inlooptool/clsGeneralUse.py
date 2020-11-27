@@ -9,9 +9,6 @@ class TT_GeneralUse():
         self.logPrint = logPrint
         self.debug = debug
 
-        if self.logPrint is False:
-            print("Let op. Log Print is uitgeschakeld.")
-
     def StartAnalyse(self):
         """Reinitialise internal clock"""
         import time

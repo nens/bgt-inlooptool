@@ -10,10 +10,11 @@ from datetime import datetime
 
 try:
     import rtree
-
     USE_INDEX = True
+    print('rtree is succesfully imported and USE_INDEX is True')
 except ImportError:
     USE_INDEX = False
+    print('rtree is not imported and USE_INDEX is False')
 
 # Local imports
 from core import result_table_schema as schema

@@ -74,15 +74,15 @@ class BGTInloopToolArcGIS(BaseTool):
                       datatype='DEDatasetType',
                       parameterType='Required',
                       direction='Input'),
-            parameter(displayName='Bewaar de output',
-                      name='save_output',
-                      datatype='GPBoolean',
-                      parameterType='Required',
-                      direction='Input',
-                      defaultValue=True),
+            # parameter(displayName='Bewaar de output',
+            #           name='save_output',
+            #           datatype='GPBoolean',
+            #           parameterType='Required',
+            #           direction='Input',
+            #           defaultValue=True),
             parameter(displayName='Opslag locatie gdb',
-                      name='output_gdb',
-                      datatype='DEWorkspace',
+                      name='output_gpkg',
+                      datatype='DEDatasetType',
                       parameterType='Required',
                       direction='Output'),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
@@ -184,23 +184,22 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.StartAnalyse()
             self.arcgis_com.AddMessage("Start BGT Inlooptool!")
 
-            bag_file = parameters[0].valueAsText
+            building_file = parameters[0].valueAsText
             bgt_file = parameters[1].valueAsText
             pipe_file = parameters[2].valueAsText
-            save_output = parameters[3].valueAsText
-            output_gdb = parameters[4].valueAsText
+            output_gpkg = parameters[3].valueAsText
 
             core_parameters = InputParameters(
-                max_afstand_vlak_afwateringsvoorziening=parameters[5].value,
-                max_afstand_vlak_oppwater=parameters[6].value,
-                max_afstand_pand_oppwater=parameters[7].value,
-                max_afstand_vlak_kolk=parameters[8].value,
-                max_afstand_afgekoppeld=parameters[9].value,
-                max_afstand_drievoudig=parameters[10].value,
-                afkoppelen_hellende_daken=parameters[11].value,
-                bouwjaar_gescheiden_binnenhuisriolering=parameters[12].value,
-                verhardingsgraad_erf=parameters[13].value,
-                verhardingsgraad_half_verhard=parameters[14].value)
+                max_afstand_vlak_afwateringsvoorziening=parameters[4].value,
+                max_afstand_vlak_oppwater=parameters[5].value,
+                max_afstand_pand_oppwater=parameters[6].value,
+                max_afstand_vlak_kolk=parameters[7].value,
+                max_afstand_afgekoppeld=parameters[8].value,
+                max_afstand_drievoudig=parameters[9].value,
+                afkoppelen_hellende_daken=parameters[10].value,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[11].value,
+                verhardingsgraad_erf=parameters[12].value,
+                verhardingsgraad_half_verhard=parameters[13].value)
 
             self.it = InloopTool(core_parameters)
 
@@ -210,10 +209,10 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Importing pipe files")
             self.it.import_pipes(pipe_file)
             self.arcgis_com.AddMessage("Importing building files")
-            self.it.import_buildings(self.building_file)
-            self.it._database.add_build_year_to_surface(use_index=self.use_index)
+            self.it.import_buildings(building_file)
+            self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
             self.arcgis_com.AddMessage("Calculating distances")
-            self.it.calculate_distances(parameters=core_parameters, use_index=self.use_index)
+            self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
             self.arcgis_com.AddMessage("Calculating Runoff targets")
             self.it.calculate_runoff_targets()
 
@@ -221,7 +220,7 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Exporting to GPKG")
             # temp = arcpy.GetSystemEnvironment("TEMP")
             # gpkg_path = os.path.join(temp, 'bgt_inlooptool.gpkg')
-            self.it._database._write_to_disk(output_gdb)
+            self.it._database._write_to_disk(output_gpkg)
             # import ogr
             # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
             # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
@@ -263,31 +262,29 @@ if __name__ == '__main__':
         # pipe_file
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
 
-        # save output
-        params[3].value = True
         # output_location
-        params[4].value = r"C:\GIS\bgt_inlooptool1.gpkg"
+        params[3].value = r"C:\GIS\bgt_inlooptool2.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
-        params[5].value = 40
+        params[4].value = 40
         # maximale afstand vlak oppervlaktewater
-        params[6].value = 2
+        params[5].value = 2
         # maximale afstand pand oppervlaktewater
-        params[7].value = 6
+        params[6].value = 6
         # 'maximale afstand vlak kolk
-        params[8].value = 30
+        params[7].value = 30
         # maximale afstand afgekoppeld
-        params[9].value = 3
+        params[8].value = 3
         # maximale afstand drievoudig
-        params[10].value = 4
+        params[9].value = 4
         # afkoppelen hellende daken
-        params[11].value = True
+        params[10].value = True
         # bouwjaar gescheiden binnenhuisriolering
-        params[12].value = 1992
+        params[11].value = 1992
         # verhardingsgraad erf
-        params[13].value = 50
+        params[12].value = 50
         # verhardingsgraad half verhard
-        params[14].value = 50
+        params[13].value = 50
 
         tool.execute(parameters=params, messages=None)
 

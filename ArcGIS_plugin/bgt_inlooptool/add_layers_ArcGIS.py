@@ -22,6 +22,7 @@ def add_layers_to_map(save_database):
             df = arcpy.mapping.ListDataFrames(mxd)[0]
             layer_dir = os.path.join(os.path.dirname(__file__), "Layers")
 
+            # gpkg layer toevoegen in ArcMap lijkt niet te werken via Python
             # Add Layer
             add_layer1 = arcpy.mapping.Layer("uitlaat_vlak")
             arcpy.mapping.AddLayer(df, add_layer1, "AUTO_ARRANGE")
