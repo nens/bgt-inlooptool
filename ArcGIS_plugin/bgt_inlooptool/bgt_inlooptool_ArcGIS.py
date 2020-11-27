@@ -216,9 +216,9 @@ class BGTInloopToolArcGIS(BaseTool):
 
             # Export results
             self.arcgis_com.AddMessage("Exporting to GPKG")
-            temp = arcpy.GetSystemEnvironment("TEMP")
-            gpkg_path = os.path.join(temp, 'bgt_inlooptool.gpkg')
-            self.it._database._write_to_disk(gpkg_path)
+            # temp = arcpy.GetSystemEnvironment("TEMP")
+            # gpkg_path = os.path.join(temp, 'bgt_inlooptool.gpkg')
+            self.it._database._write_to_disk(output_gdb)
             # import ogr
             # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
             # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
@@ -234,7 +234,8 @@ class BGTInloopToolArcGIS(BaseTool):
             # ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map
-            add_layers_to_map(save_database)
+            
+            # add_layers_to_map(save_database)
 
 
         except Exception:
@@ -262,7 +263,7 @@ if __name__ == '__main__':
         # save output
         params[3].value = True
         # output_location
-        params[4].value = r"C:\GIS\test.gdb"
+        params[4].value = r"C:\GIS\test.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[5].value = 40
