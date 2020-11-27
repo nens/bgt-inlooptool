@@ -79,7 +79,7 @@ TARGET_TYPE_VGS_HEMELWATERRIOOL = 'vgs_hemelwaterriool'
 TARGET_TYPE_INFILTRATIEVOORZIENING = 'infiltratievoorziening'
 TARGET_TYPE_NIET_AANGESLOTEN = 'niet_aangesloten'
 
-FYSIEK_VOORKOMEN_VERHARD = ['verhard', 'open verharding', 'gesloten verharding', 'half verhard']
+FYSIEK_VOORKOMEN_VERHARD = ['verhard', 'open verhard', 'gesloten verhard', 'half verhard', 'pand']
 
 DISTANCE_TYPE_NAAM = {
     'Gemengd riool': 'gemengd_riool',

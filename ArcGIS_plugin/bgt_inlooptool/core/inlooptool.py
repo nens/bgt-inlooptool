@@ -104,6 +104,7 @@ class InloopTool:
         self._database.register_epsg()
         self._database.register_surfaces()
         self._database.merge_surfaces()
+        self._database.classify_surfaces(self.parameters)
 
     def import_pipes(self, file_path):
         """
@@ -141,7 +142,7 @@ class InloopTool:
             """Is het oppervlak (mogelijk/deels) verhard?"""
             if surface.surface_type in NON_CONNECTABLE_SURFACE_TYPES:
                 return False
-            elif surface.bgt_fysiek_voorkomen in FYSIEK_VOORKOMEN_VERHARD:
+            elif surface.type_verharding in FYSIEK_VOORKOMEN_VERHARD:
                 return True
             else:
                 return False
@@ -152,7 +153,7 @@ class InloopTool:
                        surface.distance_vuilwaterriool,
                        surface.distance_infiltratievoorziening,
                        surface.distance_gemengd_riool,
-                       surface.distance_oppervlaktewater) == 9999
+                       surface.distance_oppervlaktewater) != 9999
 
         def is_bouwwerk():
             return surface.surface_type in [SURFACE_TYPE_PAND, SURFACE_TYPE_GEBOUWINSTALLATIE]
@@ -165,10 +166,14 @@ class InloopTool:
 
         def bij_gem_plus_hwa():
             """Ligt het oppervlak in de buurt van een straat waar naast gemengd ook rwa is gelegd?"""
-            return abs(surface.distance_gemengd_riool
-                       -
-                       min(surface.distance_hemelwaterriool,
-                           surface.distance_infiltratievoorziening)) <= parameters.max_afstand_afgekoppeld
+            
+            if surface.distance_gemengd_riool != 9999 and (surface.distance_hemelwaterriool != 9999 or surface.distance_infiltratievoorziening != 9999):            
+                return abs(surface.distance_gemengd_riool
+                           -
+                           min(surface.distance_hemelwaterriool,
+                               surface.distance_infiltratievoorziening)) <= parameters.max_afstand_afgekoppeld
+            else:
+                return False
 
         def gem_dichtst_bij():
             """Ligt het gemengde riool dichterbij dan HWA/VGS-HWA/Infiltratieriool?"""
@@ -178,7 +183,7 @@ class InloopTool:
         def hwa_dichterbij_dan_hwavgs_en_infiltr():
             """Ligt het HWA riool dichterbij dan het infiltratieriool?"""
             return surface.distance_hemelwaterriool < surface.distance_infiltratievoorziening
-
+            
         def bij_drievoudig_stelsel_crit1():
             return False
 
@@ -193,7 +198,10 @@ class InloopTool:
 
         def nieuw_pand():
             """Is het bouwjaar van het pand later dan de ondergrens voor gescheiden binnenhuis riolering?"""
-            return surface.build_year > parameters.bouwjaar_gescheiden_binnenhuisriolering
+            if surface.build_year is None:
+                return False
+            else:
+                return surface.build_year > parameters.bouwjaar_gescheiden_binnenhuisriolering
 
         def hellend_dak():
             return True
@@ -203,7 +211,7 @@ class InloopTool:
             if surface[distance] is None:
                 surface[distance] = 9999
 
-        if verhard():
+        if not verhard():
             result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
         elif not bij_hov():
@@ -213,54 +221,56 @@ class InloopTool:
         elif is_bouwwerk():
             if bij_water():
                 result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
-            else:
-                if bij_gem_plus_hwa():
-                    if self.parameters.afkoppelen_hellende_daken:
-                        if nieuw_pand():
-                            if hellend_dak():
-                                if bij_drievoudig_stelsel_crit1():
-                                    if bij_drievoudig_stelsel_crit2():
-                                        result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
-                                        result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                    else:
-                                        result[TARGET_TYPE_HEMELWATERRIOOL] = 50
-                                        result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                else:
-                                    if hwa_dichterbij_dan_hwavgs_en_infiltr():
-                                        result[TARGET_TYPE_HEMELWATERRIOOL] = 50
-                                        result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                    else:
-                                        if hwa_vgs_dichterbij_dan_infiltr():
-                                            result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 50
-                                            result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                                        else:
-                                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
-                                            result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                            else:
-                                result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                            if surface.distance_hemelwaterriool < surface.distance_infiltratievoorziening:
-                                result[TARGET_TYPE_HEMELWATERRIOOL] = 100
-                            else:
-                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
-                        else:
-                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                else:
-                    if gem_dichtst_bij():
-                        result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                    else:
+            
+            elif bij_gem_plus_hwa():
+                if self.parameters.afkoppelen_hellende_daken:
+                    if nieuw_pand() and hellend_dak():
                         if bij_drievoudig_stelsel_crit1():
                             if bij_drievoudig_stelsel_crit2():
-                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
+                                result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                             else:
-                                result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                                result[TARGET_TYPE_HEMELWATERRIOOL] = 50
+                                result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                         else:
                             if hwa_dichterbij_dan_hwavgs_en_infiltr():
-                                result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                                result[TARGET_TYPE_HEMELWATERRIOOL] = 50
+                                result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                             else:
                                 if hwa_vgs_dichterbij_dan_infiltr():
-                                    pass
+                                    result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 50
+                                    result[TARGET_TYPE_GEMENGD_RIOOL] = 50
                                 else:
-                                    result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                                    result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
+                                    result[TARGET_TYPE_GEMENGD_RIOOL] = 50
+                    
+                    else:
+                        if gem_dichtst_bij():
+                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+                        elif hwa_dichterbij_dan_hwavgs_en_infiltr():
+                            result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                        else:
+                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                else:
+                    result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+            else:
+                if gem_dichtst_bij():
+                    result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+                elif bij_drievoudig_stelsel_crit1():
+                    if bij_drievoudig_stelsel_crit2():
+                        result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                    else:
+                        result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                else:
+                    if hwa_dichterbij_dan_hwavgs_en_infiltr():
+                        result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                    else:
+                        if hwa_vgs_dichterbij_dan_infiltr():
+                            pass
+                        elif surface.distance_infiltratievoorziening != 9999:
+                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                        else:
+                            result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
 
         # Overige verharde oppervlakken
         elif verhard():
@@ -281,8 +291,10 @@ class InloopTool:
                         else:
                             if hwa_vgs_dichterbij_dan_infiltr():
                                 result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 100
-                            else:
+                            elif surface.distance_infiltratievoorziening != 9999:
                                 result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                            else:
+                                result[TARGET_TYPE_NIET_AANGESLOTEN] = 100                                
                 else:
                     result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
         return result
@@ -294,179 +306,175 @@ class InloopTool:
         :return: None
         """
 
-        try:
-            surfaces = self._database.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
-            pipes = self._database.mem_database.GetLayerByName(PIPES_TABLE_NAME)
+        surfaces = self._database.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
+        pipes = self._database.mem_database.GetLayerByName(PIPES_TABLE_NAME)
 
+        if use_index:
+            surface_idx = create_index(surfaces)
+            pipe_idx = create_index(pipes)
+
+        out_layer = Layer(
+            self._database.mem_database.CreateLayer(
+                "pipe_distances",
+                self._database.srs,
+                surfaces.GetGeomType(),
+                ["OVERWRITE=TRUE"],
+            )
+        )
+
+        out_layer.add_field("surface_lokaalid", ogr.OFTString)
+        for field in list(set(DISTANCE_TYPE_NAAM.values())):
+            out_layer.add_field("distance_" + field, ogr.OFTReal)
+            out_layer.add_field("naam_" + field, ogr.OFTReal)
+
+        lokaalid_distances = {}
+        surfaces.ResetReading()
+        surfaces.SetSpatialFilter(None)
+        for surface_id in range(0, surfaces.GetFeatureCount()):
+            surface = surfaces.GetFeature(surface_id)
+
+            if not surface:
+                continue
+
+            surface_geom = surface.geometry()
+            buffered = surface_geom.Buffer(
+                parameters.max_afstand_vlak_afwateringsvoorziening
+            )
+
+            distances = []
+            pipe_ids = []
+            pipe_types = []
             if use_index:
-                surface_idx = create_index(surfaces)
-                pipe_idx = create_index(pipes)
+                for pipe_id in pipe_idx.intersection(buffered.GetEnvelope()):
+                    pipe = pipes.GetFeature(pipe_id)
+                    pipe_geom = pipe.geometry()
+                    if pipe_geom.Intersects(buffered):
+                        distances.append(pipe_geom.Distance(surface_geom))
+                        pipe_ids.append(pipe.GetFID())
+                        pipe_types.append(pipe["TypeNaam"])
 
-            out_layer = Layer(
-                self._database.mem_database.CreateLayer(
-                    "pipe_distances",
-                    self._database.srs,
-                    surfaces.GetGeomType(),
-                    ["OVERWRITE=TRUE"],
-                )
-            )
+            else:
+                pipes.SetSpatialFilter(buffered)
+                for pipe in pipes:
+                    pipe_geom = pipe.geometry()
+                    if pipe_geom.Intersects(buffered):
+                        distances.append(pipe_geom.Distance(surface_geom))
+                        pipe_ids.append(pipe.GetFID())
+                        pipe_types.append(pipe["TypeNaam"])
 
-            out_layer.add_field("surface_lokaalid", ogr.OFTString)
-            for field in list(set(DISTANCE_TYPE_NAAM.values())):
-                out_layer.add_field("distance_" + field, ogr.OFTReal)
-                out_layer.add_field("naam_" + field, ogr.OFTReal)
-
-            lokaalid_distances = {}
-            surfaces.ResetReading()
-            surfaces.SetSpatialFilter(None)
-            for surface_id in range(0, surfaces.GetFeatureCount()):
-                surface = surfaces.GetFeature(surface_id)
-
-                if not surface:
-                    continue
-
-                surface_geom = surface.geometry()
-                buffered = surface_geom.Buffer(
-                    parameters.max_afstand_vlak_afwateringsvoorziening
-                )
-
-                distances = []
-                pipe_ids = []
-                pipe_types = []
-                if use_index:
-                    for pipe_id in pipe_idx.intersection(buffered.GetEnvelope()):
-                        pipe = pipes.GetFeature(pipe_id)
-                        pipe_geom = pipe.geometry()
-                        if pipe_geom.Intersects(buffered):
-                            distances.append(pipe_geom.Distance(surface_geom))
-                            pipe_ids.append(pipe.GetFID())
-                            pipe_types.append(pipe["TypeNaam"])
-
-                else:
-                    pipes.SetSpatialFilter(buffered)
-                    for pipe in pipes:
-                        pipe_geom = pipe.geometry()
-                        if pipe_geom.Intersects(buffered):
-                            distances.append(pipe_geom.Distance(surface_geom))
-                            pipe_ids.append(pipe.GetFID())
-                            pipe_types.append(pipe["TypeNaam"])
-
-                if len(distances) == 0:
-                    continue
-                else:
-                    lokaalid = surface["identificatie_lokaalid"]
-                    pipe_dict = {"surface_lokaalid": lokaalid}
-                    pipe_types_unique = [
-                        p for p in set(pipe_types) if p in DISTANCE_TYPE_NAAM
-                    ]
-                    for pipe_type in pipe_types_unique:
-                        min_dist = min(
-                            [
-                                distances[i]
-                                for i, v in enumerate(pipe_types)
-                                if v == pipe_type
-                            ]
-                        )
-                        pipe_id = pipe_ids[distances.index(min_dist)]
-                        pipe = pipes.GetFeature(pipe_id)
-                        name = DISTANCE_TYPE_NAAM[pipe_type]
-                        pipe_dict.update(
-                            {"distance_" + name: min_dist, "naam_" + name: pipe["Naam"]}
-                        )
-                    out_layer.add_feature(surface_geom, pipe_dict)
-
-                del pipe_dict["surface_lokaalid"]
-                lokaalid_distances[lokaalid] = pipe_dict
-
-            pipes.SetSpatialFilter(None)
-            out_layer.layer = None
-            pipes = None
-
-            out_layer = Layer(
-                self._database.mem_database.CreateLayer(
-                    "water_distances",
-                    self._database.srs,
-                    surfaces.GetGeomType(),
-                    ["OVERWRITE=TRUE"],
-                )
-            )
-
-            out_layer.add_field("surface_lokaalid", ogr.OFTString)
-            out_layer.add_field("distance", ogr.OFTReal)
-
-            surfaces.SetSpatialFilter(None)
-            surfaces.ResetReading()
-            for surface_id in range(0, surfaces.GetFeatureCount()):
-                surface = surfaces.GetFeature(surface_id)
-
-                if not surface:
-                    continue
-
-                if surface.surface_type == SURFACE_TYPE_WATERDEEL:
-                    continue
-
-                surface_geom = surface.geometry().Clone()
-                buffered = surface_geom.Buffer(
-                    parameters.max_afstand_vlak_afwateringsvoorziening
-                )
-                surface_id_or = surface["identificatie_lokaalid"]
-                surface = None
-
-                distances = []
-                surfaces_ids = []
-                if use_index:
-                    for surface_id in surface_idx.intersection(buffered.GetEnvelope()):
-                        surface = surfaces.GetFeature(surface_id)
-                        if surface.surface_type == SURFACE_TYPE_WATERDEEL:
-                            water_geom = surface.geometry()
-                            if water_geom.Intersects(buffered):
-                                distances.append(water_geom.Distance(surface_geom))
-                                surfaces_ids.append(surface["identificatie_lokaalid"])
-                else:
-                    surfaces.SetSpatialFilter(buffered)
-                    for surface in surfaces:
-                        if surface.surface_type == SURFACE_TYPE_WATERDEEL:
-                            water_geom = surface.geometry()
-                            if water_geom.Intersects(buffered):
-                                distances.append(water_geom.Distance(surface_geom))
-                                surfaces_ids.append(surface["identificatie_lokaalid"])
-                        surface = None
-
-                if len(distances) == 0:
-                    continue
-                else:
-                    min_dist = min(distances)
-                    surface_id = surfaces_ids[distances.index(min_dist)]
-                    out_layer.add_feature(
-                        surface_geom, {"surface_lokaalid": surface_id, "distance": min_dist}
+            if len(distances) == 0:
+                continue
+            else:
+                lokaalid = surface["identificatie_lokaalid"]
+                pipe_dict = {"surface_lokaalid": lokaalid}
+                pipe_types_unique = [
+                    p for p in set(pipe_types) if p in DISTANCE_TYPE_NAAM
+                ]
+                for pipe_type in pipe_types_unique:
+                    min_dist = min(
+                        [
+                            distances[i]
+                            for i, v in enumerate(pipe_types)
+                            if v == pipe_type
+                        ]
                     )
-                # add to dict
-                if surface_id_or not in lokaalid_distances:
-                    lokaalid_distances[surface_id_or] = {"water_distance": min_dist}
-                else:
-                    lokaalid_distances[surface_id_or]["water_distance"] = min_dist
+                    pipe_id = pipe_ids[distances.index(min_dist)]
+                    pipe = pipes.GetFeature(pipe_id)
+                    name = DISTANCE_TYPE_NAAM[pipe_type]
+                    pipe_dict.update(
+                        {"distance_" + name: min_dist, "naam_" + name: pipe["Naam"]}
+                    )
+                out_layer.add_feature(surface_geom, pipe_dict)
 
-            out_layer.layer = None
+            del pipe_dict["surface_lokaalid"]
+            lokaalid_distances[lokaalid] = pipe_dict
 
-            surfaces.SetSpatialFilter(None)
-            surfaces.ResetReading()
-            for surface in surfaces:
-                lokaalid = surface.identificatie_lokaalid
-                if lokaalid in lokaalid_distances.keys():
-                    data = lokaalid_distances[surface.identificatie_lokaalid]
-                    for dist_type in DISTANCE_TYPE_NAAM.values():
-                        dist_type = "distance_" + dist_type
-                        if dist_type in data:
-                            surface[dist_type] = data[dist_type]
+        pipes.SetSpatialFilter(None)
+        out_layer.layer = None
+        pipes = None
 
-                    if "water_distance" in data:
-                        surface["distance_oppervlaktewater"] = data["water_distance"]
+        out_layer = Layer(
+            self._database.mem_database.CreateLayer(
+                "water_distances",
+                self._database.srs,
+                surfaces.GetGeomType(),
+                ["OVERWRITE=TRUE"],
+            )
+        )
 
-                    surfaces.SetFeature(surface)
-            surfaces = None
-        except Exception as ex:
-            print(ex)
+        out_layer.add_field("surface_lokaalid", ogr.OFTString)
+        out_layer.add_field("distance", ogr.OFTReal)
 
+        surfaces.SetSpatialFilter(None)
+        surfaces.ResetReading()
+        for surface_id in range(0, surfaces.GetFeatureCount()):
+            surface = surfaces.GetFeature(surface_id)
+
+            if not surface:
+                continue
+
+            if surface.surface_type == SURFACE_TYPE_WATERDEEL:
+                continue
+
+            surface_geom = surface.geometry().Clone()
+            buffered = surface_geom.Buffer(
+                parameters.max_afstand_vlak_afwateringsvoorziening
+            )
+            surface_id_or = surface["identificatie_lokaalid"]
+            surface = None
+
+            distances = []
+            surfaces_ids = []
+            if use_index:
+                for surface_id in surface_idx.intersection(buffered.GetEnvelope()):
+                    surface = surfaces.GetFeature(surface_id)
+                    if surface.surface_type == SURFACE_TYPE_WATERDEEL:
+                        water_geom = surface.geometry()
+                        if water_geom.Intersects(buffered):
+                            distances.append(water_geom.Distance(surface_geom))
+                            surfaces_ids.append(surface["identificatie_lokaalid"])
+            else:
+                surfaces.SetSpatialFilter(buffered)
+                for surface in surfaces:
+                    if surface.surface_type == SURFACE_TYPE_WATERDEEL:
+                        water_geom = surface.geometry()
+                        if water_geom.Intersects(buffered):
+                            distances.append(water_geom.Distance(surface_geom))
+                            surfaces_ids.append(surface["identificatie_lokaalid"])
+                    surface = None
+
+            if len(distances) == 0:
+                continue
+            else:
+                min_dist = min(distances)
+                surface_id = surfaces_ids[distances.index(min_dist)]
+                out_layer.add_feature(
+                    surface_geom, {"surface_lokaalid": surface_id, "distance": min_dist}
+                )
+            # add to dict
+            if surface_id_or not in lokaalid_distances:
+                lokaalid_distances[surface_id_or] = {"water_distance": min_dist}
+            else:
+                lokaalid_distances[surface_id_or]["water_distance"] = min_dist
+
+        out_layer.layer = None
+
+        surfaces.SetSpatialFilter(None)
+        surfaces.ResetReading()
+        for surface in surfaces:
+            lokaalid = surface.identificatie_lokaalid
+            if lokaalid in lokaalid_distances.keys():
+                data = lokaalid_distances[surface.identificatie_lokaalid]
+                for dist_type in DISTANCE_TYPE_NAAM.values():
+                    dist_type = "distance_" + dist_type
+                    if dist_type in data:
+                        surface[dist_type] = data[dist_type]
+
+                if "water_distance" in data:
+                    surface["distance_oppervlaktewater"] = data["water_distance"]
+
+                surfaces.SetFeature(surface)
+        surfaces = None
 
     def calculate_runoff_targets(self):
         """
@@ -474,55 +482,53 @@ class InloopTool:
         Import BGT Surfaces and Pipes to _database first
         Calculate distances first
         """
-        try:
-            bgt_surfaces = self._database.bgt_surfaces
-            result_table = self._database.result_table
-            feature_defn = result_table.GetLayerDefn()
+        bgt_surfaces = self._database.bgt_surfaces
+        result_table = self._database.result_table
+        feature_defn = result_table.GetLayerDefn()
 
-            for surface in bgt_surfaces:
-                feature = ogr.Feature(feature_defn)
-                surface_geometry = surface.GetGeometryRef()
-                fixed_geometry = ogr.ForceToPolygon(surface_geometry)
-                feature.SetGeometry(fixed_geometry)
+        for surface in bgt_surfaces:
+            feature = ogr.Feature(feature_defn)
+            surface_geometry = surface.GetGeometryRef()
+            fixed_geometry = ogr.ForceToPolygon(surface_geometry)
+            feature.SetGeometry(fixed_geometry)
 
-                afwatering = self.decision_tree(surface, self.parameters)
-                # feature.SetField(RESULT_TABLE_FIELD_ID, val) --> is autoincrement field
-                feature.SetField(
-                    RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                )
-                feature.SetField(
-                    RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
-                )
+            afwatering = self.decision_tree(surface, self.parameters)
+            # feature.SetField(RESULT_TABLE_FIELD_ID, val) --> is autoincrement field
+            feature.SetField(
+                RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            feature.SetField(
+                RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
+            )
 
-                feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface[RESULT_TABLE_FIELD_TYPE_VERHARDING])
-                # feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, val) # not yet implemented
-                # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val) # not yet implemented
-                # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val) # not yet implemented
-                # feature.SetField(RESULT_TABLE_FIELD_BERGING_DAK, val) # not yet implemented
-                # feature.SetField(RESULT_TABLE_FIELD_PUTCODE, val) # not yet implemented
-                # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
-                feature.SetField(
-                    TARGET_TYPE_GEMENGD_RIOOL, afwatering[TARGET_TYPE_GEMENGD_RIOOL]
-                )
-                feature.SetField(
-                    TARGET_TYPE_HEMELWATERRIOOL, afwatering[TARGET_TYPE_HEMELWATERRIOOL]
-                )
-                feature.SetField(
-                    TARGET_TYPE_VGS_HEMELWATERRIOOL,
-                    afwatering[TARGET_TYPE_VGS_HEMELWATERRIOOL],
-                )
-                feature.SetField(
-                    TARGET_TYPE_INFILTRATIEVOORZIENING,
-                    afwatering[TARGET_TYPE_INFILTRATIEVOORZIENING],
-                )
-                feature.SetField(
-                    TARGET_TYPE_NIET_AANGESLOTEN, afwatering[TARGET_TYPE_NIET_AANGESLOTEN]
-                )
-                result_table.CreateFeature(feature)
-                feature = None
-        except Exception as ex:
-            print(ex)
+            feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.surface_type)
+            # feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, val) # not yet implemented
+            # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val) # not yet implemented
+            # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val) # not yet implemented
+            # feature.SetField(RESULT_TABLE_FIELD_BERGING_DAK, val) # not yet implemented
+            # feature.SetField(RESULT_TABLE_FIELD_PUTCODE, val) # not yet implemented
+            # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
+            feature.SetField(
+                TARGET_TYPE_GEMENGD_RIOOL, afwatering[TARGET_TYPE_GEMENGD_RIOOL]
+            )
+            feature.SetField(
+                TARGET_TYPE_HEMELWATERRIOOL, afwatering[TARGET_TYPE_HEMELWATERRIOOL]
+            )
+            feature.SetField(
+                TARGET_TYPE_VGS_HEMELWATERRIOOL,
+                afwatering[TARGET_TYPE_VGS_HEMELWATERRIOOL],
+            )
+            feature.SetField(
+                TARGET_TYPE_INFILTRATIEVOORZIENING,
+                afwatering[TARGET_TYPE_INFILTRATIEVOORZIENING],
+            )
+            feature.SetField(
+                TARGET_TYPE_NIET_AANGESLOTEN, afwatering[TARGET_TYPE_NIET_AANGESLOTEN]
+            )
+            result_table.CreateFeature(feature)
+            feature = None
+
 
 class Database:
     def __init__(self, epsg=28992):
@@ -804,6 +810,7 @@ class Database:
         for feature in layer:
             if feature:
                 verhardingsgraad = None
+                verhardingstype = None 
                 if feature.surface_type == SURFACE_TYPE_PAND:
                     verhardingstype = VERHARDINGSTYPE_PAND
                 elif feature.surface_type == SURFACE_TYPE_WATERDEEL:
@@ -861,14 +868,16 @@ class Database:
             if use_index:
                 for surface_id in surface_idx.intersection(centroid.GetEnvelope()):
                     surface = surfaces.GetFeature(surface_id)
-                    surface['build_year'] = building[field_name]
-                    surfaces.SetFeature(surface)
+                    if surface.surface_type == 'pand':
+                        surface['build_year'] = building[field_name]
+                        surfaces.SetFeature(surface)
             else:
                 surfaces.SetSpatialFilter(centroid)
                 for surface in surfaces:
-                    if surface.geometry().Intersects(centroid):
-                        surface['build_year'] = building[field_name]
-                        surfaces.SetFeature(surface)
+                    if surface.surface_type == 'pand':
+                        if surface.geometry().Intersects(centroid):
+                            surface['build_year'] = building[field_name]
+                            surfaces.SetFeature(surface)
         surfaces = None
 
     def merge_surfaces(self):
