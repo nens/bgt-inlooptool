@@ -22,28 +22,13 @@
  ***************************************************************************/
 """
 import ogr
-import pip
-try:
-    import rtree
-except:
-    pip.main(['install', 'rtree'])
-    import rtree
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import Qgis, QgsProject
+from qgis.utils import iface
 
-# Initialize Qt resources from file resources.py
-from .resources import *
-# Import the code for the dialog
-from .BGTInloopTool_dialog import BGTInloopToolDialog
-import os.path, sys
-
-# Import the BGT Inlooptool core
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from core.inlooptool import *
-from .ogr2qgis import *
 
 from qgis.core import (
   QgsProcessingContext,
@@ -56,8 +41,19 @@ from qgis.core import (
   QgsMessageLog,
 )
 
+# Initialize Qt resources from file resources.py
+from .resources import *
+# Import the code for the dialog
+from .BGTInloopTool_dialog import BGTInloopToolDialog
+import os.path, sys
+
+# Import the BGT Inlooptool core
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from core.inlooptool import *
+from .ogr2qgis import *
+
 MESSAGE_CATEGORY = 'BGT Inlooptool'
-USE_INDEX = True
+INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), 'bgt_inlooptabel.qml')
 
 class InloopToolTask(QgsTask):
     
@@ -78,7 +74,7 @@ class InloopToolTask(QgsTask):
         QgsMessageLog.logMessage("started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)        
         self.it = InloopTool(self.parameters)
         
-        database_fn = 'C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/mem_database.gpkg'
+        #database_fn = 'C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/mem_database.gpkg'
         #self.it._database.mem_database = ogr.Open(database_fn,1)
         
         # Import surfaces and pipes and calculate ruonff targets
@@ -95,7 +91,7 @@ class InloopToolTask(QgsTask):
         self.it.calculate_runoff_targets()
         
         # Export database
-        self.it._database._write_to_disk(database_fn)
+        #self.it._database._write_to_disk(database_fn)
         
         return(True)
             
@@ -111,6 +107,9 @@ class InloopToolTask(QgsTask):
                     qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Inlooptabel')
                     project = QgsProject.instance()
                     project.addMapLayer(qgs_lyr)
+                    layer =QgsProject.instance().mapLayersByName('BGT Inlooptabel')[0]
+                    layer.loadNamedStyle(INLOOPTABEL_STYLE)
+                    layer.triggerRepaint()
         
         else:
             if self.exception is None:
@@ -314,6 +313,10 @@ class BGTInloopTool:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
+            
+            if not USE_INDEX:
+                iface.messageBar().pushMessage("Error", "rtree not installed, performance will be slower than optimal", level=Qgis.Error)
+
             self.dlg = BGTInloopToolDialog()
             # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)

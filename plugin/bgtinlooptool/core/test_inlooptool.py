@@ -17,6 +17,8 @@ import unittest
 
 # Globals
 
+__file__ = sys.argv[0]
+
 DATA_PATH = os.path.join(os.path.dirname(__file__), "../test-data")
 SURFACES_INPUT_FILENAME = os.path.join(DATA_PATH, 'extract.zip')
 PIPES_INPUT_FILENAME = os.path.join(DATA_PATH, 'getGeoPackage_1134.gpkg')
@@ -30,9 +32,6 @@ from core.inlooptool import *
 from core.constants import *
 
 # Drivers
-SQLITE_DRIVER = ogr.GetDriverByName("SQLITE")
-GPKG_DRIVER = ogr.GetDriverByName("GPKG")
-
 
 class UnitDatabase(unittest.TestCase):
     """ used for both unittests and integrated testing"""
@@ -182,17 +181,160 @@ class UnitDatabase(unittest.TestCase):
         self.assertTrue(isinstance(result, ogr.DataSource), 'calculated_result.gpkg is not a valid ogr.Datasource')
 
     def test_decision_tree(self):
+        from core.inlooptool import *
         parameters = InputParameters()
         it = InloopTool(parameters)
-        it._database.mem_database = ogr.Open('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/output/database.gpkg',1)
-        test_surface = it._database.bgt_surfaces.GetFeature(1)
+        it._database.mem_database = ogr.Open('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/mem_database.gpkg',1)
+        surface = it._database.bgt_surfaces.GetFeature(1)
         
-        test.surface.distance_oppervlaktewater
+        def reset_surface():
+            for distance in ['distance_gemengd_riool', 'distance_hemelwaterriool', 'distance_vuilwaterriool',
+                             'distance_infiltratievoorziening', 'distance_oppervlaktewater']:
+                surface[distance] = 9999
         
-        it.decision_tree(test_surface, parameters)
+        surface.ExportToJson(_)
+                
+        # Beslisboom voor bouwwerken testen
+                
+        # bouwwerk bij water, 
+        # niet aangesloten: 100
+        reset_surface()
+        surface.surface_type = 'pand'
+        surface.distance_oppervlakte_water = 1
+        it.decision_tree(surface, parameters)
         
+        # Gemengd plus hwa of infiltratie, nieuw pand, hwa dichtsbij
+        # gemengd 50, hwa 50
+        reset_surface()
+        parameters.afkoppelen_hellende_daken = True
+        surface.surface_type = 'pand'
+        surface.build_year = 2014
+        surface.distance_gemengd_riool = 2
+        surface.distance_hemelwaterriool = 2
+        it.decision_tree(surface, parameters)
         
+        # Gemegnd plus hwa of infiltratie, infiltratie dichtsbij 
+        # gemengd 50, infiltratie 50
+        reset_surface()
+        parameters.afkoppelen_hellende_daken = True
+        surface.surface_type = 'pand'
+        surface.build_year = 2014
+        surface.distance_gemengd_riool = 2
+        surface.distance_hemelwaterriool = 10
+        surface.distance_infiltratievoorziening = 2
+        it.decision_tree(surface, parameters)
 
+        # Gemengd plus hwa of infiltratie, oud pand 
+        # Altijd 100 of dichtsbijzijnde
+        reset_surface()
+        parameters.afkoppelen_hellende_daken = True
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_gemengd_riool = 3
+        surface.distance_hemelwaterriool = 3
+        surface.distance_infiltratievoorziening = 1
+        it.decision_tree(surface, parameters)                
+
+        # Gemengd plus hwa of infiltratie, oud pand 
+        # Altijd 100 of dichtsbijzijnde
+        reset_surface()
+        parameters.afkoppelen_hellende_daken = True
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_gemengd_riool = 3
+        surface.distance_hemelwaterriool = 3
+        surface.distance_infiltratievoorziening = 1
+        it.decision_tree(surface, parameters)
+
+        # Gemengd plus hwa of infiltratie, oud pand, maar niet afkoppelen hellende daken 
+        # Altijd gemengd
+        reset_surface()
+        parameters.afkoppelen_hellende_daken = False
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_gemengd_riool = 3
+        surface.distance_hemelwaterriool = 3
+        surface.distance_infiltratievoorziening = 1
+        it.decision_tree(surface, parameters)
+
+        # Geen afgekoppeld systeem dus: infiltratie + rwa of alleen gemengd, alleen rwa of alleen infiltratie 
+        reset_surface()
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_gemengd_riool = 1
+        it.decision_tree(surface, parameters)
+
+        reset_surface()
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_hemelwaterriool = 1
+        it.decision_tree(surface, parameters)
+
+        reset_surface()
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_infiltratievoorziening = 1
+        it.decision_tree(surface, parameters)
+
+        reset_surface()
+        surface.surface_type = 'pand'
+        surface.build_year = 1900
+        surface.distance_oppervlaktewater = 3
+        it.decision_tree(surface, parameters)
+        
+        # Geen bouwwerk, wel verhard
+        # Gemengd riool
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_gemengd_riool = 1
+        it.decision_tree(surface, parameters)
+
+        # alleen rwa of infiltratie
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_hemelwaterriool = 1
+        it.decision_tree(surface, parameters)        
+
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_infiltratievoorziening = 1
+        it.decision_tree(surface, parameters)        
+        
+        # infiltratie + rwa 
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_infiltratievoorziening = 1
+        surface.distance_hemelwaterriool = 0.5
+        it.decision_tree(surface, parameters)        
+        
+        # infiltratie + gemengd + hwa
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_infiltratievoorziening = 2
+        surface.distance_hemelwaterriool = 2
+        surface.distance_gemengd_riool = 1
+        it.decision_tree(surface, parameters)
+        
+        # infiltratie + gemengd + hwa
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_hemelwaterriool = 40
+        surface.distance_gemengd_riool = 1
+        it.decision_tree(surface, parameters)
+        
+        reset_surface()
+        surface.surface_type = None
+        surface.type_verharding = 'verhard'
+        surface.distance_oppervlaktewater = 100
+        it.decision_tree(surface, parameters)
+
+        
     def test_add_buildings(self):
         parameters = InputParameters()
         it = InloopTool(parameters)
