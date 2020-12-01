@@ -15,7 +15,7 @@ sys.path.append(bgt_inlooptool_dir)
 sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 
 # Set path to Generic modules
-from cls_General_use import TT_GeneralUse
+from cls_general_use import GeneralUse
 from common import BaseTool, parameter
 from add_layers_ArcGIS import add_layers_to_map
 # installs the gdal wheel for python 2 if not installed?
@@ -63,28 +63,26 @@ class BGTInloopToolArcGIS(BaseTool):
                       name='bag',
                       datatype="DEDatasetType",
                       parameterType="Optional",
-                      direction="Input"),
+                      direction="Input",
+                      defaultValue=r"C:\GIS\test_data_inlooptool\bag.gpkg"),
             parameter(displayName='BGT (als zipfile)',
                       name='bgt',
                       datatype="DEFile",
                       parameterType="Required",
-                      direction="Input"),
+                      direction="Input",
+                      defaultValue=r"C:\GIS\test_data_inlooptool\extract.zip"),
             parameter(displayName='Leidingen (als geopackage)',
                       name='leidingen',
                       datatype='DEDatasetType',
                       parameterType='Required',
-                      direction='Input'),
-            # parameter(displayName='Bewaar de output',
-            #           name='save_output',
-            #           datatype='GPBoolean',
-            #           parameterType='Required',
-            #           direction='Input',
-            #           defaultValue=True),
+                      direction='Input',
+                      defaultValue=r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"),
             parameter(displayName='Opslag locatie gdb',
                       name='output_gpkg',
                       datatype='DEDatasetType',
-                      parameterType='Required',
-                      direction='Output'),
+                      # parameterType='Required',
+                      # direction='Output'),
+                      defaultValue=r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem_database.gpkg"),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
                       name='max_vlak_afwatervoorziening',
                       datatype='GPDouble',
@@ -180,7 +178,7 @@ class BGTInloopToolArcGIS(BaseTool):
 
     def execute(self, parameters, messages):
         try:
-            self.arcgis_com = TT_GeneralUse(sys, arcpy)
+            self.arcgis_com = GeneralUse(sys, arcpy)
             self.arcgis_com.StartAnalyse()
             self.arcgis_com.AddMessage("Start BGT Inlooptool!")
 
@@ -201,24 +199,25 @@ class BGTInloopToolArcGIS(BaseTool):
                 verhardingsgraad_erf=parameters[12].value,
                 verhardingsgraad_half_verhard=parameters[13].value)
 
-            self.it = InloopTool(core_parameters)
+            # self.it = InloopTool(core_parameters)
+            #
+            # # Import surfaces and pipes
+            # self.arcgis_com.AddMessage("Importing BGT files")
+            # self.it.import_surfaces(bgt_file)
+            # self.arcgis_com.AddMessage("Importing pipe files")
+            # self.it.import_pipes(pipe_file)
+            # self.arcgis_com.AddMessage("Importing building files")
+            # self.it.import_buildings(building_file)
+            # self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
+            # self.arcgis_com.AddMessage("Calculating distances")
+            # self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
+            # self.arcgis_com.AddMessage("Calculating Runoff targets")
+            # self.it.calculate_runoff_targets()
+            #
+            # # Export results
+            # self.arcgis_com.AddMessage("Exporting to GPKG")
+            # self.it._database._write_to_disk(output_gpkg)
 
-            # Import surfaces and pipes
-            self.arcgis_com.AddMessage("Importing BGT files")
-            self.it.import_surfaces(bgt_file)
-            self.arcgis_com.AddMessage("Importing pipe files")
-            self.it.import_pipes(pipe_file)
-            self.arcgis_com.AddMessage("Importing building files")
-            self.it.import_buildings(building_file)
-            self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
-            self.arcgis_com.AddMessage("Calculating distances")
-            self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
-            self.arcgis_com.AddMessage("Calculating Runoff targets")
-            self.it.calculate_runoff_targets()
-
-            # Export results
-            self.arcgis_com.AddMessage("Exporting to GPKG")
-            self.it._database._write_to_disk(output_gpkg)
             # import ogr
             # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
             # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
@@ -234,8 +233,9 @@ class BGTInloopToolArcGIS(BaseTool):
             # ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map
-            
-            add_layers_to_map(output_gpkg)
+
+            self.arcgis_com.AddMessage("Visualiseren van resultaten BGT Inlooptool!")
+            add_layers_to_map(output_gpkg, self.arcgis_com)
 
 
         except Exception:

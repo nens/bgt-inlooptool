@@ -2,63 +2,79 @@ import arcpy
 import sys
 import os
 
-from cls_General_use import GeneralUse
-arcgis_com = GeneralUse(sys, arcpy)
-
-python_version = str(sys.version)[0]
+python_version = int(str(sys.version)[0])
 
 # Add layers to map
-def add_layers_to_map(save_database):
+def add_layers_to_map(save_database, arcgis_com):
 
-    # Symbology layer for both ArcMap and ArcGIS Pro
-    layers = os.path.join(os.path.dirname(__file__), 'layers')
-    symbology_layer = "bgt_inlooptabel.lyr"
+    try:
+        # Symbology layer for both ArcMap and ArcGIS Pro
+        layers = os.path.join(os.path.dirname(__file__), 'layers')
+        symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyrx")
+        arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
 
-    # TODO alternate way to check for ArcMap or ArcGIS Pro? als exe?
-    if python_version == 2:
-        print('You are in ArcMap')
+        # TODO alternate way to check for ArcMap or ArcGIS Pro? als exe?
+        if python_version == 2:
+            arcgis_com.AddMessage('You are in ArcMap')
 
-        # Weergeven van resultaten in ArcMap
-        try:
-            mxd = arcpy.mapping.MapDocument('CURRENT')
-        except:
-            mxd = None
-            arcpy.AddMessage('Niet in ArcMap')
-        if not mxd is None:
-            arcpy.AddMessage('In ArcMap')
-            df = arcpy.mapping.ListDataFrames(mxd)[0]
-            layer_dir = os.path.join(os.path.dirname(__file__), "Layers")
+            # Weergeven van resultaten in ArcMap
+            try:
+                mxd = arcpy.mapping.MapDocument('CURRENT')
+            except:
+                mxd = None
+                arcpy.AddMessage('Niet in ArcMap')
+            if not mxd is None:
+                arcpy.AddMessage('In ArcMap')
+                df = arcpy.mapping.ListDataFrames(mxd)[0]
+                layer_dir = os.path.join(os.path.dirname(__file__), "Layers")
 
-            # gpkg layer toevoegen in ArcMap lijkt niet te werken via Python
-            # Add Layer
-            add_layer1 = arcpy.mapping.Layer("uitlaat_vlak")
-            arcpy.mapping.AddLayer(df, add_layer1, "AUTO_ARRANGE")
+                # gpkg layer toevoegen in ArcMap lijkt niet te werken via Python
+                # Add Layer
+                add_layer1 = arcpy.mapping.Layer("uitlaat_vlak")
+                arcpy.mapping.AddLayer(df, add_layer1, "AUTO_ARRANGE")
 
-            # Add layer with symbology
-            add_symbology_layer = arcpy.mapping.Layer(os.path.join(layer_dir, 'test.lyr'))
-            add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "test")
-            arcpy.mapping.AddLayer(df, add_symbology_layer)
+                # Add layer with symbology
+                add_symbology_layer = arcpy.mapping.Layer(os.path.join(layer_dir, 'test.lyr'))
+                add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "test")
+                arcpy.mapping.AddLayer(df, add_symbology_layer)
 
-    elif python_version == 3:
-        print('You are in ArcGIS Pro')
+        elif python_version == 3:
+            arcgis_com.AddMessage('You are in ArcGIS Pro')
 
-        # Read ArcGIS Pro project and Map
-        aprx = arcpy.mp.ArcGISProject("CURRENT")
-        map = aprx.listMaps()[0]
+            # Read ArcGIS Pro project and Map
+            # aprx = arcpy.mp.ArcGISProject(r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
+            aprx = arcpy.mp.ArcGISProject("CURRENT")
+            map = aprx.listMaps()[0]
 
-        dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
-        # TODO if directly from gpkg werkend maken!
-        try:
-            layer = map.addDataFromPath(dataset)
-        except Exception:
-            arcgis_com.Traceback()
+            dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
+            # TODO if directly from gpkg werkend maken!
+            # try:
+            #     layer = map.addDataFromPath(dataset)
+            #     # arcpy.ApplySymbologyFromLayer_management(layer, symbology_layer)
+            #     # TODO als Nelen en Schuurman dit in de core doet aanzetten!
+            # except Exception:
+            #     arcgis_com.Traceback()
 
-        # If gpkg does not work
-        out_dataset = layers_to_gdb(save_database, dataset)
-        layer = map.addDataFromPath(out_dataset)
+            # If gpkg does not work
+            out_dataset = layers_to_gdb(save_database, dataset)
+            new_layer = map.addDataFromPath(out_dataset)
 
-        # Apply the symbology from the symbology layer to the input layer
-        arcpy.ApplySymbologyFromLayer_management(layer, symbology_layer)
+            # Apply the symbology from the symbology layer to the input layer
+            # arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
+            # door bug wordt dit niet goed weergegeven vanuit de tool. fix in ArcGIS Pro 2.7
+            # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDEyMDkwNg==
+
+            # alternative
+            # add layer to map, apply symbology and delete layerfile
+            layer_file = arcpy.mp.LayerFile(symbology_layer_path)
+            sym_lyr = map.addLayer(layer_file)[0]
+            arcpy.ApplySymbologyFromLayer_management(new_layer, sym_lyr)
+            map.removeLayer(sym_lyr)
+
+        else:
+            arcgis_com.AddMessage('Python version is {} and is not supported'.format(python_version))
+    except:
+        arcgis_com.Traceback()
 
 
 def layers_to_gdb(save_database, dataset):
@@ -66,11 +82,14 @@ def layers_to_gdb(save_database, dataset):
     # If gpkg does not work
     save_gdb = save_database.replace('.gpkg', '.gdb')
     if not arcpy.Exists(save_gdb):
-        ws = arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename((save_gdb)))
+        arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename(save_gdb))
+    ws = save_gdb
     arcpy.env.workspace = ws
+    arcpy.env.overwriteOutput = True
     fc_name = 'main_bgt_inlooptabel'
-    arcpy.FeatureClassToGeodatabase_conversion(dataset, fc_name)
-    out_dataset = os.path.join(save_database, 'main_bgt_inlooptabel')
+    out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, ws, fc_name))
+    bgt_inloop_symbology(out_dataset)
+    # out_dataset = os.path.join(save_database, 'main_bgt_inlooptabel')
 
     return out_dataset
 
@@ -96,10 +115,9 @@ def bgt_inloop_symbology(out_dataset):
 
 if __name__ == '__main__':
 
-    temp = arcpy.GetSystemEnvironment("TEMP")
-    gpkg_path = os.path.join(temp, 'bgt_inlooptool.gpkg')
-    input_geopackage = r'C:\GIS\test3.gpkg'
-    output_gdb = r'C:\GIS\output3.gdb'
-    layers_to_gdb(input_geopackage, output_gdb)
+    from cls_general_use import GeneralUse
+    arcgis_com = GeneralUse(sys, arcpy)
+    save_database = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem_database.gpkg"
+    add_layers_to_map(save_database, arcgis_com)
 
     print('helemaal klaar!')
