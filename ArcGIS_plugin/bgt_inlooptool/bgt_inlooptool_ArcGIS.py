@@ -15,7 +15,7 @@ sys.path.append(bgt_inlooptool_dir)
 sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 
 # Set path to Generic modules
-from clsGeneralUse import TT_GeneralUse
+from cls_General_use import TT_GeneralUse
 from common import BaseTool, parameter
 from add_layers_ArcGIS import add_layers_to_map
 # installs the gdal wheel for python 2 if not installed?
@@ -218,8 +218,6 @@ class BGTInloopToolArcGIS(BaseTool):
 
             # Export results
             self.arcgis_com.AddMessage("Exporting to GPKG")
-            # temp = arcpy.GetSystemEnvironment("TEMP")
-            # gpkg_path = os.path.join(temp, 'bgt_inlooptool.gpkg')
             self.it._database._write_to_disk(output_gpkg)
             # import ogr
             # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
@@ -237,7 +235,7 @@ class BGTInloopToolArcGIS(BaseTool):
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map
             
-            # add_layers_to_map(save_database)
+            add_layers_to_map(output_gpkg)
 
 
         except Exception:

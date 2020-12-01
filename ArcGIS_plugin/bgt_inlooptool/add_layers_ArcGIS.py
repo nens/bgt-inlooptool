@@ -2,10 +2,17 @@ import arcpy
 import sys
 import os
 
+from cls_General_use import GeneralUse
+arcgis_com = GeneralUse(sys, arcpy)
+
 python_version = str(sys.version)[0]
 
 # Add layers to map
 def add_layers_to_map(save_database):
+
+    # Symbology layer for both ArcMap and ArcGIS Pro
+    layers = os.path.join(os.path.dirname(__file__), 'layers')
+    symbology_layer = "bgt_inlooptabel.lyr"
 
     # TODO alternate way to check for ArcMap or ArcGIS Pro? als exe?
     if python_version == 2:
@@ -32,7 +39,6 @@ def add_layers_to_map(save_database):
             add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "test")
             arcpy.mapping.AddLayer(df, add_symbology_layer)
 
-
     elif python_version == 3:
         print('You are in ArcGIS Pro')
 
@@ -40,29 +46,53 @@ def add_layers_to_map(save_database):
         aprx = arcpy.mp.ArcGISProject("CURRENT")
         map = aprx.listMaps()[0]
 
-        arcpy.env.workspace = save_database
-        layer_list = arcpy.ListFeatureClasses()  # Also works on gpkg
+        dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
+        # TODO if directly from gpkg werkend maken!
+        try:
+            layer = map.addDataFromPath(dataset)
+        except Exception:
+            arcgis_com.Traceback()
 
-        for layer in layer_list:
-            dataset = os.path.join(save_database, layer)
-            map.addDataFromPath(dataset)
+        # If gpkg does not work
+        out_dataset = layers_to_gdb(save_database, dataset)
+        layer = map.addDataFromPath(out_dataset)
 
-def layers_to_gdb(input_geopackage, output_gdb):
-
-    # TODO bepalen of we alleen een nieuwe gdb doen of niet?
-    arcpy.CreateFileGDB_management(os.path.dirname(output_gdb), os.path.basename(output_gdb))
-
-    arcpy.env.workspace = input_geopackage
-    layer_list = arcpy.ListFeatureClasses()
-    for layer in layer_list:
-        desc_layer = arcpy.Describe(layer)
-        layername = str(layer[5:])
-        print(layername)
-        arcpy.FeatureClassToFeatureClass_conversion(layer, output_gdb, layername)
-        print('wait!')
+        # Apply the symbology from the symbology layer to the input layer
+        arcpy.ApplySymbologyFromLayer_management(layer, symbology_layer)
 
 
-    print('Klaar!')
+def layers_to_gdb(save_database, dataset):
+
+    # If gpkg does not work
+    save_gdb = save_database.replace('.gpkg', '.gdb')
+    if not arcpy.Exists(save_gdb):
+        ws = arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename((save_gdb)))
+    arcpy.env.workspace = ws
+    fc_name = 'main_bgt_inlooptabel'
+    arcpy.FeatureClassToGeodatabase_conversion(dataset, fc_name)
+    out_dataset = os.path.join(save_database, 'main_bgt_inlooptabel')
+
+    return out_dataset
+
+def bgt_inloop_symbology(out_dataset):
+
+    arcpy.AddField_management(out_dataset, 'categorie', 'TEXT', field_length=100)
+    field_list = ['hemelwaterriool', 'gemengd_riool', 'niet_aangesloten', 'categorie']
+    with arcpy.da.UpdateCursor(out_dataset, field_list) as cursor:
+        for row in cursor:
+            if row[0] == 100:  # hemelwaterriool = 100
+                categorie = "RWA"
+            elif row[1] == 100:  # gemengd riool = 100
+                categorie = "Gemengd"
+            elif row[2] == 100:  # niet_aangesloten = 100
+                categorie = "Maaiveld (niet aangesloten op riolering)"
+            elif 0 < row[0] < 100 and 0 < row[1] < 100:
+                categorie = "RWA / Gemengd 50-50"
+            else:
+                categorie = "Alle andere waarden"
+            row[3] = categorie
+            cursor.updateRow(row)
+
 
 if __name__ == '__main__':
 

@@ -1,4 +1,4 @@
-class TT_GeneralUse():
+class GeneralUse():
     def __init__(self, sys, arcpy, logPrint=False, debug=False):
         """"Pass sys, arcpy. Starttime is initialised.
         logPrint = False voor logging zonder print functie"""
