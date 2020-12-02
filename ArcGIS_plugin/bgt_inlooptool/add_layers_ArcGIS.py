@@ -10,33 +10,25 @@ def add_layers_to_map(save_database, arcgis_com):
     try:
         # Symbology layer for both ArcMap and ArcGIS Pro
         layers = os.path.join(os.path.dirname(__file__), 'layers')
-        symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyrx")
+        symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyr")
         arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
+
+        dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
+        # temporary, create copy
+        out_dataset = layers_to_gdb(save_database, dataset)
 
         # TODO alternate way to check for ArcMap or ArcGIS Pro? als exe?
         if python_version == 2:
             arcgis_com.AddMessage('You are in ArcMap')
 
             # Weergeven van resultaten in ArcMap
-            try:
-                mxd = arcpy.mapping.MapDocument('CURRENT')
-            except:
-                mxd = None
-                arcpy.AddMessage('Niet in ArcMap')
-            if not mxd is None:
-                arcpy.AddMessage('In ArcMap')
-                df = arcpy.mapping.ListDataFrames(mxd)[0]
-                layer_dir = os.path.join(os.path.dirname(__file__), "Layers")
+            mxd = arcpy.mapping.MapDocument('CURRENT')
+            df = arcpy.mapping.ListDataFrames(mxd)[0]
 
-                # gpkg layer toevoegen in ArcMap lijkt niet te werken via Python
-                # Add Layer
-                add_layer1 = arcpy.mapping.Layer("uitlaat_vlak")
-                arcpy.mapping.AddLayer(df, add_layer1, "AUTO_ARRANGE")
-
-                # Add layer with symbology
-                add_symbology_layer = arcpy.mapping.Layer(os.path.join(layer_dir, 'test.lyr'))
-                add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "test")
-                arcpy.mapping.AddLayer(df, add_symbology_layer)
+            # Add layer with symbology
+            add_symbology_layer = arcpy.mapping.Layer(symbology_layer_path)
+            add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "test")
+            arcpy.mapping.AddLayer(df, add_symbology_layer)
 
         elif python_version == 3:
             arcgis_com.AddMessage('You are in ArcGIS Pro')
@@ -46,7 +38,6 @@ def add_layers_to_map(save_database, arcgis_com):
             aprx = arcpy.mp.ArcGISProject("CURRENT")
             map = aprx.listMaps()[0]
 
-            dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
             # TODO if directly from gpkg werkend maken!
             # try:
             #     layer = map.addDataFromPath(dataset)
@@ -56,7 +47,6 @@ def add_layers_to_map(save_database, arcgis_com):
             #     arcgis_com.Traceback()
 
             # If gpkg does not work
-            out_dataset = layers_to_gdb(save_database, dataset)
             new_layer = map.addDataFromPath(out_dataset)
 
             # Apply the symbology from the symbology layer to the input layer
