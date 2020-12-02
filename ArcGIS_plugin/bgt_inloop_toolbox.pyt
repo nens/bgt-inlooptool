@@ -6,6 +6,11 @@ Date: 29/09/2020
 """
 from bgt_inlooptool.bgt_inlooptool_ArcGIS import BGTInloopToolArcGIS
 
+# installs the gdal wheel for python 2 if not installed?
+# TODO is python always installed for ArcGIS Pro?
+from installs.install_packages import try_install_gdal
+try_install_gdal()
+
 
 class Toolbox(object):
 

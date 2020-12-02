@@ -18,10 +18,6 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 from cls_general_use import GeneralUse
 from common import BaseTool, parameter
 from add_layers_ArcGIS import add_layers_to_map
-# installs the gdal wheel for python 2 if not installed?
-# TODO is python always installed for ArcGIS Pro?
-from installs.install_packages import try_install_gdal
-try_install_gdal()
 
 # import bgt inlooptool
 # TODO voor arcmap mogelijk zonder core.
