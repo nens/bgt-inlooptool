@@ -315,7 +315,7 @@ class BGTInloopTool:
             self.first_start = False
             
             if not USE_INDEX:
-                iface.messageBar().pushMessage("Error", "rtree not installed, performance will be slower than optimal", level=Qgis.Warning)
+                iface.messageBar().pushMessage("Warning", "rtree not installed, performance will be slower than optimal", level=Qgis.Warning)
 
             self.dlg = BGTInloopToolDialog()
             # Initiating the tool in 'on_run'
