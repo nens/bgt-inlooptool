@@ -6,7 +6,7 @@
 name=BGT Inlooptool
 qgisMinimumVersion=3.0
 description=BGT Inlooptool
-version=0.4
+version=0.5
 author=Emile de Badts
 email=emile.debadts@nelen-schuurmans.nl
 
