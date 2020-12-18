@@ -10,12 +10,12 @@ def add_layers_to_map(save_database, arcgis_com):
     try:
         # Symbology layer for both ArcMap and ArcGIS Pro
         layers = os.path.join(os.path.dirname(__file__), 'layers')
-        symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyr")
+        symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyrx")
         arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
 
         dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
-        # temporary, create copy
-        out_dataset = layers_to_gdb(save_database, dataset)
+        # temporary, create copy in a gdb, because the right field is not available
+        dataset = _layers_to_gdb(save_database, dataset)
 
         # TODO alternate way to check for ArcMap or ArcGIS Pro? als exe?
         if python_version == 2:
@@ -38,28 +38,23 @@ def add_layers_to_map(save_database, arcgis_com):
             aprx = arcpy.mp.ArcGISProject("CURRENT")
             map = aprx.listMaps()[0]
 
-            # TODO if directly from gpkg werkend maken!
+            # # TODO if directly from gpkg, eerst moet N&S symbology veld toevoegen in code
             # try:
             #     layer = map.addDataFromPath(dataset)
-            #     # arcpy.ApplySymbologyFromLayer_management(layer, symbology_layer)
+            #     symbology_layer = arcpy.mp.LayerFile(symbology_layer_path)
+            #     arcpy.ApplySymbologyFromLayer_management(layer, symbology_layer)
             #     # TODO als Nelen en Schuurman dit in de core doet aanzetten!
             # except Exception:
             #     arcgis_com.Traceback()
 
             # If gpkg does not work
-            new_layer = map.addDataFromPath(out_dataset)
-
+            layer = map.addDataFromPath(dataset)
+            layer_file = arcpy.mp.LayerFile(symbology_layer_path)
+            arcpy.ApplySymbologyFromLayer_management(layer, layer_file)
             # Apply the symbology from the symbology layer to the input layer
             # arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
             # door bug wordt dit niet goed weergegeven vanuit de tool. fix in ArcGIS Pro 2.7
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDEyMDkwNg==
-
-            # alternative
-            # add layer to map, apply symbology and delete layerfile
-            layer_file = arcpy.mp.LayerFile(symbology_layer_path)
-            sym_lyr = map.addLayer(layer_file)[0]
-            arcpy.ApplySymbologyFromLayer_management(new_layer, sym_lyr)
-            map.removeLayer(sym_lyr)
 
         else:
             arcgis_com.AddMessage('Python version is {} and is not supported'.format(python_version))
@@ -67,7 +62,7 @@ def add_layers_to_map(save_database, arcgis_com):
         arcgis_com.Traceback()
 
 
-def layers_to_gdb(save_database, dataset):
+def _layers_to_gdb(save_database, dataset):
 
     # If gpkg does not work
     save_gdb = save_database.replace('.gpkg', '.gdb')
@@ -78,12 +73,12 @@ def layers_to_gdb(save_database, dataset):
     arcpy.env.overwriteOutput = True
     fc_name = 'main_bgt_inlooptabel'
     out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, ws, fc_name))
-    bgt_inloop_symbology(out_dataset)
+    _bgt_inloop_symbology(out_dataset)
     # out_dataset = os.path.join(save_database, 'main_bgt_inlooptabel')
 
     return out_dataset
 
-def bgt_inloop_symbology(out_dataset):
+def _bgt_inloop_symbology(out_dataset):
 
     arcpy.AddField_management(out_dataset, 'categorie', 'TEXT', field_length=100)
     field_list = ['hemelwaterriool', 'gemengd_riool', 'niet_aangesloten', 'categorie']

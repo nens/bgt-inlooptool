@@ -214,22 +214,8 @@ class BGTInloopToolArcGIS(BaseTool):
             # self.arcgis_com.AddMessage("Exporting to GPKG")
             # self.it._database._write_to_disk(output_gpkg)
 
-            # import ogr
-            # GPKG_DRIVER = ogr.GetDriverByName("GPKG")
-            # GPKG_DRIVER.CopyDataSource(self.it._database.mem_database, database_fn)
-            # TODO schrijven naar gdb werkend maken!
-            # self.arcgis_com.AddMessage("Exporting to GDB")
-            # onderstaande lijkt niet te werken
-            # import ogr
-            # output_gdb = r'C:\GIS\output.gdb'
-            # gdb_driver = ogr.GetDriverByName("OpenFileGDB")
-            # gdb_driver.CopyDataSource(self.it._database.mem_database, output_gdb)
-            # http://pcjericks.github.io/py-gdalogr-cookbook/layers.html#filter-and-select-input-shapefile-to-new-output-shapefile-like-ogr2ogr-cli
-            # https://www.esri.com/arcgis-blog/products/product/data-management/how-to-use-ogc-geopackages-in-arcgis-pro/
-            # ogr_lyr = self.it._database.mem_database.GetLayerByName('bgt_inlooptabel')
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map
-
             self.arcgis_com.AddMessage("Visualiseren van resultaten BGT Inlooptool!")
             add_layers_to_map(output_gpkg, self.arcgis_com)
 
@@ -257,7 +243,7 @@ if __name__ == '__main__':
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
 
         # output_location
-        params[3].value = r"C:\GIS\bgt_inlooptool2.gpkg"
+        params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\test_database.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[4].value = 40
