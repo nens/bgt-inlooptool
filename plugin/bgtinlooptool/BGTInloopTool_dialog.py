@@ -27,6 +27,8 @@ import os
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 
+from qgis.core import QgsMapLayerProxyModel 
+
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'BGTInloopTool_dialog_base.ui'))
@@ -73,6 +75,19 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # Run button default disable
         self.pushButtonRun.setEnabled(False)
         self.validate()
+        
+        # BGT Api extract settings
+        self.bgtApiOutput.setStorageMode(3)
+        self.BGTExtentCombobox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        
+        # Clip extent settings
+        self.inputExtentCheckBox.clicked.connect(self.inputExtentCheckBoxChanged)
+        self.inputExtentComboBox.setEnabled(False)
+        self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+    
+    def inputExtentCheckBoxChanged(self):
+        state = self.inputExtentCheckBox.checkState()
+        self.inputExtentComboBox.setEnabled(state)
     
     def bgt_file_changed(self):
         self.validate()
@@ -87,7 +102,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         valid = True
         
-        # Check if zipfile
+        # Check pipe file 
         bgt_file = self.bgt_file.filePath()
         if not os.path.isfile(bgt_file):
             valid = False
