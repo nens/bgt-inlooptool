@@ -724,6 +724,30 @@ class Database:
             # TODO more specific exception
             raise FileInputError("Ongeldige input: BGT zip file")
             
+    def import_kolken(self, file_path):
+            
+        """
+
+        """
+        kolken_abspath = os.path.abspath(file_path)
+        if not os.path.isfile(kolken_abspath):
+            raise FileNotFoundError(
+                "Kolken GeoPackage niet gevonden: {}".format(kolken_abspath)
+            )
+        kolken_ds = ogr.Open(file_path)
+        # TODO more thorough checks of validity of input geopackage
+        try:
+            self.mem_database.CopyLayer(
+                kolken_ds[0], KOLKEN_TABLE_NAME
+            )
+        except Exception:
+            # TODO more specific exception
+            raise FileInputError(
+                "Ongeldige input: {} is geen geldige GeoPackage".format(
+                    kolken_abspath
+                )
+            )
+
     def add_index_to_inputs(self):
         """
         add index to input layers if rtree is installed
