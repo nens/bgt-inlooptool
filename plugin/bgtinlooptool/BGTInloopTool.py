@@ -107,9 +107,8 @@ class InloopToolTask(QgsTask):
                     qgs_lyr = as_qgis_memory_layer(ogr_lyr, 'BGT Inlooptabel')
                     project = QgsProject.instance()
                     project.addMapLayer(qgs_lyr)
-                    layer =QgsProject.instance().mapLayersByName('BGT Inlooptabel')[0]
-                    layer.loadNamedStyle(INLOOPTABEL_STYLE)
-                    layer.triggerRepaint()
+                    qgs_lyr.loadNamedStyle(INLOOPTABEL_STYLE)
+                    qgs_lyr.triggerRepaint()
         
         else:
             if self.exception is None:
