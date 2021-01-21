@@ -6,264 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1165</width>
-    <height>584</height>
+    <width>954</width>
+    <height>596</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>BGT Inlooptool</string>
   </property>
-  <widget class="QgsFileWidget" name="bgt_file">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>20</y>
-     <width>551</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsFileWidget" name="pipe_file">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>70</y>
-     <width>551</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>20</y>
-     <width>131</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>BGT vlakken (.zip)</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>70</y>
-     <width>161</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>GWSW leidingen (.gpkg)</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>289</y>
-     <width>271</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max. afstand afwateringsvoorziening</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>339</y>
-     <width>261</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max. afstand verhardingsvlak - opp. water</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>389</y>
-     <width>271</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max. afstand pand - opp. water</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_6">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>439</y>
-     <width>271</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max. afstand verhardingsvlak - kolk</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_7">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>489</y>
-     <width>271</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max. afstand afgekoppeld stelsel</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_8">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>539</y>
-     <width>241</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max. afstand drievoudig stelsel</string>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_afwateringsvoorziening">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>289</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_oppwater">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>339</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="max_afstand_pand_oppwater">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>389</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_kolk">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>439</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="max_afstand_afgekoppeld">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>489</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="max_afstand_drievoudig">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>539</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_9">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>390</y>
-     <width>181</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Afkoppelen hellende daken </string>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="afkoppelen_hellende_daken">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>390</y>
-     <width>81</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_10">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>440</y>
-     <width>241</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Bouwjaar gescheiden binnenhuisriolering</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_11">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>120</y>
-     <width>161</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>BAG panden (.gpkg)</string>
-   </property>
-  </widget>
-  <widget class="QgsFileWidget" name="building_file">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>120</y>
-     <width>551</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QPushButton" name="pushButtonRun">
    <property name="geometry">
     <rect>
-     <x>540</x>
-     <y>540</y>
+     <x>330</x>
+     <y>550</y>
      <width>241</width>
      <height>28</height>
     </rect>
@@ -272,44 +26,11 @@
     <string>Bereken afwateringskenmerken</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_12">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>170</y>
-     <width>121</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>DEM (.tif)</string>
-   </property>
-  </widget>
-  <widget class="QgsFileWidget" name="dem_file">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>170</y>
-     <width>551</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QSpinBox" name="bouwjaar_gescheiden_binnenhuisriolering">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>440</y>
-     <width>81</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QListWidget" name="listWidget">
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>40</y>
+     <x>600</x>
+     <y>50</y>
      <width>341</width>
      <height>531</height>
     </rect>
@@ -318,8 +39,8 @@
   <widget class="QLabel" name="label_13">
    <property name="geometry">
     <rect>
-     <x>820</x>
-     <y>10</y>
+     <x>600</x>
+     <y>20</y>
      <width>55</width>
      <height>16</height>
     </rect>
@@ -328,74 +49,310 @@
     <string>Info</string>
    </property>
   </widget>
-  <widget class="QgsFileWidget" name="kolken_file">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>220</y>
-     <width>551</width>
-     <height>27</height>
-    </rect>
+  <widget class="QTabWidget" name="TabWidget">
+   <property name="enabled">
+    <bool>true</bool>
    </property>
-  </widget>
-  <widget class="QLabel" name="label_14">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>220</y>
-     <width>121</width>
-     <height>16</height>
+     <y>30</y>
+     <width>561</width>
+     <height>501</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Kolken (.shp)</string>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>100</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
-  </widget>
-  <widget class="QLabel" name="label_15">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>290</y>
-     <width>201</width>
-     <height>16</height>
-    </rect>
+   <property name="currentIndex">
+    <number>0</number>
    </property>
-   <property name="text">
-    <string>Verhardingsgraad erf</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_16">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>340</y>
-     <width>201</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Verhardingsgraad half verhard</string>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="verhardingsgraad_erf">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>290</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QgsDoubleSpinBox" name="verhardingsgraad_half_verhard">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>340</y>
-     <width>90</width>
-     <height>27</height>
-    </rect>
-   </property>
+   <widget class="QWidget" name="input_tab">
+    <attribute name="title">
+     <string>Input</string>
+    </attribute>
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>501</width>
+       <height>201</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>BGT vlakken (.zip)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QgsFileWidget" name="bgt_file"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>GWSW leidingen (.gpkg)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QgsFileWidget" name="pipe_file"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>BAG panden (.gpkg)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QgsFileWidget" name="building_file"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>DEM (.tif)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QgsFileWidget" name="dem_file"/>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>Kolken (.shp)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QgsFileWidget" name="kolken_file"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QgsMapLayerComboBox" name="BGTExtentCombobox">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>260</y>
+       <width>351</width>
+       <height>27</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QgsMapLayerComboBox" name="inputExtentComboBox">
+     <property name="geometry">
+      <rect>
+       <x>250</x>
+       <y>436</y>
+       <width>271</width>
+       <height>27</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_19">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>310</y>
+       <width>125</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Output zip</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButtonDownloadBGT">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>350</y>
+       <width>93</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Download</string>
+     </property>
+    </widget>
+    <widget class="QgsFileWidget" name="bgtApiOutput">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>310</y>
+       <width>341</width>
+       <height>27</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_17">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>260</y>
+       <width>125</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Extent layer</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_18">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>440</y>
+       <width>173</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Selecteer inputs binnen extent</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="inputExtentCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>440</y>
+       <width>16</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="settings_tab">
+    <attribute name="title">
+     <string>Instellingen</string>
+    </attribute>
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>381</width>
+       <height>461</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Max. afstand afwateringsvoorziening</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_afwateringsvoorziening"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Max. afstand verhardingsvlak - opp. water</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_oppwater"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Max. afstand pand - opp. water</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QgsDoubleSpinBox" name="max_afstand_pand_oppwater"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Max. afstand verhardingsvlak - kolk</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_kolk"/>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Max. afstand afgekoppeld stelsel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QgsDoubleSpinBox" name="max_afstand_afgekoppeld"/>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Max. afstand drievoudig stelsel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QgsDoubleSpinBox" name="max_afstand_drievoudig"/>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>Verhardingsgraad erf</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QgsDoubleSpinBox" name="verhardingsgraad_erf"/>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>Verhardingsgraad half verhard</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QgsDoubleSpinBox" name="verhardingsgraad_half_verhard"/>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Afkoppelen hellende daken </string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QCheckBox" name="afkoppelen_hellende_daken">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Bouwjaar gescheiden binnenhuisriolering</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QSpinBox" name="bouwjaar_gescheiden_binnenhuisriolering"/>
+      </item>
+     </layout>
+    </widget>
+   </widget>
   </widget>
  </widget>
  <customwidgets>
@@ -408,6 +365,11 @@
    <class>QgsFileWidget</class>
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

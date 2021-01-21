@@ -60,6 +60,7 @@ SOURCE_PIPES_TABLE_NAME = "default_lijn"
 SURFACES_TABLE_NAME = 'bgt_oppervlak'
 PIPES_TABLE_NAME = 'pipes'
 BUILDINGS_TABLE_NAME = 'buildings'
+KOLKEN_TABLE_NAME = 'kolken'
 RESULT_TABLE_NAME = 'bgt_inlooptabel'
 
 RESULT_TABLE_FIELD_ID = 'id'
