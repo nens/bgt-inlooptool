@@ -8,18 +8,18 @@ python_version = int(str(sys.version)[0])
 def add_layers_to_map(save_database, arcgis_com):
     # Add layers to map
     try:
-        # Symbology layer for both ArcMap and ArcGIS Pro
-        layers = os.path.join(os.path.dirname(__file__), 'layers')
-        symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyrx")
-        arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
-
         dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
         # temporary, create copy in a gdb, because the right field is not available
         dataset = _layers_to_gdb(save_database, dataset)
+        layers = os.path.join(os.path.dirname(__file__), 'layers')
 
         # TODO alternate way to check for ArcMap or ArcGIS Pro? als exe?
         if python_version == 2:
             arcgis_com.AddMessage('You are in ArcMap')
+
+            # Symbology layer for both ArcMap and ArcGIS Pro
+            symbology_layer_path = os.path.join(layers, "symb_bgt_inlooptabel.lyr")
+            arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
 
             # Weergeven van resultaten in ArcMap
             mxd = arcpy.mapping.MapDocument('CURRENT')
@@ -27,11 +27,15 @@ def add_layers_to_map(save_database, arcgis_com):
 
             # Add layer with symbology
             add_symbology_layer = arcpy.mapping.Layer(symbology_layer_path)
-            add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "test")
+            add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "main_bgt_inlooptabel")
             arcpy.mapping.AddLayer(df, add_symbology_layer)
 
         elif python_version == 3:
             arcgis_com.AddMessage('You are in ArcGIS Pro')
+
+            # Symbology layer for both ArcMap and ArcGIS Pro
+            symbology_layer_path = os.path.join(layers, "inlooptabel_bgt.lyrx")
+            arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
 
             # Read ArcGIS Pro project and Map
             # aprx = arcpy.mp.ArcGISProject(r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
@@ -48,9 +52,12 @@ def add_layers_to_map(save_database, arcgis_com):
             #     arcgis_com.Traceback()
 
             # If gpkg does not work
-            layer = map.addDataFromPath(dataset)
+            input_layer = map.addDataFromPath(dataset)
             layer_file = arcpy.mp.LayerFile(symbology_layer_path)
-            arcpy.ApplySymbologyFromLayer_management(layer, layer_file)
+            for layer in layer_file.listLayers():
+                sym_layer = layer
+            arcpy.ApplySymbologyFromLayer_management(input_layer, sym_layer,
+                                                     [["VALUE_FIELD", "categorie", "categorie"]])
             # Apply the symbology from the symbology layer to the input layer
             # arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
             # door bug wordt dit niet goed weergegeven vanuit de tool. fix in ArcGIS Pro 2.7
