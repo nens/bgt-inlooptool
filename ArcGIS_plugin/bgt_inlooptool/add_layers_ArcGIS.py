@@ -4,9 +4,9 @@ import os
 
 python_version = int(str(sys.version)[0])
 
-# Add layers to map
-def add_layers_to_map(save_database, arcgis_com):
 
+def add_layers_to_map(save_database, arcgis_com):
+    # Add layers to map
     try:
         # Symbology layer for both ArcMap and ArcGIS Pro
         layers = os.path.join(os.path.dirname(__file__), 'layers')
@@ -77,6 +77,7 @@ def _layers_to_gdb(save_database, dataset):
     # out_dataset = os.path.join(save_database, 'main_bgt_inlooptabel')
 
     return out_dataset
+
 
 def _bgt_inloop_symbology(out_dataset):
 

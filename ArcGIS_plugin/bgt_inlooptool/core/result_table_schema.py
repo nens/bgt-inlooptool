@@ -21,4 +21,4 @@ FIELDS = {
 
 PRIMARY_KEY = 'id'
 GEOMETRY_COLUMN = 'geom'
-GEOMETRY_TYPE = ogr.wkbCurvePolygon
+GEOMETRY_TYPE = ogr.wkbPolygon

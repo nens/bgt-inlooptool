@@ -76,8 +76,8 @@ class BGTInloopToolArcGIS(BaseTool):
             parameter(displayName='Opslag locatie gdb',
                       name='output_gpkg',
                       datatype='DEDatasetType',
-                      # parameterType='Required',
-                      # direction='Output'),
+                      parameterType='Required',
+                      direction='Output',
                       defaultValue=r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem_database.gpkg"),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
                       name='max_vlak_afwatervoorziening',
@@ -195,24 +195,24 @@ class BGTInloopToolArcGIS(BaseTool):
                 verhardingsgraad_erf=parameters[12].value,
                 verhardingsgraad_half_verhard=parameters[13].value)
 
-            # self.it = InloopTool(core_parameters)
-            #
-            # # Import surfaces and pipes
-            # self.arcgis_com.AddMessage("Importing BGT files")
-            # self.it.import_surfaces(bgt_file)
-            # self.arcgis_com.AddMessage("Importing pipe files")
-            # self.it.import_pipes(pipe_file)
-            # self.arcgis_com.AddMessage("Importing building files")
-            # self.it.import_buildings(building_file)
-            # self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
-            # self.arcgis_com.AddMessage("Calculating distances")
-            # self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
-            # self.arcgis_com.AddMessage("Calculating Runoff targets")
-            # self.it.calculate_runoff_targets()
-            #
-            # # Export results
-            # self.arcgis_com.AddMessage("Exporting to GPKG")
-            # self.it._database._write_to_disk(output_gpkg)
+            self.it = InloopTool(core_parameters)
+
+            # Import surfaces and pipes
+            self.arcgis_com.AddMessage("Importing BGT files")
+            self.it.import_surfaces(bgt_file)
+            self.arcgis_com.AddMessage("Importing pipe files")
+            self.it.import_pipes(pipe_file)
+            self.arcgis_com.AddMessage("Importing building files")
+            self.it.import_buildings(building_file)
+            self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
+            self.arcgis_com.AddMessage("Calculating distances")
+            self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
+            self.arcgis_com.AddMessage("Calculating Runoff targets")
+            self.it.calculate_runoff_targets()
+
+            # Export results
+            self.arcgis_com.AddMessage("Exporting to GPKG")
+            self.it._database._write_to_disk(output_gpkg)
 
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map
