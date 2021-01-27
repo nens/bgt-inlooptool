@@ -26,7 +26,7 @@ except ImportError:
     USE_INDEX = False
 
 # Local imports
-from core import result_table_schema as schema
+from core.table_schemas import *
 from core.constants import *
 from core.constants import (
     ALL_USED_SURFACE_TYPES,
@@ -80,14 +80,14 @@ class InputParameters:
                  bouwjaar_gescheiden_binnenhuisriolering=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
                  verhardingsgraad_erf=VERHARDINGSGRAAD_ERF,
                  verhardingsgraad_half_verhard=VERHARDINGSGRAAD_HALF_VERHARD):
-        self.max_afstand_vlak_afwateringsvoorziening = (max_afstand_vlak_afwateringsvoorziening)
+        self.max_afstand_vlak_afwateringsvoorziening = max_afstand_vlak_afwateringsvoorziening
         self.max_afstand_vlak_oppwater = max_afstand_vlak_oppwater
         self.max_afstand_pand_oppwater = max_afstand_pand_oppwater
         self.max_afstand_vlak_kolk = max_afstand_vlak_kolk
         self.max_afstand_afgekoppeld = max_afstand_afgekoppeld
         self.max_afstand_drievoudig = max_afstand_drievoudig
         self.afkoppelen_hellende_daken = afkoppelen_hellende_daken
-        self.bouwjaar_gescheiden_binnenhuisriolering = (bouwjaar_gescheiden_binnenhuisriolering)
+        self.bouwjaar_gescheiden_binnenhuisriolering = bouwjaar_gescheiden_binnenhuisriolering
         self.verhardingsgraad_erf = verhardingsgraad_erf
         self.verhardingsgraad_half_verhard = verhardingsgraad_half_verhard
 
@@ -157,9 +157,14 @@ class InloopTool:
 
         def verhard():
             """Is het oppervlak (mogelijk/deels) verhard?"""
+            a = surface.type_verharding
             if surface.surface_type in NON_CONNECTABLE_SURFACE_TYPES:
                 return False
-            elif surface.type_verharding in FYSIEK_VOORKOMEN_VERHARD:
+            elif surface.type_verharding in {
+                VERHARDINGSTYPE_PAND,
+                VERHARDINGSTYPE_OPEN_VERHARD,
+                VERHARDINGSTYPE_GESLOTEN_VERHARD
+            }:
                 return True
             else:
                 return False
@@ -501,13 +506,17 @@ class InloopTool:
         result_table = self._database.result_table
         feature_defn = result_table.GetLayerDefn()
 
-        for surface in bgt_surfaces:
+        for fid, surface in enumerate(bgt_surfaces):
             feature = ogr.Feature(feature_defn)
             surface_geometry = surface.GetGeometryRef()
             fixed_geometry = ogr.ForceToPolygon(surface_geometry)
             feature.SetGeometry(fixed_geometry)
 
             afwatering = self.decision_tree(surface, self.parameters)
+            feature.SetField(
+                RESULT_TABLE_FIELD_ID,
+                fid,
+            )
             feature.SetField(
                 RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -553,8 +562,8 @@ class Database:
         self.epsg = epsg
         self.srs = osr.SpatialReference()
         self.srs.ImportFromEPSG(epsg)
-        self.mem_database = MEM_DRIVER.CreateDataSource("/vsimem/_database.gpkg")
-        self.empty_result_table()
+        self.mem_database = MEM_DRIVER.CreateDataSource('')
+        self.create_table(table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA),
         self._sql_dir = SQL_DIR
 
     @property
@@ -585,16 +594,18 @@ class Database:
         """
         return self.mem_database.GetLayerByName(BUILDINGS_TABLE_NAME)
 
-    def empty_result_table(self):
-        """Create or replace the result table"""
+    def create_table(self, table_name, table_schema):
+        """Create or replace the result table
+        :param table_schema:
+        :param table_name:
+        """
         lyr = self.mem_database.CreateLayer(
-            RESULT_TABLE_NAME,
+            table_name,
             self.srs,
-            geom_type=schema.GEOMETRY_TYPE,
-            options=["FID={}".format(schema.PRIMARY_KEY)],
-        )  # spatial index is added by default
+            geom_type=table_schema.geometry_type
+        )
 
-        for fieldname, datatype in schema.FIELDS.items():
+        for fieldname, datatype in table_schema.fields.items():
             field_defn = ogr.FieldDefn(fieldname, datatype)
             lyr.CreateField(field_defn)
 
@@ -818,15 +829,6 @@ class Database:
         layer = self.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
         if layer is None:
             raise DatabaseOperationError
-        # add fields if not exists
-        for field_name in [
-            RESULT_TABLE_FIELD_TYPE_VERHARDING,
-            RESULT_TABLE_FIELD_GRAAD_VERHARDING,
-        ]:
-            if layer.FindFieldIndex(field_name, 1) == -1:
-                field_defn = ogr.FieldDefn(field_name, ogr.OFTString)
-                field_defn.SetWidth(60)
-                layer.CreateField(field_defn)
 
         for feature in layer:
             if feature:
@@ -878,12 +880,43 @@ class Database:
                 layer.SetFeature(feature)
         layer = None
 
+    def merge_surfaces(self):
+        """ Merge and standardize all imported surfaces to one layer"""
+        self.create_table(table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA)
+        dest_layer = self.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
+        id_counter = 1
+        for surface in ALL_USED_SURFACE_TYPES:
+            input_layer = self.mem_database.GetLayerByName(surface)
+            for i in range(0, input_layer.GetFeatureCount()):
+                feature = input_layer.GetFeature(i)
+                if feature:
+                    if feature["eindRegistratie"] is None:
+                        if hasattr(feature, "plus-status"):
+                            if feature["plus-status"] in ["plan", "historie"]:
+                                continue
+                        new_feature = ogr.Feature(dest_layer.GetLayerDefn())
+                        new_feature.SetField('id', id_counter)
+                        id_counter += 1
+                        new_feature.SetField(
+                            "identificatie_lokaalid", feature["identificatie.lokaalID"]
+                        )
+                        new_feature.SetField("surface_type", surface)
+
+                        if surface in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
+                            new_feature["bgt_fysiek_voorkomen"] = feature[
+                                "bgt-fysiekVoorkomen"
+                            ]
+                        target_geometry = ogr.ForceToPolygon(feature.geometry())
+                        target_geometry.AssignSpatialReference(self.srs)
+                        new_feature.SetGeometry(target_geometry)
+                        dest_layer.CreateFeature(new_feature)
+                        target_geometry = None
+                        new_feature = None
+        dest_layer = None
+
     def add_build_year_to_surface(self, field_name='bouwjaar', use_index=USE_INDEX):
         print('Started add_build_year_to_surface...')
         surfaces = self.bgt_surfaces
-        surfaces.CreateField(ogr.FieldDefn('build_year', ogr.OFTReal))
-        print('... created field build_year')
-        self.mem_database.FlushCache()
         surfaces.ResetReading()
 
         print(f'use_index: {use_index}')
@@ -906,69 +939,6 @@ class Database:
 
         print('... done')
         return
-
-    def merge_surfaces(self):
-        """ Merge and standardize all imported surfaces to one layer"""
-        dest_layer = self.mem_database.CreateLayer(
-            SURFACES_TABLE_NAME, self.srs, 3, ["OVERWRITE=YES", "GEOMETRY_NAME=geom"]
-        )
-
-        # adding fields to new layer
-        add_text_fields = [
-            "identificatie_lokaalid",
-            "surface_type",
-            "bgt_fysiek_voorkomen",
-        ]
-
-        for field in add_text_fields:
-            field_name = ogr.FieldDefn(field, ogr.OFTString)
-            field_name.SetWidth(60)
-            dest_layer.CreateField(field_name)
-
-        add_real_fields = [
-            "distance_oppervlaktewater",
-            "distance_hemelwaterriool",
-            "distance_vuilwaterriool",
-            "distance_infiltratievoorziening",
-            "distance_gemengd_riool",
-        ]
-
-        for field in add_real_fields:
-            field_name = ogr.FieldDefn(field, ogr.OFTReal)
-            field_name.SetWidth(20)
-            dest_layer.CreateField(field_name)
-
-        for surface in ALL_USED_SURFACE_TYPES:
-            input_layer = self.mem_database.GetLayerByName(surface)
-
-            for i in range(0, input_layer.GetFeatureCount()):
-                feature = input_layer.GetFeature(i)
-
-                if feature:
-
-                    if feature["eindRegistratie"] is None:
-                        if hasattr(feature, "plus-status"):
-                            if feature["plus-status"] in ["plan", "historie"]:
-                                continue
-                        new_feature = ogr.Feature(dest_layer.GetLayerDefn())
-                        new_feature.SetField(
-                            "identificatie_lokaalid", feature["identificatie.lokaalID"]
-                        )
-                        new_feature.SetField("surface_type", surface)
-
-                        if surface in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
-                            new_feature["bgt_fysiek_voorkomen"] = feature[
-                                "bgt-fysiekVoorkomen"
-                            ]
-
-                        target_geometry = ogr.ForceToPolygon(feature.geometry())
-                        target_geometry.AssignSpatialReference(self.srs)
-                        new_feature.SetGeometry(target_geometry)
-                        dest_layer.CreateFeature(new_feature)
-
-                        target_geometry = None
-                        new_feature = None
-        dest_layer = None
 
     def _write_to_disk(self, file_path):
         """Copy self.mem_database to file_path"""
