@@ -30,6 +30,8 @@ def add_layers_to_map(save_database, arcgis_com):
             add_symbology_layer.replaceDataSource(save_database, "FILEGDB_WORKSPACE", "main_bgt_inlooptabel")
             arcpy.mapping.AddLayer(df, add_symbology_layer)
 
+            mxd.save()
+
         elif python_version == 3:
             arcgis_com.AddMessage('You are in ArcGIS Pro')
 
@@ -38,8 +40,8 @@ def add_layers_to_map(save_database, arcgis_com):
             arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
 
             # Read ArcGIS Pro project and Map
-            # aprx = arcpy.mp.ArcGISProject(r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
-            aprx = arcpy.mp.ArcGISProject("CURRENT")
+            aprx = arcpy.mp.ArcGISProject(r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
+            # aprx = arcpy.mp.ArcGISProject("CURRENT")
             map = aprx.listMaps()[0]
 
             # # TODO if directly from gpkg, eerst moet N&S symbology veld toevoegen in code
@@ -58,10 +60,12 @@ def add_layers_to_map(save_database, arcgis_com):
                 sym_layer = layer
             arcpy.ApplySymbologyFromLayer_management(input_layer, sym_layer,
                                                      [["VALUE_FIELD", "categorie", "categorie"]])
+            # TODO werkt wel vanuit test.py maar niet vanuit hier!
             # Apply the symbology from the symbology layer to the input layer
             # arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
             # door bug wordt dit niet goed weergegeven vanuit de tool. fix in ArcGIS Pro 2.7
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDEyMDkwNg==
+            aprx.save()
 
         else:
             arcgis_com.AddMessage('Python version is {} and is not supported'.format(python_version))

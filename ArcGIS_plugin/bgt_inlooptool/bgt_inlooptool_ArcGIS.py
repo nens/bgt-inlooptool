@@ -78,7 +78,7 @@ class BGTInloopToolArcGIS(BaseTool):
                       datatype='DEDatasetType',
                       parameterType='Required',
                       direction='Output',
-                      defaultValue=r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem_database.gpkg"),
+                      defaultValue=r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem_database5.gpkg"),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
                       name='max_vlak_afwatervoorziening',
                       datatype='GPDouble',
@@ -219,7 +219,6 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Visualiseren van resultaten BGT Inlooptool!")
             add_layers_to_map(output_gpkg, self.arcgis_com)
 
-
         except Exception:
             self.arcgis_com.Traceback()
         finally:
@@ -241,9 +240,8 @@ if __name__ == '__main__':
         params[1].value = r"C:\GIS\test_data_inlooptool\extract.zip"
         # pipe_file
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
-
         # output_location
-        params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\test_database.gpkg"
+        params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem17.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[4].value = 40
