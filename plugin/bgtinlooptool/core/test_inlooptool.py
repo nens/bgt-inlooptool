@@ -78,23 +78,7 @@ class UnitDatabase(unittest.TestCase):
                     geom_type == ogr.wkbPolygon,
                     "geometry in layer {} is not a polygon".format(surface_type)
                 )
-    
-        """ Tests if epsg is properly registered"""
-        self.db.register_epsg()
-    
-        sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id = 28992"
-        layer = self.db.mem_database.ExecuteSQL(sql)
-        self.assertTrue(layer[0]['srs_id'] == 28992, "registering failure, srs not 28992")
-    
-        """ Tests if contents are properly registered"""
-        self.db.register_surfaces()
-    
-        for surface_type in ALL_USED_SURFACE_TYPES:
-            sql = "SELECT * FROM gpkg_contents WHERE table_name = '{}';".format(surface_type)
-            layer = self.db.mem_database.ExecuteSQL(sql)
-            self.assertTrue(layer[0]['table_name'] == surface_type,
-                            "gpkg contents not registered")
-    
+      
     def test_classify(self):
         params = InputParameters()
         it = BGTInloopTool(params)

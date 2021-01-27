@@ -6,9 +6,9 @@ import time
 import tempfile
 
 try:
-    from BytesIO import BytesIO ## for Python 2
+    from BytesIO import BytesIO  ## for Python 2
 except ImportError:
-    from io import BytesIO ## for Python 3
+    from io import BytesIO  ## for Python 3
 
 # Third-party imports
 import osr
@@ -20,6 +20,7 @@ import requests
 
 try:
     import rtree
+
     USE_INDEX = True
 except ImportError:
     USE_INDEX = False
@@ -40,13 +41,13 @@ from core.constants import (
     PIPES_TABLE_NAME,
 )
 from core.defaults import *
-from core.vector import * 
 
 # Globals
 SQL_DIR = os.path.join(__file__, "sql")
 
 # Exceptions
 gdal.UseExceptions()
+
 
 class DatabaseOperationError(Exception):
     """Raised when an invalid _database operation is requested"""
@@ -62,6 +63,7 @@ class FileInputError(Exception):
 
 # Drivers
 GPKG_DRIVER = ogr.GetDriverByName("GPKG")
+MEM_DRIVER = ogr.GetDriverByName("Memory")
 
 
 class InputParameters:
@@ -110,11 +112,8 @@ class InloopTool:
         """
         self._database.import_surfaces_raw(file_path)
         self._database.clean_surfaces()
-        self._database.register_epsg()
-        self._database.register_surfaces()
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
-
 
     def import_pipes(self, file_path):
         """
@@ -139,8 +138,7 @@ class InloopTool:
         :return: None
         """
         self._database.import_kolken(file_path=file_path)
-    
-        
+
     def decision_tree(self, surface, parameters):
         """
         Determine target percentages for one surface
@@ -185,8 +183,9 @@ class InloopTool:
 
         def bij_gem_plus_hwa():
             """Ligt het oppervlak in de buurt van een straat waar naast gemengd ook rwa is gelegd?"""
-            
-            if surface.distance_gemengd_riool != 9999 and (surface.distance_hemelwaterriool != 9999 or surface.distance_infiltratievoorziening != 9999):            
+
+            if surface.distance_gemengd_riool != 9999 and (
+                    surface.distance_hemelwaterriool != 9999 or surface.distance_infiltratievoorziening != 9999):
                 return abs(surface.distance_gemengd_riool
                            -
                            min(surface.distance_hemelwaterriool,
@@ -202,7 +201,7 @@ class InloopTool:
         def hwa_dichterbij_dan_hwavgs_en_infiltr():
             """Ligt het HWA riool dichterbij dan het infiltratieriool?"""
             return surface.distance_hemelwaterriool < surface.distance_infiltratievoorziening
-            
+
         def bij_drievoudig_stelsel_crit1():
             return False
 
@@ -240,7 +239,7 @@ class InloopTool:
         elif is_bouwwerk():
             if bij_water():
                 result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
-            
+
             elif bij_gem_plus_hwa():
                 if self.parameters.afkoppelen_hellende_daken:
                     if nieuw_pand() and hellend_dak():
@@ -262,7 +261,7 @@ class InloopTool:
                                 else:
                                     result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-                    
+
                     else:
                         if gem_dichtst_bij():
                             result[TARGET_TYPE_GEMENGD_RIOOL] = 100
@@ -313,7 +312,7 @@ class InloopTool:
                             elif surface.distance_infiltratievoorziening != 9999:
                                 result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                             else:
-                                result[TARGET_TYPE_NIET_AANGESLOTEN] = 100                                
+                                result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
                 else:
                     result[TARGET_TYPE_NIET_AANGESLOTEN] = 100
         return result
@@ -345,7 +344,7 @@ class InloopTool:
         lokaalid_distances = {}
         surfaces.ResetReading()
         surfaces.SetSpatialFilter(None)
-                
+
         for surface_id in range(0, surfaces.GetFeatureCount()):
             surface = surfaces.GetFeature(surface_id)
 
@@ -509,7 +508,6 @@ class InloopTool:
             feature.SetGeometry(fixed_geometry)
 
             afwatering = self.decision_tree(surface, self.parameters)
-            # feature.SetField(RESULT_TABLE_FIELD_ID, val) --> is autoincrement field
             feature.SetField(
                 RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -518,8 +516,8 @@ class InloopTool:
                 RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
             )
 
-            feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.surface_type)
-            # feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, val) # not yet implemented
+            feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding)
+            feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding)
             # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val) # not yet implemented
             # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val) # not yet implemented
             # feature.SetField(RESULT_TABLE_FIELD_BERGING_DAK, val) # not yet implemented
@@ -555,8 +553,7 @@ class Database:
         self.epsg = epsg
         self.srs = osr.SpatialReference()
         self.srs.ImportFromEPSG(epsg)
-        self.mem_database = GPKG_DRIVER.CreateDataSource("/vsimem/_database.gpkg")
-        self.register_epsg()
+        self.mem_database = MEM_DRIVER.CreateDataSource("/vsimem/_database.gpkg")
         self.empty_result_table()
         self._sql_dir = SQL_DIR
 
@@ -587,52 +584,6 @@ class Database:
         :rtype ogr.Layer
         """
         return self.mem_database.GetLayerByName(BUILDINGS_TABLE_NAME)
-
-    def register_epsg(self):
-        """
-        Register self.srs in self.mem_database
-        Only registers srs if no row of that id exists in gpkg_spatial_ref_sys
-        """
-        if self.srs.IsProjected():
-            cstype = "PROJCS"
-        elif self.srs.IsGeographic():
-            cstype = "GEOGCS"
-        else:
-            raise ValueError("Invalid SRS")
-
-        sql = """SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id = {}""".format(
-            self.srs.GetAuthorityCode(cstype)
-        )
-        result_lyr = self.mem_database.ExecuteSQL(sql)
-        result_row_count = result_lyr.GetFeatureCount()
-        self.mem_database.ReleaseResultSet(result_lyr)
-        if result_row_count == 0:
-            sql = """
-                    INSERT INTO gpkg_spatial_ref_sys (
-                      srs_name,
-                      srs_id,
-                      organization,
-                      organization_coordsys_id,
-                      definition,
-                      description
-                    )
-                    VALUES (
-                        '{srs_name}',
-                        {srs_id},
-                        '{organization}',
-                        {organization_coordsys_id},
-                        '{definition}',
-                        '{description}'
-                    );
-                    """.format(
-                srs_name=self.srs.GetAttrValue(cstype),
-                srs_id=self.srs.GetAuthorityCode(cstype),
-                organization=self.srs.GetAuthorityName(cstype),
-                organization_coordsys_id=self.srs.GetAuthorityCode(cstype),
-                definition=self.srs.ExportToWkt(),
-                description=self.srs.GetAttrValue(cstype),
-            )
-            self.mem_database.ExecuteSQL(sql)
 
     def empty_result_table(self):
         """Create or replace the result table"""
@@ -680,26 +631,33 @@ class Database:
         :param file_path: GWSW GeoPackage
         :return: None
         """
+        print("Started import buildings")
         gwsw_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(gwsw_gpkg_abspath):
+            print("...FileNotFoundError")
             raise FileNotFoundError(
                 "GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath)
             )
+        print("...file found")
         bag_ds = ogr.Open(file_path)
+        print("...file opened")
         # TODO more thorough checks of validity of input geopackage
         try:
             self.mem_database.CopyLayer(
                 bag_ds[0], BUILDINGS_TABLE_NAME
             )
+            print("...layer copied")
         except Exception:
             # TODO more specific exception
+            print("...FileInputError")
             raise FileInputError(
                 "Ongeldige input: {} is geen geldige GWSW GeoPackage".format(
                     gwsw_gpkg_abspath
                 )
             )
-            
-            
+        print("...finished import buildings")
+        return
+
     def import_surfaces_raw(self, file_path):
         """
         Copy the required contents of the BGT zip file 'as is' to self.mem_database
@@ -723,9 +681,9 @@ class Database:
         except Exception:
             # TODO more specific exception
             raise FileInputError("Ongeldige input: BGT zip file")
-            
+
     def import_kolken(self, file_path):
-            
+
         """
 
         """
@@ -753,26 +711,31 @@ class Database:
         add index to input layers if rtree is installed
 
         """
+        print('Adding indices...')
+        print('...pipes...')
         self.pipes_idx = create_index(self.pipes)
+        print('...surfaces...')
         self.bgt_surfaces_idx = create_index(self.bgt_surfaces)
+        print('...buildings...')
         self.buildings_idx = create_index(self.buildings)
-            
+        print('...done!')
+
     def remove_input_features_outside_clip_extent(self, extent_wkt, use_index=USE_INDEX):
-        
+
         extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
-        
+
         pipes = self.pipes
         bgt_surfaces = self.bgt_surfaces
         buildings = self.buildings
-        
+
         if use_index:
-            
+
             for pipe_id in self.pipes_idx.intersection(extent_geometry.GetEnvelope()):
                 pipe = pipes.GetFeature(pipe_id)
                 pipe_geom = pipe.geometry()
                 if pipe_geom.Intersects(extent_geometry):
                     pipes.DeleteFeature(pipe_id)
-            
+
             for surface_id in self.bgt_surfaces_idx.intersection(extent_geometry.GetEnvelope()):
                 surface = bgt_surfaces.GetFeature(surface_id)
                 surface_geom = surface.geometry()
@@ -784,14 +747,14 @@ class Database:
                 building_geom = building.geometry()
                 if building_geom.Intersects(extent_geometry):
                     buildings.DeleteFeature(building_id)
-                    
+
         else:
             pipes.SetSpatialFilter(extent_geometry)
             for pipe in pipes:
                 pipe_geom = pipe.geometry()
                 if pipe_geom.Intersects(extent_geometry):
                     pipes.DeleteFeature(pipe.GetFID())
-                    
+
             bgt_surfaces.SetSpatialFilter(extent_geometry)
             for surface in bgt_surfaces:
                 surface_geom = surface.geometry()
@@ -803,15 +766,14 @@ class Database:
                 building_geom = building.geometry()
                 if building_geom.Intersects(extent_geometry):
                     buildings.DeleteFeature(building.GetFID())
-        
-        
+
         pipes.ResetReading()
         bgt_surfaces.ResetReading()
         buildings.ResetReading()
-        
+
         pipes = None
         bgt_surfaces = None
-        buildings = None 
+        buildings = None
 
     def clean_surfaces(self):
         """
@@ -821,7 +783,6 @@ class Database:
         """
         for stype in ALL_USED_SURFACE_TYPES:
             lyr = self.mem_database.GetLayerByName(stype)
-            lyr.StartTransaction()
             for f in lyr:
                 geom = f.GetGeometryRef()
                 geom_type = geom.GetGeometryType()
@@ -848,59 +809,13 @@ class Database:
                         )
                     )
 
-            lyr.CommitTransaction()
+            lyr.ResetReading()
+            self.mem_database.FlushCache()
             lyr = None
-
-    def register_surfaces(self):
-        """Register tables in self.mem_database's geopackage admin tables"""
-        for stype in ALL_USED_SURFACE_TYPES:
-            lyr = self.mem_database.GetLayerByName(stype)
-            x0, x1, y0, y1 = lyr.GetExtent()
-            sql = """DELETE FROM gpkg_contents WHERE table_name = '{}';""".format(stype)
-            self.mem_database.ExecuteSQL(sql)
-            sql = """
-                    INSERT INTO gpkg_contents (
-                        table_name,
-                        data_type,
-                        identifier,
-                        description,
-                        min_x, max_x, min_y, max_y,
-                        srs_id
-                    )
-                    VALUES ('{table_name}', '{data_type}', '{identifier}', '{description}',
-                            {min_x}, {max_x}, {min_y}, {max_y}, {srs_id});
-                    """.format(
-                table_name=stype,
-                data_type="features",
-                identifier=stype,
-                description=stype,
-                min_x=x0,
-                max_x=x1,
-                min_y=y0,
-                max_y=y1,
-                srs_id=self.epsg,
-            )
-            self.mem_database.ExecuteSQL(sql)
-            sql = """DELETE FROM gpkg_geometry_columns WHERE table_name = '{}';""".format(
-                stype
-            )
-            self.mem_database.ExecuteSQL(sql)
-            sql = """
-                    INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m)
-                    VALUES ('{table_name}','{column_name}','{geometry_type_name}',{srs_id},{z},{m});
-                    """.format(
-                table_name=stype,
-                column_name="geom",
-                geometry_type_name="POLYGON",
-                srs_id=28992,
-                z=0,
-                m=0,
-            )
-            self.mem_database.ExecuteSQL(sql)
 
     def classify_surfaces(self, parameters):
         """Determine NWRW surface type of all imported surfaces"""
-        layer = self.bgt_surfaces
+        layer = self.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
         if layer is None:
             raise DatabaseOperationError
         # add fields if not exists
@@ -916,7 +831,7 @@ class Database:
         for feature in layer:
             if feature:
                 verhardingsgraad = None
-                verhardingstype = None 
+                verhardingstype = None
                 if feature.surface_type == SURFACE_TYPE_PAND:
                     verhardingstype = VERHARDINGSTYPE_PAND
                 elif feature.surface_type == SURFACE_TYPE_WATERDEEL:
@@ -954,7 +869,7 @@ class Database:
                     elif feature.bgt_fysiek_voorkomen == "erf":
                         verhardingstype = VERHARDINGSTYPE_OPEN_VERHARD
                         verhardingsgraad = parameters.verhardingsgraad_erf
-                    elif feature.bgt_fysiek_voorkomen == "gesloten verhard":
+                    elif feature.bgt_fysiek_voorkomen == "gesloten verharding":
                         verhardingstype = VERHARDINGSTYPE_GESLOTEN_VERHARD
 
                 feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] = verhardingstype
@@ -964,10 +879,14 @@ class Database:
         layer = None
 
     def add_build_year_to_surface(self, field_name='bouwjaar', use_index=USE_INDEX):
+        print('Started add_build_year_to_surface...')
         surfaces = self.bgt_surfaces
         surfaces.CreateField(ogr.FieldDefn('build_year', ogr.OFTReal))
+        print('... created field build_year')
+        self.mem_database.FlushCache()
+        surfaces.ResetReading()
 
-
+        print(f'use_index: {use_index}')
         for building in self.buildings:
             centroid = building.geometry().Centroid()
             if use_index:
@@ -984,6 +903,9 @@ class Database:
                             surface['build_year'] = building[field_name]
                             surfaces.SetFeature(surface)
         surfaces = None
+
+        print('... done')
+        return
 
     def merge_surfaces(self):
         """ Merge and standardize all imported surfaces to one layer"""
@@ -1017,7 +939,7 @@ class Database:
             dest_layer.CreateField(field_name)
 
         for surface in ALL_USED_SURFACE_TYPES:
-            input_layer = self.mem_database.GetLayerByName("{surface}".format(surface=surface))
+            input_layer = self.mem_database.GetLayerByName(surface)
 
             for i in range(0, input_layer.GetFeatureCount()):
                 feature = input_layer.GetFeature(i)
@@ -1032,7 +954,7 @@ class Database:
                         new_feature.SetField(
                             "identificatie_lokaalid", feature["identificatie.lokaalID"]
                         )
-                        new_feature.SetField("surface_type", "{surface}".format(surface=surface))
+                        new_feature.SetField("surface_type", surface)
 
                         if surface in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
                             new_feature["bgt_fysiek_voorkomen"] = feature[
@@ -1052,7 +974,7 @@ class Database:
         """Copy self.mem_database to file_path"""
         self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, file_path)
         self.out_db = None
-        
+
 
 class Layer(object):
     def __init__(self, layer):
@@ -1074,7 +996,7 @@ class Layer(object):
 
 def create_index(layer):
     layer.ResetReading()
-    index = rtree.index.Index(interleaved=False)
+    index = rtree.Index(interleaved=False)
     for feature in layer:
         if feature:
             geometry = feature.GetGeometryRef()
