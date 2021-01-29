@@ -22,6 +22,7 @@ def try_install_gdal():
     try:
         import gdal
         print("gdal is succesvol geimporteerd")
+        raw_input("Press enter to exit")
     except ImportError as ex:
         if python_version == 2:
             try:
@@ -32,13 +33,15 @@ def try_install_gdal():
             except CalledProcessError as ex2:  # uitzoeken wat voor error
                 try:
                     print("gdal kan niet direct geinstalleerd worden, nu wordt geprobeerd pip te upgraden")
-                    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip==20.3"])
                     subprocess.check_call([sys.executable, "-m", "pip", "install", WHEEL])
                     import gdal
                     print("gdal is succesvol geinstalleerd")
                 except CalledProcessError as ex3:
                     print("pip is niet geupdate en gdal kon niet worden geinstalleerd.")
                     print("Neem contact op met bgtinlooptool@nelen-schuurmans.nl")
+
+            raw_input("Press enter to exit")
         else:
             print("gdal zou geinstalleerd moeten zijn in ArcGIS Pro. Check in ArcGIS Pro of gdal geinstalleerd is")
             print(" of neem contact op met uw IT afdeling of desnoods met Esri")
