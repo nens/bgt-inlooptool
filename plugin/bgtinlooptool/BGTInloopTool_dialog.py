@@ -68,7 +68,6 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         
         self.dem_file.setEnabled(False)
-        self.kolken_file.setEnabled(False)
         
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
         
@@ -85,6 +84,11 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.inputExtentComboBox.setEnabled(False)
         self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
     
+        # TESTING
+        # self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/extract.zip')
+        # self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/getGeoPackage_1134.gpkg')
+        # self.building_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/bag.gpkg')
+
     def inputExtentCheckBoxChanged(self):
         state = self.inputExtentCheckBox.checkState()
         self.inputExtentComboBox.setEnabled(state)

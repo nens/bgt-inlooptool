@@ -20,7 +20,6 @@ import requests
 
 try:
     import rtree
-
     USE_INDEX = True
 except ImportError:
     USE_INDEX = False
@@ -123,18 +122,10 @@ class InloopTool:
         """
         self._database.import_pipes(file_path=file_path)
 
-    def import_buildings(self, file_path):
-        """
-        Import buildings to database
-        :param file_path: path to GWSW Geopackage that contains the pipes
-        :return: None
-        """
-        self._database.import_buildings(file_path=file_path)
-
     def import_kolken(self, file_path):
         """
-        Import buildings to database
-        :param file_path: path to GWSW Geopackage that contains the pipes
+        Import kolken to database
+        :param file_path: path to ogr suitable datasource
         :return: None
         """
         self._database.import_kolken(file_path=file_path)
@@ -328,9 +319,117 @@ class InloopTool:
         :param parameters: input parameters
         :return: None
         """
-
         surfaces = self._database.bgt_surfaces
         pipes = self._database.pipes
+        
+        pipes.ResetReading()            
+        surface = None
+                
+        surfaces.ResetReading()
+        surfaces.SetSpatialFilter(None)
+
+        for surface in surfaces:
+            surface_id = surface.GetFID()
+            
+            if not surface:
+                print('surface kapoet')
+                continue
+
+            surface_geom = surface.geometry().Clone()
+            buffered = surface_geom.Buffer(
+                parameters.max_afstand_vlak_afwateringsvoorziening
+            )
+
+            distances = {}
+            if use_index:
+                for pipe_id in self._database.pipes_idx.intersection(buffered.GetEnvelope()):
+                    pipe = pipes.GetFeature(pipe_id)
+                    pipe_geom = pipe.geometry().Clone()
+                    if pipe_geom.Intersects(buffered):
+                        pipe_type_attribute = pipe['TypeNaam']
+                        if pipe_type_attribute in DISTANCE_TYPE_NAAM:
+                            pipe_typenaam = 'distance_' + DISTANCE_TYPE_NAAM[pipe_type_attribute] 
+                            if pipe_typenaam not in distances.keys():
+                                distances[pipe_typenaam] = [pipe_geom.Distance(surface_geom)]
+                            else:
+                                if distances[pipe_typenaam][0] > pipe_geom.Distance(surface_geom):
+                                    distances[pipe_typenaam] = [pipe_geom.Distance(surface_geom)]
+                            
+            else:
+                pipes.SetSpatialFilter(buffered)
+                for pipe in pipes:
+                    pipe_geom = pipe.geometry()
+                    if pipe_geom.Intersects(buffered):
+                        pipe_type_attribute = pipe['TypeNaam']
+                        if pipe_type_attribute in DISTANCE_TYPE_NAAM:
+                            pipe_typenaam = 'distance_' + DISTANCE_TYPE_NAAM[pipe_type_attribute] 
+                            if not distances[pipe_typenaam]:
+                                distances[pipe_typenaam] = [pipe_geom.Distance(surface_geom)]
+                            else:
+                                if distances[pipe_typenaam][0] > pipe_geom.Distance(surface_geom):
+                                    distances[pipe_typenaam] = [pipe_geom.Distance(surface_geom)]
+
+            # Get water distances for surface, except surface itself is water
+            if surface.surface_type != SURFACE_TYPE_WATERDEEL:
+                    
+                water_distance = float('Inf')
+                
+                if use_index:
+                    for surface_id in self._database.bgt_surfaces_idx.intersection(buffered.GetEnvelope()):
+                        surface = surfaces.GetFeature(surface_id)
+                        if surface.surface_type == SURFACE_TYPE_WATERDEEL:
+                            water_geom = surface.geometry().Clone()
+                            if water_geom.Intersects(buffered):
+                                if water_geom.Distance(surface_geom) < water_distance:
+                                    water_distance = water_geom.Distance(surface_geom)
+                        
+                else:
+                    surfaces.SetSpatialFilter(buffered)
+                    for surface in surfaces:
+                        if surface.surface_type == SURFACE_TYPE_WATERDEEL:
+                            water_geom = surface.geometry()
+                            if water_geom.Intersects(buffered):
+                                if water_geom.Distance(surface_geom) < water_distance:
+                                    water_distance = water_geom.Distance(surface_geom)
+    
+                # add to dict
+                distances["water_distance"] = water_distance
+            
+            # Write distances to surfaces layer
+            
+            for dist_type in DISTANCE_TYPE_NAAM.values():
+
+                dist_type = "distance_" + dist_type
+
+                if dist_type in distances:
+                    surface[dist_type] = distances[dist_type]
+
+                if "water_distance" in distances:
+                    surface["distance_oppervlaktewater"] = distances["water_distance"]
+
+                surfaces.SetFeature(surface)
+            
+            surface = None
+            
+        pipes = None
+        
+        surfaces.ResetReading()
+        surfaces.SetSpatialFilter(None)
+        surfaces = None
+
+    def calculate_distances_old(self, parameters, use_index=USE_INDEX):
+        """
+        For all BGT Surfaces, calculate the distance to the nearest pipe of each type and nearest surface water
+        :param parameters: input parameters
+        :return: None
+        """
+
+        surfaces = self._database.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
+        pipes = self._database.mem_database.GetLayerByName(PIPES_TABLE_NAME)
+
+        if use_index:
+            surface_idx = create_index(surfaces)
+            pipe_idx = create_index(pipes)
 
         out_layer = Layer(
             self._database.mem_database.CreateLayer(
@@ -349,9 +448,8 @@ class InloopTool:
         lokaalid_distances = {}
         surfaces.ResetReading()
         surfaces.SetSpatialFilter(None)
-
-        for surface_id in range(0, surfaces.GetFeatureCount()):
-            surface = surfaces.GetFeature(surface_id)
+        for surface in surfaces:
+            surface_id = surface.GetFID()
 
             if not surface:
                 continue
@@ -365,7 +463,7 @@ class InloopTool:
             pipe_ids = []
             pipe_types = []
             if use_index:
-                for pipe_id in self._database.pipes_idx.intersection(buffered.GetEnvelope()):
+                for pipe_id in pipe_idx.intersection(buffered.GetEnvelope()):
                     pipe = pipes.GetFeature(pipe_id)
                     pipe_geom = pipe.geometry()
                     if pipe_geom.Intersects(buffered):
@@ -427,8 +525,8 @@ class InloopTool:
 
         surfaces.SetSpatialFilter(None)
         surfaces.ResetReading()
-        for surface_id in range(0, surfaces.GetFeatureCount()):
-            surface = surfaces.GetFeature(surface_id)
+        for surface in surfaces:
+            surface_id = surface.GetFID()
 
             if not surface:
                 continue
@@ -446,7 +544,7 @@ class InloopTool:
             distances = []
             surfaces_ids = []
             if use_index:
-                for surface_id in self._database.bgt_surfaces_idx.intersection(buffered.GetEnvelope()):
+                for surface_id in surface_idx.intersection(buffered.GetEnvelope()):
                     surface = surfaces.GetFeature(surface_id)
                     if surface.surface_type == SURFACE_TYPE_WATERDEEL:
                         water_geom = surface.geometry()
@@ -496,6 +594,7 @@ class InloopTool:
                 surfaces.SetFeature(surface)
         surfaces = None
 
+
     def calculate_runoff_targets(self):
         """
         Fill the 'target type' columns of the result table
@@ -506,7 +605,7 @@ class InloopTool:
         result_table = self._database.result_table
         feature_defn = result_table.GetLayerDefn()
 
-        for fid, surface in enumerate(bgt_surfaces):
+        for surface in bgt_surfaces:
             feature = ogr.Feature(feature_defn)
             surface_geometry = surface.GetGeometryRef()
             fixed_geometry = ogr.ForceToPolygon(surface_geometry)
@@ -515,7 +614,7 @@ class InloopTool:
             afwatering = self.decision_tree(surface, self.parameters)
             feature.SetField(
                 RESULT_TABLE_FIELD_ID,
-                fid,
+                surface.GetFID(),
             )
             feature.SetField(
                 RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
@@ -636,39 +735,6 @@ class Database:
                 )
             )
 
-    def import_buildings(self, file_path):
-        """
-        Copy the required contents of the GWSW GeoPackage file to self.mem_database
-        :param file_path: GWSW GeoPackage
-        :return: None
-        """
-        print("Started import buildings")
-        gwsw_gpkg_abspath = os.path.abspath(file_path)
-        if not os.path.isfile(gwsw_gpkg_abspath):
-            print("...FileNotFoundError")
-            raise FileNotFoundError(
-                "GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath)
-            )
-        print("...file found")
-        bag_ds = ogr.Open(file_path)
-        print("...file opened")
-        # TODO more thorough checks of validity of input geopackage
-        try:
-            self.mem_database.CopyLayer(
-                bag_ds[0], BUILDINGS_TABLE_NAME
-            )
-            print("...layer copied")
-        except Exception:
-            # TODO more specific exception
-            print("...FileInputError")
-            raise FileInputError(
-                "Ongeldige input: {} is geen geldige GWSW GeoPackage".format(
-                    gwsw_gpkg_abspath
-                )
-            )
-        print("...finished import buildings")
-        return
-
     def import_surfaces_raw(self, file_path):
         """
         Copy the required contents of the BGT zip file 'as is' to self.mem_database
@@ -696,24 +762,25 @@ class Database:
     def import_kolken(self, file_path):
 
         """
+        Copy point features from a ogr layer
 
         """
         kolken_abspath = os.path.abspath(file_path)
         if not os.path.isfile(kolken_abspath):
             raise FileNotFoundError(
-                "Kolken GeoPackage niet gevonden: {}".format(kolken_abspath)
+                "Bestand niet gevonden: {}".format(kolken_abspath)
             )
-        kolken_ds = ogr.Open(file_path)
         # TODO more thorough checks of validity of input geopackage
+
         try:
+            kolken_ds = ogr.Open(file_path)
             self.mem_database.CopyLayer(
                 kolken_ds[0], KOLKEN_TABLE_NAME
             )
         except Exception:
             # TODO more specific exception
             raise FileInputError(
-                "Ongeldige input: {} is geen geldige GeoPackage".format(
-                    kolken_abspath
+                "Ongeldige input: {}".format(kolken_abspath
                 )
             )
 
@@ -727,8 +794,6 @@ class Database:
         self.pipes_idx = create_index(self.pipes)
         print('...surfaces...')
         self.bgt_surfaces_idx = create_index(self.bgt_surfaces)
-        print('...buildings...')
-        self.buildings_idx = create_index(self.buildings)
         print('...done!')
 
     def remove_input_features_outside_clip_extent(self, extent_wkt, use_index=USE_INDEX):
@@ -737,7 +802,10 @@ class Database:
 
         pipes = self.pipes
         bgt_surfaces = self.bgt_surfaces
-        buildings = self.buildings
+        
+        intersecting_pipes = []
+        intersecting_surfaces = []
+
 
         if use_index:
 
@@ -745,47 +813,41 @@ class Database:
                 pipe = pipes.GetFeature(pipe_id)
                 pipe_geom = pipe.geometry()
                 if pipe_geom.Intersects(extent_geometry):
-                    pipes.DeleteFeature(pipe_id)
+                    intersecting_pipes.append(pipe_id)
 
             for surface_id in self.bgt_surfaces_idx.intersection(extent_geometry.GetEnvelope()):
                 surface = bgt_surfaces.GetFeature(surface_id)
                 surface_geom = surface.geometry()
                 if surface_geom.Intersects(extent_geometry):
-                    bgt_surfaces.DeleteFeature(surface_id)
-
-            for building_id in self.buildings_idx.intersection(extent_geometry.GetEnvelope()):
-                building = buildings.GetFeature(building_id)
-                building_geom = building.geometry()
-                if building_geom.Intersects(extent_geometry):
-                    buildings.DeleteFeature(building_id)
+                    intersecting_surfaces.append(surface_id)
 
         else:
             pipes.SetSpatialFilter(extent_geometry)
             for pipe in pipes:
                 pipe_geom = pipe.geometry()
                 if pipe_geom.Intersects(extent_geometry):
-                    pipes.DeleteFeature(pipe.GetFID())
-
+                    intersecting_pipes.append(pipe.GetFID())
+                    
             bgt_surfaces.SetSpatialFilter(extent_geometry)
             for surface in bgt_surfaces:
                 surface_geom = surface.geometry()
                 if surface_geom.Intersects(extent_geometry):
-                    bgt_surfaces.DeleteFeature(surface.GetFID())
+                    intersecting_surfaces.append(surface.GetFID())
 
-            buildings.SetSpatialFilter(extent_geometry)
-            for building in buildings:
-                building_geom = building.geometry()
-                if building_geom.Intersects(extent_geometry):
-                    buildings.DeleteFeature(building.GetFID())
+                    
+        for pipe in pipes:
+            pipe_fid = pipe.GetFID()
+            if pipe_fid not in intersecting_pipes:
+                pipes.DeleteFeature(pipe_fid)
 
-        pipes.ResetReading()
-        bgt_surfaces.ResetReading()
-        buildings.ResetReading()
-
+        for surface in bgt_surfaces:
+            surface_fid = surface.GetFID()
+            if surface_fid not in intersecting_surfaces:
+                bgt_surfaces.DeleteFeature(surface_fid)
+                
         pipes = None
         bgt_surfaces = None
-        buildings = None
-
+        
     def clean_surfaces(self):
         """
         Update the surfaces layer to include polygons only.
@@ -906,6 +968,10 @@ class Database:
                             new_feature["bgt_fysiek_voorkomen"] = feature[
                                 "bgt-fysiekVoorkomen"
                             ]
+                        
+                        if surface == SURFACE_TYPE_PAND:
+                            new_feature['identificatiebagpnd'] = feature['identificatieBAGPND']
+                        
                         target_geometry = ogr.ForceToPolygon(feature.geometry())
                         target_geometry.AssignSpatialReference(self.srs)
                         new_feature.SetGeometry(target_geometry)
@@ -914,29 +980,33 @@ class Database:
                         new_feature = None
         dest_layer = None
 
-    def add_build_year_to_surface(self, field_name='bouwjaar', use_index=USE_INDEX):
+    def add_build_year_to_surface(self, file_path, field_name='bouwjaar'):
+        
         print('Started add_build_year_to_surface...')
+
+        ds = ogr.Open(file_path)
+        buildings = ds[0] 
+        
         surfaces = self.bgt_surfaces
         surfaces.ResetReading()
-
-        print(f'use_index: {use_index}')
-        for building in self.buildings:
-            centroid = building.geometry().Centroid()
-            if use_index:
-                for surface_id in self.bgt_surfaces_idx.intersection(centroid.GetEnvelope()):
-                    surface = surfaces.GetFeature(surface_id)
-                    if surface.surface_type == 'pand':
-                        surface['build_year'] = building[field_name]
-                        surfaces.SetFeature(surface)
-            else:
-                surfaces.SetSpatialFilter(centroid)
-                for surface in surfaces:
-                    if surface.surface_type == 'pand':
-                        if surface.geometry().Intersects(centroid):
-                            surface['build_year'] = building[field_name]
-                            surfaces.SetFeature(surface)
+        surfaces.CreateField(ogr.FieldDefn('build_year', ogr.OFTReal))
+            
+        # create dict from buildings
+        building_dict = {}
+        for building in buildings:
+            building_dict[building['identificatie'][1:]] = building[field_name]
+            building = None
+                
+        for surface in surfaces:
+            if surface['surface_type'] == SURFACE_TYPE_PAND:
+                if surface['identificatiebagpnd'] in building_dict.keys():
+                    print('building in dict')
+                    surface['build_year'] = building_dict[surface['identificatiebagpnd']]
+                    surfaces.SetFeature(surface)
+            surface = None
+        
+        buildings = None
         surfaces = None
-
         print('... done')
         return
 
@@ -966,7 +1036,7 @@ class Layer(object):
 
 def create_index(layer):
     layer.ResetReading()
-    index = rtree.Index(interleaved=False)
+    index = rtree.index.Index(interleaved=False)
     for feature in layer:
         if feature:
             geometry = feature.GetGeometryRef()

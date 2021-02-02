@@ -19,6 +19,7 @@ SURFACES_TABLE_SCHEMA = TableSchema(
                 RESULT_TABLE_FIELD_TYPE_VERHARDING: ogr.OFTString,
                 RESULT_TABLE_FIELD_GRAAD_VERHARDING: ogr.OFTReal,
                 'build_year': ogr.OFTInteger,
+                'identificatiebagpnd': ogr.OFTString,
                 'distance_oppervlaktewater': ogr.OFTReal,
                 'distance_hemelwaterriool': ogr.OFTReal,
                 'distance_vuilwaterriool': ogr.OFTReal,

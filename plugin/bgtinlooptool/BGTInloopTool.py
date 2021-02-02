@@ -8,7 +8,7 @@
                               -------------------
         begin                : 2020-08-12
         git sha              : $Format:%H$
-        copyright            : (C) 2020 by Emile de Badts
+        copyright            : (C) 2020 by Leendert van Wolfswinkel, Emile de Badts
         email                : emile.debadts@nelen-schuurmans.nl
  ***************************************************************************/
 
@@ -67,7 +67,7 @@ BGT_STYLE = os.path.join(os.path.dirname(__file__), 'style', 'bgt_oppervlakken.q
 
 class InloopToolTask(QgsTask):
 
-    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, input_extent_mask_wkt, use_index):
+    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, kolken_file, input_extent_mask_wkt, use_index):
         super().__init__(description, QgsTask.CanCancel)
 
         QgsMessageLog.logMessage("initalized task", MESSAGE_CATEGORY, level=Qgis.Info)
@@ -81,7 +81,7 @@ class InloopToolTask(QgsTask):
         self.exception = None
 
     def run(self):
-        print(self.use_index)
+                        
         QgsMessageLog.logMessage("started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)
         self.it = InloopTool(self.parameters)
 
@@ -90,23 +90,24 @@ class InloopToolTask(QgsTask):
         self.it.import_surfaces(self.bgt_file)
         QgsMessageLog.logMessage("importing pipes", MESSAGE_CATEGORY, level=Qgis.Info)
         self.it.import_pipes(self.pipe_file)
-        QgsMessageLog.logMessage("importing buildings", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.import_buildings(self.building_file)
-        print('Importing buildings finished')
 
         if self.use_index:
             print('Adding index to inputs...')
             self.it._database.add_index_to_inputs()
             print('Finished adding index to inputs')
 
-        self.it._database.add_build_year_to_surface(use_index=self.use_index)
+        self.it._database.add_build_year_to_surface(file_path=self.building_file)
         print('Added build year to surfaces')
-
+                
         if self.input_extent_mask_wkt is not None:
+            QgsMessageLog.logMessage("clipping inputs to extent", MESSAGE_CATEGORY, level=Qgis.Info)
             self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
+            if self.use_index:
+                print('Adding index to inputs...')
+                self.it._database.add_index_to_inputs()
 
         QgsMessageLog.logMessage("calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.calculate_distances(parameters=self.parameters, use_index=self.use_index)
+        self.it.calculate_distances_old(parameters=self.parameters, use_index=self.use_index)
         QgsMessageLog.logMessage("calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
         self.it.calculate_runoff_targets()
 
@@ -128,6 +129,7 @@ class InloopToolTask(QgsTask):
                                    layer_tree_layer_name='GWSW Leidingen',
                                    qml=PIPES_STYLE
                                    )
+
 
         else:
             if self.exception is None:
@@ -301,18 +303,15 @@ class BGTInloopTool:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    def download_bgt_from_api(self):
-
-        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
-        output_zip = self.dlg.bgtApiOutput.filePath()
-
-        extent_layer_crs = extent_layer.crs()
-        if extent_layer_crs != 'EPSG:28992':
-            reproject = True
+    def validate_extent_layer(self,extent_layer):
 
         # Check amount of features in the selected layer
         extent_feature_count = extent_layer.featureCount()
         selected_feature_count = extent_layer.selectedFeatureCount()
+
+        extent_layer_crs = extent_layer.crs()
+        if extent_layer_crs != 'EPSG:28992':
+                reproject = True
 
         if extent_feature_count == 1:
             extent_feature = extent_layer.getFeature(0)
@@ -320,14 +319,20 @@ class BGTInloopTool:
         elif selected_feature_count == 1:
             selected_feature = extent_layer.selectedFeatures()[0]
             extent_geometry = selected_feature.geometry()
+        elif extent_feature_count > 1:
+            iface.messageBar().pushMessage("Warning", "Clip layer contains more than one polygon. Please select one and try again.", level=Qgis.Warning)
+            return False
+        elif extent_feature_count == 0:
+            iface.messageBar().pushMessage("Warning", "Clip layer has no features", level=Qgis.Warning)
+            return False
         else:
-            iface.messageBar().pushMessage("Warning", "Extent layer not suitable", level=Qgis.Warning)
-            return
+            iface.messageBar().pushMessage("Warning", "Clip layer not suitable", level=Qgis.Warning)
+            return False
 
         if extent_geometry.isNull():
-            iface.messageBar().pushMessage("Warning", "Extent layer has no geometry", level=Qgis.Warning)
-            return
-
+            iface.messageBar().pushMessage("Warning", "Clip layer has no geometry", level=Qgis.Warning)
+            return False
+        
         if reproject:
             out_crs = QgsCoordinateReferenceSystem('EPSG:28992')
             transform = QgsCoordinateTransform(extent_layer_crs, out_crs, QgsProject.instance())
@@ -335,6 +340,18 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
         else:
             extent_geometry_wkt = extent_geometry.asWkt()
+            
+        return(extent_geometry_wkt)
+
+        
+    def download_bgt_from_api(self):
+
+        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
+        output_zip = self.dlg.bgtApiOutput.filePath()
+
+        extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+        if not extent_geometry_wkt:
+            return
 
         # Use the extent geometry to extract surfaces for the given extent    
         nam = QgsBlockingNetworkRequest()
@@ -380,46 +397,13 @@ class BGTInloopTool:
         bgt_file = self.dlg.bgt_file.filePath()
         pipe_file = self.dlg.pipe_file.filePath()
         building_file = self.dlg.building_file.filePath()
+        kolken_file = self.dlg.kolken_file.filePath()
 
         if self.dlg.inputExtentCheckBox.checkState():
             extent_layer = self.dlg.inputExtentComboBox.currentLayer()
-
-            extent_layer_crs = extent_layer.crs()
-            if extent_layer_crs != 'EPSG:28992':
-                reproject = True
-
-            # Check amount of features in the selected layer
-            extent_feature_count = extent_layer.featureCount()
-            print('extent feature count: ', extent_feature_count)
-            selected_feature_count = extent_layer.selectedFeatureCount()
-
-            if extent_feature_count == 1:
-                extent_feature = extent_layer.getFeature(1)
-                extent_geometry = extent_feature.geometry()
-            elif selected_feature_count == 1:
-                selected_feature = extent_layer.selectedFeatures()[0]
-                extent_geometry = selected_feature.geometry()
-            elif extent_feature_count > 1:
-                iface.messageBar().pushMessage("Warning", "Clip layer contains more than one polygon. Please select one and try again.", level=Qgis.Warning)
+            extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+            if not extent_geometry_wkt:
                 return
-            elif extent_feature_count == 0:
-                iface.messageBar().pushMessage("Warning", "Clip layer has no features", level=Qgis.Warning)
-                return
-            else:
-                iface.messageBar().pushMessage("Warning", "Clip layer not suitable", level=Qgis.Warning)
-                return
-
-            if extent_geometry.isNull():
-                iface.messageBar().pushMessage("Warning", "Clip layer has no geometry", level=Qgis.Warning)
-                return
-
-            if reproject:
-                out_crs = QgsCoordinateReferenceSystem('EPSG:28992')
-                transform = QgsCoordinateTransform(extent_layer_crs, out_crs, QgsProject.instance())
-                extent_geometry.transform(transform)
-                extent_geometry_wkt = extent_geometry.asWkt()
-            else:
-                extent_geometry_wkt = extent_geometry.asWkt()
         else:
             extent_geometry_wkt = None
 
@@ -441,6 +425,7 @@ class BGTInloopTool:
                                         bgt_file=bgt_file,
                                         pipe_file=pipe_file,
                                         building_file=building_file,
+                                        kolken_file=kolken_file,
                                         input_extent_mask_wkt=extent_geometry_wkt,
                                         use_index=USE_INDEX)
 

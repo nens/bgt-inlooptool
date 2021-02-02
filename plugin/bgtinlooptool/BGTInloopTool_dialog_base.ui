@@ -58,7 +58,7 @@
      <x>20</x>
      <y>30</y>
      <width>561</width>
-     <height>501</height>
+     <height>511</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -139,8 +139,8 @@
     <widget class="QgsMapLayerComboBox" name="BGTExtentCombobox">
      <property name="geometry">
       <rect>
-       <x>160</x>
-       <y>260</y>
+       <x>155</x>
+       <y>270</y>
        <width>351</width>
        <height>27</height>
       </rect>
@@ -149,9 +149,9 @@
     <widget class="QgsMapLayerComboBox" name="inputExtentComboBox">
      <property name="geometry">
       <rect>
-       <x>250</x>
-       <y>436</y>
-       <width>271</width>
+       <x>156</x>
+       <y>443</y>
+       <width>351</width>
        <height>27</height>
       </rect>
      </property>
@@ -159,21 +159,21 @@
     <widget class="QLabel" name="label_19">
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>15</x>
        <y>310</y>
        <width>125</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Output zip</string>
+      <string>Output bestand (.zip)</string>
      </property>
     </widget>
     <widget class="QPushButton" name="pushButtonDownloadBGT">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>350</y>
+       <x>10</x>
+       <y>340</y>
        <width>93</width>
        <height>28</height>
       </rect>
@@ -185,8 +185,8 @@
     <widget class="QgsFileWidget" name="bgtApiOutput">
      <property name="geometry">
       <rect>
-       <x>160</x>
-       <y>310</y>
+       <x>155</x>
+       <y>300</y>
        <width>341</width>
        <height>27</height>
       </rect>
@@ -195,21 +195,21 @@
     <widget class="QLabel" name="label_17">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>260</y>
+       <x>16</x>
+       <y>274</y>
        <width>125</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Extent layer</string>
+      <string>Gebiedsgrens</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_18">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>440</y>
+       <x>10</x>
+       <y>420</y>
        <width>173</width>
        <height>16</height>
       </rect>
@@ -221,14 +221,59 @@
     <widget class="QCheckBox" name="inputExtentCheckBox">
      <property name="geometry">
       <rect>
-       <x>200</x>
-       <y>440</y>
+       <x>190</x>
+       <y>420</y>
        <width>16</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
       <string/>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_20">
+     <property name="geometry">
+      <rect>
+       <x>15</x>
+       <y>240</y>
+       <width>201</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 75 8pt &quot;MS Shell Dlg 2&quot;;</string>
+     </property>
+     <property name="text">
+      <string>Download BGT vlakken vanuit API</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_21">
+     <property name="geometry">
+      <rect>
+       <x>11</x>
+       <y>390</y>
+       <width>251</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 75 8pt &quot;MS Shell Dlg 2&quot;;</string>
+     </property>
+     <property name="text">
+      <string>Gebruik gebiedsgrens om inputs te selecteren</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_22">
+     <property name="geometry">
+      <rect>
+       <x>11</x>
+       <y>450</y>
+       <width>125</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Gebiedsgrens</string>
      </property>
     </widget>
    </widget>
