@@ -28,6 +28,7 @@ from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 
 from qgis.core import QgsMapLayerProxyModel 
+from qgis.gui import QgsFileWidget
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -56,8 +57,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
         self.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
         self.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
-        self.max_afstand_vlak_kolk.setEnabled(False)
-        
+
         self.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
         self.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
 
@@ -67,8 +67,6 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         
-        self.dem_file.setEnabled(False)
-        
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
         
         # Run button default disable
@@ -76,11 +74,12 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.validate()
         
         # BGT Api extract settings
-        self.bgtApiOutput.setStorageMode(3)
+        self.bgtApiOutput.setStorageMode(QgsFileWidget.SaveFile)
+
         self.BGTExtentCombobox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        
+
         # Clip extent settings
-        self.inputExtentCheckBox.clicked.connect(self.inputExtentCheckBoxChanged)
+        self.inputExtentGroupBox.clicked.connect(self.inputExtentGroupBoxChanged)
         self.inputExtentComboBox.setEnabled(False)
         self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
     
@@ -89,8 +88,8 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/getGeoPackage_1134.gpkg')
         # self.building_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/bag.gpkg')
 
-    def inputExtentCheckBoxChanged(self):
-        state = self.inputExtentCheckBox.checkState()
+    def inputExtentGroupBoxChanged(self):
+        state = self.inputExtentGroupBox.isChecked()
         self.inputExtentComboBox.setEnabled(state)
     
     def bgt_file_changed(self):
@@ -106,7 +105,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         valid = True
         
-        # Check pipe file 
+        # Check bgt file
         bgt_file = self.bgt_file.filePath()
         if not os.path.isfile(bgt_file):
             valid = False
@@ -120,12 +119,22 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         elif os.path.splitext(pipe_file)[1] != '.gpkg':
             valid = False
 
-        # Check pipe file 
+        # Check building (BAG) file (optional)
         building_file = self.building_file.filePath()
-        if not os.path.isfile(building_file):
+        if building_file == '':  # optional input
+            valid = True
+        elif not os.path.isfile(building_file):
             valid = False
         elif os.path.splitext(building_file)[1] != '.gpkg':
             valid = False
-        
+
+        # Check kolken file (optional)
+        kolken_file = self.kolken_file.filePath()
+        if kolken_file == '':  # optional input
+            valid = True
+        elif not os.path.isfile(kolken_file):
+            valid = False
+        elif os.path.splitext(kolken_file)[1] != '.gpkg':
+            valid = False
+
         self.pushButtonRun.setEnabled(valid)
-        

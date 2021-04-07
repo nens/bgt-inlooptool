@@ -41,6 +41,8 @@ from qgis.core import (
 from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
+from .resources import *
+
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
 
@@ -52,6 +54,7 @@ from .ogr2qgis import *
 
 try:
     import rtree
+
     USE_INDEX = True
     print('Found rtree module, using index')
 except ImportError:
@@ -65,92 +68,144 @@ INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), 'style', 'bgt_inloop
 PIPES_STYLE = os.path.join(os.path.dirname(__file__), 'style', 'gwsw_lijn.qml')
 BGT_STYLE = os.path.join(os.path.dirname(__file__), 'style', 'bgt_oppervlakken.qml')
 
+
 class InloopToolTask(QgsTask):
 
-    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, kolken_file, input_extent_mask_wkt, use_index):
+    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, kolken_file, input_extent_mask_wkt,
+                 use_index):
         super().__init__(description, QgsTask.CanCancel)
 
-        QgsMessageLog.logMessage("initalized task", MESSAGE_CATEGORY, level=Qgis.Info)
+        iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                       "Afwateringskenmerken BGT vlakken bepalen...",
+                                       level=Qgis.Info
+                                       )
+        iface.mainWindow().repaint()  # to show the message before the task starts
 
         self.parameters = parameters
         self.bgt_file = bgt_file
         self.pipe_file = pipe_file
         self.building_file = building_file
+        self.kolken_file = kolken_file
         self.use_index = use_index
         self.input_extent_mask_wkt = input_extent_mask_wkt
         self.exception = None
+        self.setProgress(0)
+        self.total_progress = 5
+        if self.parameters.gebruik_kolken:
+            self.total_progress += 1
+        if self.parameters.gebruik_bag:
+            self.total_progress += 1
+        if self.input_extent_mask_wkt is not None:
+            self.total_progress += 1
+
+    def increase_progress(self):
+        self.setProgress(self.progress()+100/self.total_progress)
 
     def run(self):
-                        
-        QgsMessageLog.logMessage("started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it = InloopTool(self.parameters)
 
-        # Import surfaces and pipes and calculate runoff targets
-        QgsMessageLog.logMessage("importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info)
+        QgsMessageLog.logMessage("Started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)
+        self.it = InloopTool(self.parameters)
+        self.increase_progress()
+
+        QgsMessageLog.logMessage("Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info)
         self.it.import_surfaces(self.bgt_file)
-        QgsMessageLog.logMessage("importing pipes", MESSAGE_CATEGORY, level=Qgis.Info)
+        self.increase_progress()
+
+        QgsMessageLog.logMessage("Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info)
         self.it.import_pipes(self.pipe_file)
+        self.increase_progress()
+
+        if self.parameters.gebruik_kolken:
+            QgsMessageLog.logMessage("Importing kolken", MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it.import_kolken(self.kolken_file)
+            self.increase_progress()
+
+        # Note: buildings are not imported to database.
+        # self.it._database.add_build_year_to_surface() just reads the build year without copying the layer
 
         if self.use_index:
-            print('Adding index to inputs...')
-            self.it._database.add_index_to_inputs()
-            print('Finished adding index to inputs')
+            QgsMessageLog.logMessage(' -- Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+            QgsMessageLog.logMessage(' -- Finished adding index to inputs', MESSAGE_CATEGORY, level=Qgis.Info)
 
-        self.it._database.add_build_year_to_surface(file_path=self.building_file)
-        print('Added build year to surfaces')
-                
+        if self.parameters.gebruik_bag:
+            QgsMessageLog.logMessage('Adding build year to surfaces', MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it._database.add_build_year_to_surface(file_path=self.building_file)
+            self.increase_progress()
+
         if self.input_extent_mask_wkt is not None:
-            QgsMessageLog.logMessage("clipping inputs to extent", MESSAGE_CATEGORY, level=Qgis.Info)
+            QgsMessageLog.logMessage("Clipping inputs to extent", MESSAGE_CATEGORY, level=Qgis.Info)
             self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
+            self.increase_progress()
             if self.use_index:
-                print('Adding index to inputs...')
-                self.it._database.add_index_to_inputs()
+                QgsMessageLog.logMessage('Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
+                self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
 
-        QgsMessageLog.logMessage("calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.calculate_distances_old(parameters=self.parameters, use_index=self.use_index)
-        QgsMessageLog.logMessage("calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
+        QgsMessageLog.logMessage("Calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)
+        self.it.calculate_distances(parameters=self.parameters, use_index=self.use_index)
+        self.increase_progress()
+
+        QgsMessageLog.logMessage("Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
         self.it.calculate_runoff_targets()
+        self.increase_progress()
 
+        QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
         return True
 
     def finished(self, result):
 
         if result:
-            QgsMessageLog.logMessage("successfully calculated runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
-            self.add_to_layer_tree(db_layer_name=SURFACES_TABLE_NAME,
-                                   layer_tree_layer_name='BGT Oppervlakken',
-                                   qml=BGT_STYLE
-                                   )
-            self.add_to_layer_tree(db_layer_name=RESULT_TABLE_NAME,
-                                   layer_tree_layer_name='BGT Inlooptabel',
-                                   qml=INLOOPTABEL_STYLE
-                                   )
-            self.add_to_layer_tree(db_layer_name=PIPES_TABLE_NAME,
-                                   layer_tree_layer_name='GWSW Leidingen',
-                                   qml=PIPES_STYLE
-                                   )
+            root = QgsProject.instance().layerTreeRoot()
+            layer_group = root.insertGroup(0, MESSAGE_CATEGORY)
 
+            self.add_to_layer_group(db_layer_name=SURFACES_TABLE_NAME,
+                                    layer_tree_layer_name='BGT Oppervlakken',
+                                    qml=BGT_STYLE,
+                                    layer_group=layer_group
+                                    )
+            self.add_to_layer_group(db_layer_name=RESULT_TABLE_NAME,
+                                    layer_tree_layer_name='BGT Inlooptabel',
+                                    qml=INLOOPTABEL_STYLE,
+                                    layer_group=layer_group
+                                    )
+            self.add_to_layer_group(db_layer_name=PIPES_TABLE_NAME,
+                                    layer_tree_layer_name='GWSW Leidingen',
+                                    qml=PIPES_STYLE,
+                                    layer_group=layer_group
+                                    )
+            iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                           "Afwateringskenmerken BGT bepaald!",
+                                           level=Qgis.Success
+                                           )
 
         else:
             if self.exception is None:
-                QgsMessageLog.logMessage("task failed: cancelled by user", MESSAGE_CATEGORY, level=Qgis.Critical)
+                iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                               "Bepalen afwateringskenmerken BGT afgebroken door gebruiker",
+                                               level=Qgis.Info
+                                               )
             else:
-                QgsMessageLog.logMessage("task failed: {}".format(self.exception), MESSAGE_CATEGORY,
-                                         level=Qgis.Critical)
+                iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                               "Bepalen afwateringskenmerken BGT mislukt",
+                                               level=Qgis.Critical
+                                               )
                 raise self.exception
 
     def cancel(self):
-
-        QgsMessageLog.logMessage("task failed: cancelled by user", MESSAGE_CATEGORY, level=Qgis.Critical)
+        iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                       "Bepalen afwateringskenmerken BGT afgebroken door gebruiker",
+                                       level=Qgis.Info
+                                       )
         super().cancel()
 
-    def add_to_layer_tree(self, db_layer_name: str, layer_tree_layer_name: str, qml: str):
+    def add_to_layer_group(self, db_layer_name: str, layer_tree_layer_name: str, qml: str, layer_group):
         ogr_lyr = self.it._database.mem_database.GetLayerByName(db_layer_name)
         if ogr_lyr is not None:
             if ogr_lyr.GetFeatureCount() > 0:
                 qgs_lyr = as_qgis_memory_layer(ogr_lyr, layer_tree_layer_name)
                 project = QgsProject.instance()
-                project.addMapLayer(qgs_lyr)
+                project.addMapLayer(qgs_lyr, addToLegend=False)
+                layer_group.insertLayer(0, qgs_lyr)
                 qgs_lyr.loadNamedStyle(qml)
                 qgs_lyr.triggerRepaint()
 
@@ -288,7 +343,7 @@ class BGTInloopTool:
         icon_path = ':/plugins/BGTInloopTool/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Afwateringskenmerken BGT vlakken'),
+            text=self.tr(u'BGT Inlooptool'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -303,36 +358,56 @@ class BGTInloopTool:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    def validate_extent_layer(self,extent_layer):
+    def validate_extent_layer(self, extent_layer):
 
-        # Check amount of features in the selected layer
+        # Check feature count in the selected layer
         extent_feature_count = extent_layer.featureCount()
+        QgsMessageLog.logMessage(f"Found {extent_feature_count} features in extent layer",
+                                 MESSAGE_CATEGORY, level=Qgis.Info)
+
         selected_feature_count = extent_layer.selectedFeatureCount()
+        QgsMessageLog.logMessage(f"Found {selected_feature_count} selected features in extent layer",
+                                 MESSAGE_CATEGORY, level=Qgis.Info)
 
         extent_layer_crs = extent_layer.crs()
         if extent_layer_crs != 'EPSG:28992':
-                reproject = True
+            reproject = True
 
         if extent_feature_count == 1:
-            extent_feature = extent_layer.getFeature(0)
+            extent_feature = extent_layer.getFeature(1)  # 1-based indexing for features!
             extent_geometry = extent_feature.geometry()
         elif selected_feature_count == 1:
             selected_feature = extent_layer.selectedFeatures()[0]
             extent_geometry = selected_feature.geometry()
         elif extent_feature_count > 1:
-            iface.messageBar().pushMessage("Warning", "Clip layer contains more than one polygon. Please select one and try again.", level=Qgis.Warning)
+            self.iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                                "Laag voor gebiedsselectie bevat meer dan één polygoon / feature. "
+                                                "Selecteer er maximaal één en probeer opnieuw.",
+                                                level=Qgis.Warning,
+                                                duration=10
+                                                )
             return False
         elif extent_feature_count == 0:
-            iface.messageBar().pushMessage("Warning", "Clip layer has no features", level=Qgis.Warning)
+            self.iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                                "Laag voor gebiedsselectie bevat geen features",
+                                                level=Qgis.Warning
+                                                )
             return False
         else:
-            iface.messageBar().pushMessage("Warning", "Clip layer not suitable", level=Qgis.Warning)
+            self.iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                                "Laag voor gebiedsselectie is niet geschikt",
+                                                level=Qgis.Warning
+                                                )
             return False
 
         if extent_geometry.isNull():
-            iface.messageBar().pushMessage("Warning", "Clip layer has no geometry", level=Qgis.Warning)
+            self.iface.messageBar().pushMessage(MESSAGE_CATEGORY,
+                                                "Geselecteerde laag of feature heeft geen geometrie. "
+                                                "Sla wijzigingen aan de laag eerst op en probeer opnieuw",
+                                                level=Qgis.Warning
+                                                )
             return False
-        
+
         if reproject:
             out_crs = QgsCoordinateReferenceSystem('EPSG:28992')
             transform = QgsCoordinateTransform(extent_layer_crs, out_crs, QgsProject.instance())
@@ -340,10 +415,9 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
         else:
             extent_geometry_wkt = extent_geometry.asWkt()
-            
-        return(extent_geometry_wkt)
 
-        
+        return (extent_geometry_wkt)
+
     def download_bgt_from_api(self):
 
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
@@ -352,6 +426,14 @@ class BGTInloopTool:
         extent_geometry_wkt = self.validate_extent_layer(extent_layer)
         if not extent_geometry_wkt:
             return
+
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f'Begonnen met downloaden van BGT lagen naar {output_zip}',
+            level=Qgis.Info,
+            duration=5
+        )
+        self.iface.mainWindow().repaint()  # to show the message before the task starts
 
         # Use the extent geometry to extract surfaces for the given extent    
         nam = QgsBlockingNetworkRequest()
@@ -390,6 +472,13 @@ class BGTInloopTool:
         download_response = nam.get(download_request)
         with open(output_zip, "wb") as f:
             f.write(nam.reply().content())
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f'BGT lagen gedownload naar <a href="{output_zip}">{output_zip}</a>',
+            level=Qgis.Info,
+            duration=20  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
+        )
+        self.dlg.bgt_file.setFilePath(output_zip)
 
     def on_run(self):
 
@@ -399,7 +488,7 @@ class BGTInloopTool:
         building_file = self.dlg.building_file.filePath()
         kolken_file = self.dlg.kolken_file.filePath()
 
-        if self.dlg.inputExtentCheckBox.checkState():
+        if self.dlg.inputExtentGroupBox.isChecked():
             extent_layer = self.dlg.inputExtentComboBox.currentLayer()
             extent_geometry_wkt = self.validate_extent_layer(extent_layer)
             if not extent_geometry_wkt:
@@ -407,7 +496,7 @@ class BGTInloopTool:
         else:
             extent_geometry_wkt = None
 
-        # Iniate bgt inlooptool class with parameters 
+        # Iniate bgt inlooptool class with parameters
         parameters = InputParameters(
             max_afstand_vlak_afwateringsvoorziening=self.dlg.max_afstand_vlak_afwateringsvoorziening.value(),
             max_afstand_vlak_oppwater=self.dlg.max_afstand_vlak_oppwater.value(),
@@ -416,6 +505,8 @@ class BGTInloopTool:
             max_afstand_afgekoppeld=self.dlg.max_afstand_afgekoppeld.value(),
             max_afstand_drievoudig=self.dlg.max_afstand_drievoudig.value(),
             afkoppelen_hellende_daken=self.dlg.afkoppelen_hellende_daken.isChecked(),
+            gebruik_bag=building_file != '',
+            gebruik_kolken=kolken_file != '',
             bouwjaar_gescheiden_binnenhuisriolering=self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(),
             verhardingsgraad_erf=self.dlg.verhardingsgraad_erf.value(),
             verhardingsgraad_half_verhard=self.dlg.verhardingsgraad_half_verhard.value())
@@ -441,9 +532,11 @@ class BGTInloopTool:
             self.first_start = False
 
             if USE_INDEX is False:
-                iface.messageBar().pushMessage("Warning",
-                                               "rtree not installed, performance will be slower than optimal",
-                                               level=Qgis.Warning)
+                self.iface.messageBar().pushMessage(
+                    MESSAGE_CATEGORY,
+                    "De Python package 'rtree' is niet geïnstalleerd, de berekening zal daardoor langer duren",
+                    level=Qgis.Warning
+                )
 
             self.dlg = BGTInloopToolDialog()
 
@@ -451,7 +544,7 @@ class BGTInloopTool:
             self.dlg.pushButtonRun.clicked.connect(self.on_run)
             self.dlg.pushButtonDownloadBGT.clicked.connect(self.download_bgt_from_api)
 
-        # Create a mask layer for clipping and extracting bgt surfaces 
+        # Create a mask layer for clipping and extracting bgt surfaces
         # mask_polygon = QgsVectorLayer("Polygon?crs=epsg:28992", "Extent layer", "memory")
         # project = QgsProject.instance()
         # project.addMapLayer(mask_polygon)
