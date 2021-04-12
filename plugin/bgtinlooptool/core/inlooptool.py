@@ -955,7 +955,10 @@ class Database:
             if pipe_feat:
                 gwsw_pipe_type_uri = pipe_feat[GWSW_PIPE_TYPE_FIELD]
                 gwsw_pipe_type_clean = gwsw_pipe_type_uri.split('/')[-1]
-                internal_pipe_type = PIPE_MAP[gwsw_pipe_type_clean]
+                try:
+                    internal_pipe_type = PIPE_MAP[gwsw_pipe_type_clean]
+                except KeyError:
+                    internal_pipe_type = INTERNAL_PIPE_TYPE_IGNORE
                 if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
                     delete_fids.append(pipe_feat.GetFID())
                 elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:

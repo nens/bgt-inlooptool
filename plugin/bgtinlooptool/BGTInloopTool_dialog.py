@@ -23,6 +23,7 @@
 """
 
 import os
+import ogr
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
@@ -36,6 +37,22 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 from .core.defaults import *
 
+ogr.UseExceptions()
+
+
+def is_valid_ogr_file(path: str, optional: bool = False):
+    if path == '':  # optional input
+        if optional:
+            valid = True
+        else:
+            valid = False
+    elif not os.path.isfile(path):
+        valid = False
+    else:
+        valid = isinstance(ogr.Open(path), ogr.DataSource)
+    return valid
+
+
 class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     
     def __init__(self, parent=None):
@@ -47,26 +64,24 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-            
-        self.bgt_file.fileChanged.connect(self.bgt_file_changed)
-        self.pipe_file.fileChanged.connect(self.pipe_file_changed)
-        self.building_file.fileChanged.connect(self.building_file_changed)
-    
+
+        # connect signals
+        self.bgt_file.fileChanged.connect(self.validate)
+        self.pipe_file.fileChanged.connect(self.validate)
+        self.building_file.fileChanged.connect(self.validate)
+        self.kolken_file.fileChanged.connect(self.validate)
+
         # Setting defaults
         self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
         self.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
         self.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
         self.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
-
         self.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
         self.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
-
         self.bouwjaar_gescheiden_binnenhuisriolering.setMaximum(10000)
         self.bouwjaar_gescheiden_binnenhuisriolering.setValue(BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING)
-        
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
-        
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
         
         # Run button default disable
@@ -92,15 +107,6 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         state = self.inputExtentGroupBox.isChecked()
         self.inputExtentComboBox.setEnabled(state)
     
-    def bgt_file_changed(self):
-        self.validate()
-    
-    def pipe_file_changed(self):
-        self.validate()        
-    
-    def building_file_changed(self):
-        self.validate()
-    
     def validate(self):
         
         valid = True
@@ -114,27 +120,19 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         # Check pipe file 
         pipe_file = self.pipe_file.filePath()
-        if not os.path.isfile(pipe_file):
+        if not is_valid_ogr_file(pipe_file, optional=False):
             valid = False
-        elif os.path.splitext(pipe_file)[1] != '.gpkg':
+        if os.path.splitext(pipe_file)[1] != '.gpkg':
             valid = False
 
         # Check building (BAG) file (optional)
         building_file = self.building_file.filePath()
-        if building_file == '':  # optional input
-            valid = True
-        elif not os.path.isfile(building_file):
-            valid = False
-        elif os.path.splitext(building_file)[1] != '.gpkg':
+        if not is_valid_ogr_file(building_file, optional=True):
             valid = False
 
         # Check kolken file (optional)
         kolken_file = self.kolken_file.filePath()
-        if kolken_file == '':  # optional input
-            valid = True
-        elif not os.path.isfile(kolken_file):
-            valid = False
-        elif os.path.splitext(kolken_file)[1] != '.gpkg':
+        if not is_valid_ogr_file(kolken_file, optional=True):
             valid = False
 
         self.pushButtonRun.setEnabled(valid)

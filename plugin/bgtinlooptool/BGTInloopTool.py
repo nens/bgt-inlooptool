@@ -374,7 +374,10 @@ class BGTInloopTool:
             reproject = True
 
         if extent_feature_count == 1:
-            extent_feature = extent_layer.getFeature(1)  # 1-based indexing for features!
+            # to get the first and only feature you think you might do extent_layer.getFeature(1),
+            # but this does not work for shapefiles. Why? WHY?
+            for feat in extent_layer.getFeatures():
+                extent_feature = feat
             extent_geometry = extent_feature.geometry()
         elif selected_feature_count == 1:
             selected_feature = extent_layer.selectedFeatures()[0]
