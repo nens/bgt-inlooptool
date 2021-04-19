@@ -339,9 +339,6 @@ class InloopTool:
          * nearest water surface
          * nearest kolk (sewer gully)
 
-        :param 
-        
-        : True to use rtree index
         :param parameters: input parameters
         :return: None
         """
