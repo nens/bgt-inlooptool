@@ -352,6 +352,10 @@ class InloopTool:
             self._database.kolken.ResetReading()
             self._database.kolken.SetSpatialFilter(None)
 
+        surface_water_buffer_dist = max([parameters.max_afstand_pand_oppwater,
+                                         parameters.max_afstand_vlak_oppwater])
+        print(f'surface_water_buffer_dist: {surface_water_buffer_dist}')
+
         # Distance to pipes
         for surface in self._database.bgt_surfaces:
             if not surface:
@@ -378,14 +382,9 @@ class InloopTool:
                             if distances[internal_pipe_type] > pipe_geom.Distance(surface_geom):
                                 distances[internal_pipe_type] = pipe_geom.Distance(surface_geom)
 
-
             # Distance to water surface
             if surface.surface_type != SURFACE_TYPE_WATERDEEL:
-                surface_water_buffer_dist = max([parameters.max_afstand_pand_oppwater,
-                                                 parameters.max_afstand_vlak_oppwater])
-                surface_geom_buffer_surface_water = surface_geom.Buffer(
-                    surface_water_buffer_dist
-                )
+                surface_geom_buffer_surface_water = surface_geom.Buffer(surface_water_buffer_dist)
                 min_water_distance = PSEUDO_INFINITE
 
                 for surface_id in self._database.bgt_surfaces_idx.intersection(
@@ -400,7 +399,7 @@ class InloopTool:
                                 min_water_distance = dist_to_this_water_surface
 
                 # add to dict
-                distances["water"] = min_water_distance
+                distances[OPEN_WATER] = min_water_distance
 
             # Distance to kolk
             if self.parameters.gebruik_kolken:
@@ -421,16 +420,17 @@ class InloopTool:
                                 min_kolk_distance = dist_to_this_kolk
 
                     # add to dict
-                    distances["kolk"] = min_kolk_distance
+                    distances[KOLK] = min_kolk_distance
 
             # Write distances to surfaces layer
             for distance_type in DISTANCE_TYPES:
 
                 if distance_type in distances:
+                    if distances[distance_type] == PSEUDO_INFINITE:
+                        distances[distance_type] = None
                     surface['distance_' + distance_type] = distances[distance_type]
 
-                self._database.bgt_surfaces.SetFeature(surface)
-
+            self._database.bgt_surfaces.SetFeature(surface)
             surface = None
 
         self._database.bgt_surfaces.ResetReading()
@@ -752,10 +752,13 @@ class Database:
                 verhardingstype = None
                 if feature.surface_type == SURFACE_TYPE_PAND:
                     verhardingstype = VERHARDINGSTYPE_PAND
+                    verhardingsgraad = 100
                 elif feature.surface_type == SURFACE_TYPE_WATERDEEL:
                     verhardingstype = VERHARDINGSTYPE_WATER
+                    verhardingsgraad = 0
                 elif feature.surface_type == SURFACE_TYPE_ONDERSTEUNENDWATERDEEL:
                     verhardingstype = VERHARDINGSTYPE_ONVERHARD
+                    verhardingsgraad = 0
                 elif feature.surface_type in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
                     if feature.bgt_fysiek_voorkomen in (
                             "loofbos",
@@ -779,17 +782,22 @@ class Database:
                             "kwelder",
                     ):
                         verhardingstype = VERHARDINGSTYPE_ONVERHARD
+                        verhardingsgraad = 0
                     elif feature.bgt_fysiek_voorkomen == "open verharding":
                         verhardingstype = VERHARDINGSTYPE_OPEN_VERHARD
+                        verhardingsgraad = 100
                     elif feature.bgt_fysiek_voorkomen == "half verhard":
                         verhardingstype = VERHARDINGSTYPE_OPEN_VERHARD
                         verhardingsgraad = parameters.verhardingsgraad_half_verhard
                     elif feature.bgt_fysiek_voorkomen == "erf":
-                        verhardingstype = VERHARDINGSTYPE_OPEN_VERHARD
+                        if parameters.verhardingsgraad_erf > 0:
+                            verhardingstype = VERHARDINGSTYPE_OPEN_VERHARD
+                        else:
+                            verhardingstype = VERHARDINGSTYPE_ONVERHARD
                         verhardingsgraad = parameters.verhardingsgraad_erf
                     elif feature.bgt_fysiek_voorkomen == "gesloten verharding":
                         verhardingstype = VERHARDINGSTYPE_GESLOTEN_VERHARD
-
+                        verhardingsgraad = 100
                 feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] = verhardingstype
                 if verhardingsgraad is not None:
                     feature[RESULT_TABLE_FIELD_GRAAD_VERHARDING] = verhardingsgraad
