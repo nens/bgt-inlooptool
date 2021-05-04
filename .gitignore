@@ -1,9 +1,1 @@
-
-*.pyc
-.vscode/launch.json
-.idea/workspace.xml
-.idea/vcs.xml
-.idea/modules.xml
-.idea/misc.xml
-.idea/inspectionProfiles/profiles_settings.xml
-.idea/bgt-inlooptool.iml
+.idea/

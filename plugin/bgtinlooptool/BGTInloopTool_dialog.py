@@ -23,17 +23,35 @@
 """
 
 import os
+import ogr
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 
 from qgis.core import QgsMapLayerProxyModel 
+from qgis.gui import QgsFileWidget
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'BGTInloopTool_dialog_base.ui'))
 
 from .core.defaults import *
+
+ogr.UseExceptions()
+
+
+def is_valid_ogr_file(path: str, optional: bool = False):
+    if path == '':  # optional input
+        if optional:
+            valid = True
+        else:
+            valid = False
+    elif not os.path.isfile(path):
+        valid = False
+    else:
+        valid = isinstance(ogr.Open(path), ogr.DataSource)
+    return valid
+
 
 class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     
@@ -46,30 +64,24 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-            
-        self.bgt_file.fileChanged.connect(self.bgt_file_changed)
-        self.pipe_file.fileChanged.connect(self.pipe_file_changed)
-        self.building_file.fileChanged.connect(self.building_file_changed)
-    
+
+        # connect signals
+        self.bgt_file.fileChanged.connect(self.validate)
+        self.pipe_file.fileChanged.connect(self.validate)
+        self.building_file.fileChanged.connect(self.validate)
+        self.kolken_file.fileChanged.connect(self.validate)
+
         # Setting defaults
         self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
         self.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
         self.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
         self.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
-        self.max_afstand_vlak_kolk.setEnabled(False)
-        
         self.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
         self.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
-
         self.bouwjaar_gescheiden_binnenhuisriolering.setMaximum(10000)
         self.bouwjaar_gescheiden_binnenhuisriolering.setValue(BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING)
-        
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
-        
-        self.dem_file.setEnabled(False)
-        self.kolken_file.setEnabled(False)
-        
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
         
         # Run button default disable
@@ -77,32 +89,29 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.validate()
         
         # BGT Api extract settings
-        self.bgtApiOutput.setStorageMode(3)
+        self.bgtApiOutput.setStorageMode(QgsFileWidget.SaveFile)
+
         self.BGTExtentCombobox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        
+
         # Clip extent settings
-        self.inputExtentCheckBox.clicked.connect(self.inputExtentCheckBoxChanged)
+        self.inputExtentGroupBox.clicked.connect(self.inputExtentGroupBoxChanged)
         self.inputExtentComboBox.setEnabled(False)
         self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
     
-    def inputExtentCheckBoxChanged(self):
-        state = self.inputExtentCheckBox.checkState()
+        # TESTING
+        # self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/extract.zip')
+        # self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/getGeoPackage_1134.gpkg')
+        # self.building_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/bag.gpkg')
+
+    def inputExtentGroupBoxChanged(self):
+        state = self.inputExtentGroupBox.isChecked()
         self.inputExtentComboBox.setEnabled(state)
-    
-    def bgt_file_changed(self):
-        self.validate()
-    
-    def pipe_file_changed(self):
-        self.validate()        
-    
-    def building_file_changed(self):
-        self.validate()
     
     def validate(self):
         
         valid = True
         
-        # Check pipe file 
+        # Check bgt file
         bgt_file = self.bgt_file.filePath()
         if not os.path.isfile(bgt_file):
             valid = False
@@ -111,17 +120,19 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         # Check pipe file 
         pipe_file = self.pipe_file.filePath()
-        if not os.path.isfile(pipe_file):
+        if not is_valid_ogr_file(pipe_file, optional=False):
             valid = False
-        elif os.path.splitext(pipe_file)[1] != '.gpkg':
+        if os.path.splitext(pipe_file)[1] != '.gpkg':
             valid = False
 
-        # Check pipe file 
+        # Check building (BAG) file (optional)
         building_file = self.building_file.filePath()
-        if not os.path.isfile(building_file):
+        if not is_valid_ogr_file(building_file, optional=True):
             valid = False
-        elif os.path.splitext(building_file)[1] != '.gpkg':
+
+        # Check kolken file (optional)
+        kolken_file = self.kolken_file.filePath()
+        if not is_valid_ogr_file(kolken_file, optional=True):
             valid = False
-        
+
         self.pushButtonRun.setEnabled(valid)
-        
