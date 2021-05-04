@@ -67,13 +67,24 @@ class BGTInloopToolArcGIS(BaseTool):
                       parameterType="Required",
                       direction="Input",
                       defaultValue=r"C:\GIS\test_data_inlooptool\extract.zip"),
-            parameter(displayName='Leidingen (als geopackage)',
+            parameter(displayName='GWSW Leidingen (als geopackage)',
                       name='leidingen',
                       datatype='DEDatasetType',
                       parameterType='Required',
                       direction='Input',
                       defaultValue=r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"),
-            parameter(displayName='Opslag locatie gdb',
+            parameter(displayName='Kolken (als geopackage)',
+                      name='kolken_file',
+                      datatype='DEDatasetType',
+                      parameterType='Required',
+                      direction='Input'),
+            parameter(displayName='Analyse gebied (als geopackage), wordt beperkt tot dit gebied',
+                      name='input_extent_mask_wkt',
+                      datatype='DEDatasetType',
+                      parameterType='Required',
+                      direction='Input',
+                      defaultValue=r"C:\GitHub\bgt-inlooptool\test-data\interessegebied.gpkg\main.interessegebied"),
+            parameter(displayName='Opslag locatie gpkg/gdb',
                       name='output_gpkg',
                       datatype='DEDatasetType',
                       parameterType='Required',
@@ -181,19 +192,21 @@ class BGTInloopToolArcGIS(BaseTool):
             building_file = parameters[0].valueAsText
             bgt_file = parameters[1].valueAsText
             pipe_file = parameters[2].valueAsText
-            output_gpkg = parameters[3].valueAsText
+            kolken_file = parameters[3].valueAsText
+            input_extent_mask_wkt = parameters[4].valueAsText
+            output_gpkg = parameters[5].valueAsText
 
             core_parameters = InputParameters(
-                max_afstand_vlak_afwateringsvoorziening=parameters[4].value,
-                max_afstand_vlak_oppwater=parameters[5].value,
-                max_afstand_pand_oppwater=parameters[6].value,
-                max_afstand_vlak_kolk=parameters[7].value,
-                max_afstand_afgekoppeld=parameters[8].value,
-                max_afstand_drievoudig=parameters[9].value,
-                afkoppelen_hellende_daken=parameters[10].value,
-                bouwjaar_gescheiden_binnenhuisriolering=parameters[11].value,
-                verhardingsgraad_erf=parameters[12].value,
-                verhardingsgraad_half_verhard=parameters[13].value)
+                max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
+                max_afstand_vlak_oppwater=parameters[7].value,
+                max_afstand_pand_oppwater=parameters[8].value,
+                max_afstand_vlak_kolk=parameters[9].value,
+                max_afstand_afgekoppeld=parameters[10].value,
+                max_afstand_drievoudig=parameters[11].value,
+                afkoppelen_hellende_daken=parameters[12].value,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[13].value,
+                verhardingsgraad_erf=parameters[14].value,
+                verhardingsgraad_half_verhard=parameters[15].value)
 
             self.it = InloopTool(core_parameters)
 
@@ -203,8 +216,8 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Importing pipe files")
             self.it.import_pipes(pipe_file)
 
-            # if self.parameters.gebruik_kolken:
-            #     self.it.import_kolken(self.kolken_file)
+            if self.parameters.gebruik_kolken:
+                self.it.import_kolken(kolken_file)
             self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
 
             if self.parameters.gebruik_bag:
@@ -213,12 +226,12 @@ class BGTInloopToolArcGIS(BaseTool):
                 # self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
-            # if self.input_extent_mask_wkt is not None:
-            #     self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
-            #     self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+            if input_extent_mask_wkt is not None:
+                self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
+                self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
 
             self.arcgis_com.AddMessage("Calculating distances")
-            self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
+            self.it.calculate_distances(parameters=core_parameters)
             self.arcgis_com.AddMessage("Calculating Runoff targets")
             self.it.calculate_runoff_targets()
 
@@ -254,27 +267,31 @@ if __name__ == '__main__':
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
         # output_location
         params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
+        # kolken_file
+        params[4].value = r"C:\GIS\test_data_inlooptool\extract.zip"
+        # area_file
+        params[5].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
-        params[4].value = 40
+        params[6].value = 40
         # maximale afstand vlak oppervlaktewater
-        params[5].value = 2
+        params[7].value = 2
         # maximale afstand pand oppervlaktewater
-        params[6].value = 6
+        params[8].value = 6
         # 'maximale afstand vlak kolk
-        params[7].value = 30
+        params[9].value = 30
         # maximale afstand afgekoppeld
-        params[8].value = 3
+        params[10].value = 3
         # maximale afstand drievoudig
-        params[9].value = 4
+        params[11].value = 4
         # afkoppelen hellende daken
-        params[10].value = True
+        params[12].value = True
         # bouwjaar gescheiden binnenhuisriolering
-        params[11].value = 1992
+        params[13].value = 1992
         # verhardingsgraad erf
-        params[12].value = 50
+        params[14].value = 50
         # verhardingsgraad half verhard
-        params[13].value = 50
+        params[15].value = 50
 
         tool.execute(parameters=params, messages=None)
 
