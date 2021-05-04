@@ -36,11 +36,6 @@ SQL_DIR = os.path.join(__file__, "sql")
 # Exceptions
 gdal.UseExceptions()
 
-import sys
-import arcpy
-from ArcGIS_plugin.bgt_inlooptool.cls_general_use import GeneralUse
-arcgis_com = GeneralUse(sys, arcpy)
-
 
 class DatabaseOperationError(Exception):
     """Raised when an invalid _database operation is requested"""
@@ -636,42 +631,40 @@ class Database:
 
     def remove_input_features_outside_clip_extent(self, extent_wkt):
 
-        try:
-            extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
+        extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
 
-            pipes = self.pipes
-            bgt_surfaces = self.bgt_surfaces
+        pipes = self.pipes
+        bgt_surfaces = self.bgt_surfaces
 
-            intersecting_pipes = []
-            intersecting_surfaces = []
+        intersecting_pipes = []
+        intersecting_surfaces = []
 
 
-            for pipe_id in self.pipes_idx.intersection(extent_geometry.GetEnvelope()):
-                pipe = pipes.GetFeature(pipe_id)
-                pipe_geom = pipe.geometry()
-                if pipe_geom.Intersects(extent_geometry):
-                    intersecting_pipes.append(pipe_id)
+        for pipe_id in self.pipes_idx.intersection(extent_geometry.GetEnvelope()):
+            pipe = pipes.GetFeature(pipe_id)
+            pipe_geom = pipe.geometry()
+            if pipe_geom.Intersects(extent_geometry):
+                intersecting_pipes.append(pipe_id)
 
-            for surface_id in self.bgt_surfaces_idx.intersection(extent_geometry.GetEnvelope()):
-                surface = bgt_surfaces.GetFeature(surface_id)
-                surface_geom = surface.geometry()
-                if surface_geom.Intersects(extent_geometry):
-                    intersecting_surfaces.append(surface_id)
+        for surface_id in self.bgt_surfaces_idx.intersection(extent_geometry.GetEnvelope()):
+            surface = bgt_surfaces.GetFeature(surface_id)
+            surface_geom = surface.geometry()
+            if surface_geom.Intersects(extent_geometry):
+                intersecting_surfaces.append(surface_id)
 
-            for pipe in pipes:
-                pipe_fid = pipe.GetFID()
-                if pipe_fid not in intersecting_pipes:
-                    pipes.DeleteFeature(pipe_fid)
 
-            for surface in bgt_surfaces:
-                surface_fid = surface.GetFID()
-                if surface_fid not in intersecting_surfaces:
-                    bgt_surfaces.DeleteFeature(surface_fid)
+        for pipe in pipes:
+            pipe_fid = pipe.GetFID()
+            if pipe_fid not in intersecting_pipes:
+                pipes.DeleteFeature(pipe_fid)
 
-            pipes = None
-            bgt_surfaces = None
-        except Exception:
-            arcgis_com.Traceback()
+        for surface in bgt_surfaces:
+            surface_fid = surface.GetFID()
+            if surface_fid not in intersecting_surfaces:
+                bgt_surfaces.DeleteFeature(surface_fid)
+
+        pipes = None
+        bgt_surfaces = None
 
     def clean_surfaces(self):
         """
@@ -716,40 +709,36 @@ class Database:
 
     def classify_pipes(self, delete=True):
         """Assign pipe type based on GWSW pipe type. Optionally, delete pipes of type INTERNAL_PIPE_TYPE_IGNORE"""
+        layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
+        if layer is None:
+            raise DatabaseOperationError
 
-        try:
-            layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
-            if layer is None:
-                raise DatabaseOperationError
+        layer.CreateField(ogr.FieldDefn(INTERNAL_PIPE_TYPE_FIELD, ogr.OFTString))
 
-            layer.CreateField(ogr.FieldDefn(INTERNAL_PIPE_TYPE_FIELD, ogr.OFTString))
+        delete_fids = []
+        for pipe_feat in layer:
+            if pipe_feat:
+                gwsw_pipe_type_uri = pipe_feat[GWSW_PIPE_TYPE_FIELD]
+                gwsw_pipe_type_clean = gwsw_pipe_type_uri.split('/')[-1]
+                try:
+                    internal_pipe_type = PIPE_MAP[gwsw_pipe_type_clean]
+                except KeyError:
+                    internal_pipe_type = INTERNAL_PIPE_TYPE_IGNORE
+                if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
+                    delete_fids.append(pipe_feat.GetFID())
+                elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
+                    gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
+                    gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split('/')[-1]
+                    if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
+                        internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
+                pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
+                layer.SetFeature(pipe_feat)
 
-            delete_fids = []
-            for pipe_feat in layer:
-                if pipe_feat:
-                    gwsw_pipe_type_uri = pipe_feat[GWSW_PIPE_TYPE_FIELD]
-                    gwsw_pipe_type_clean = gwsw_pipe_type_uri.split('/')[-1]
-                    try:
-                        internal_pipe_type = PIPE_MAP[gwsw_pipe_type_clean]
-                    except KeyError:
-                        internal_pipe_type = INTERNAL_PIPE_TYPE_IGNORE
-                    if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
-                        delete_fids.append(pipe_feat.GetFID())
-                    elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
-                        # gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
-                        gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split('/')[-1]
-                        if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
-                            internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
-                    pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
-                    layer.SetFeature(pipe_feat)
+        if delete:
+            for fid in delete_fids:
+                layer.DeleteFeature(fid)
 
-            if delete:
-                for fid in delete_fids:
-                    layer.DeleteFeature(fid)
-
-            layer = None
-        except Exception:
-            arcgis_com.Traceback()
+        layer = None
 
     def classify_surfaces(self, parameters):
         """Determine NWRW surface type of all imported surfaces"""

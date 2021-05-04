@@ -21,7 +21,7 @@ from add_layers_ArcGIS import add_layers_to_map
 
 # import bgt inlooptool
 # TODO voor arcmap mogelijk zonder core.
-from core.inlooptool import InloopTool, InputParameters, Database
+from ArcGIS_plugin.bgt_inlooptool.core.inlooptool import InloopTool, InputParameters
 from core.defaults import (MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
                            MAX_AFSTAND_VLAK_OPPWATER,
                            MAX_AFSTAND_PAND_OPPWATER,
@@ -270,7 +270,7 @@ if __name__ == '__main__':
         # kolken_file
         params[3].value = None
         # area_file
-        params[4].value = None
+        # params[4].value = None
         # output_location
         params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
 

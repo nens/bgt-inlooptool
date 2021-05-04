@@ -41,19 +41,15 @@ from qgis.core import (
 from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
-from .resources import *
 
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
 
 # Import the BGT Inlooptool core
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from core.inlooptool import *
+from ArcGIS_plugin.bgt_inlooptool.core.inlooptool import *
 from core.constants import *
 from .ogr2qgis import *
-
-
-import rtree
 
 MESSAGE_CATEGORY = 'BGT Inlooptool'
 BGT_API_URL = 'https://api.pdok.nl/lv/bgt/download/v1_0/full/custom'

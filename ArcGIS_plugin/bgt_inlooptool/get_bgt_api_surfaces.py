@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 """
-Created on Fri Nov 20 10:09:25 2020
-
 @author: Emile.deBadts
 """
 
@@ -35,11 +32,10 @@ import json
 import time
 
 
-BGT_API_URL =  'https://api.pdok.nl/lv/bgt/download/v1_0/full/custom'
-# from constants import ALL_USED_SURFACE_TYPES
+BGT_API_URL = 'https://api.pdok.nl/lv/bgt/download/v1_0/full/custom'
 
-def import_surfaces_from_api(extent_wkt, output_zip):
 
+def get_bgt_api_surfaces(extent_wkt, output_zip):
 	"""
 	Download the bgt surfaces for a given extent from the PDOK API 
 	"""
@@ -47,7 +43,6 @@ def import_surfaces_from_api(extent_wkt, output_zip):
 	data = {"featuretypes": list(ALL_USED_SURFACE_TYPES),
 			"format": "gmllight",
 			"geofilter": extent_wkt}
-
 	headers = {'Content-Type': 'application/json'}
 
 	r = requests.post(BGT_API_URL, data=json.dumps(data), headers=headers)
@@ -71,8 +66,8 @@ def import_surfaces_from_api(extent_wkt, output_zip):
 if __name__ == '__main__':
 
 	extent_wkt = extent_polygon_wkt='Polygon ((110870.34528933660476469 455397.70264967781258747, 110927.88217626001278404 454151.07009967073099688, 112143.82838657461979892 454139.56272228603484109, 112093.96308457433769945 455535.79117829399183393, 110870.34528933660476469 455397.70264967781258747))'
-	output_zip = r'C:\GIS\test_bgt.zip'
-	import_surfaces_from_api(extent_wkt, output_zip)
+	output_zip = r"C:\GIS\test_data_inlooptool\test_bgt_download1.zip"
+	get_bgt_api_surfaces(extent_wkt, output_zip)
 
 	print('Klaar!')
 

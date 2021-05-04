@@ -5,7 +5,7 @@ Created By: Sjoerd Hoekstra
 Date: 29/09/2020
 """
 from bgt_inlooptool.bgt_inlooptool_ArcGIS import BGTInloopToolArcGIS
-from bgt_inlooptool.bgt_vlakken_wfs import BgtVlakkenWFS
+from bgt_inlooptool.download_bgt_vlakken import BgtVlakkenWFS
 
 
 class Toolbox(object):

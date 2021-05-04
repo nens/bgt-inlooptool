@@ -17,9 +17,10 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 # Set path to Generic modules
 from cls_general_use import GeneralUse
 from common import BaseTool, parameter
+from get_bgt_api_surfaces import get_bgt_api_surfaces
 
 
-class BgtVlakkenWFS(BaseTool):
+class DownloadBGTVlakken(BaseTool):
 
     def __init__(self):
         """
@@ -42,29 +43,44 @@ class BgtVlakkenWFS(BaseTool):
         self.parameters = [
             parameter(displayName='BAG (als geopackage)',
                       name='bag',
-                      datatype="DEDatasetType",
-                      parameterType="Optional",
+                      datatype="GPFeatureLayer",
+                      parameterType="Required",
                       direction="Input",
                       defaultValue=r"C:\GIS\test_data_inlooptool\bag.gpkg"),
+            parameter(displayName='BGT download als zipfile van PDOK',
+                      name='bgt_zip',
+                      datatype="DEFile",
+                      parameterType="Required",
+                      direction="Input",
+                      defaultValue=r"C:\GIS\test_data_inlooptool\extract.zip")
         ]
 
         return self.parameters
 
     def updateParameters(self, parameters):
 
-        super(BgtVlakkenWFS, self).updateParameters(parameters)
+        super(DownloadBGTVlakken, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
 
-        super(BgtVlakkenWFS, self).updateMessages(parameters)
+        super(DownloadBGTVlakken, self).updateMessages(parameters)
 
     def execute(self, parameters, messages):
         try:
             self.arcgis_com = GeneralUse(sys, arcpy)
             self.arcgis_com.StartAnalyse()
-            self.arcgis_com.AddMessage("Start BGT Inlooptool!")
+            self.arcgis_com.AddMessage("Start downloading BGT from PDOK!")
 
-            building_file = parameters[0].valueAsText
+            input_area = parameters[0].valueAsText
+            bgt_zip = parameters[1].valueAsText
+
+            # todo get extent from gpkg or get extent from feature layer!
+            # mogen er meer dan 1 polygonen ingetekend zijn? of niet?
+            with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
+                for row in cursor:
+                    extent_wkt = row[0]
+
+            get_bgt_api_surfaces(extent_wkt, bgt_zip)
 
         except Exception:
             self.arcgis_com.Traceback()
@@ -78,11 +94,12 @@ if __name__ == '__main__':
     # easier to debug using standard Python development tools.
 
     try:
-        tool = BgtVlakkenWFS()
+        tool = DownloadBGTVlakken()
         params = tool.getParameterInfo()
 
         # bag_file
-        params[0].value = r"C:\GIS\test_data_inlooptool\bag.gpkg"
+        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\inputs.gdb\interessegebied"
+        params[1].value = r"C:\GIS\test_data_inlooptool\test_bgt_download1.zip"
 
         tool.execute(parameters=params, messages=None)
 
