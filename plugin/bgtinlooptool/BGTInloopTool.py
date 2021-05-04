@@ -52,14 +52,8 @@ from core.inlooptool import *
 from core.constants import *
 from .ogr2qgis import *
 
-try:
-    import rtree
 
-    USE_INDEX = True
-    print('Found rtree module, using index')
-except ImportError:
-    USE_INDEX = False
-    print('Did not find rtree module, not using index')
+import rtree
 
 MESSAGE_CATEGORY = 'BGT Inlooptool'
 BGT_API_URL = 'https://api.pdok.nl/lv/bgt/download/v1_0/full/custom'
@@ -71,8 +65,7 @@ BGT_STYLE = os.path.join(os.path.dirname(__file__), 'style', 'bgt_oppervlakken.q
 
 class InloopToolTask(QgsTask):
 
-    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, kolken_file, input_extent_mask_wkt,
-                 use_index):
+    def __init__(self, description, parameters, bgt_file, pipe_file, building_file, kolken_file, input_extent_mask_wkt):
         super().__init__(description, QgsTask.CanCancel)
 
         iface.messageBar().pushMessage(MESSAGE_CATEGORY,
@@ -86,7 +79,6 @@ class InloopToolTask(QgsTask):
         self.pipe_file = pipe_file
         self.building_file = building_file
         self.kolken_file = kolken_file
-        self.use_index = use_index
         self.input_extent_mask_wkt = input_extent_mask_wkt
         self.exception = None
         self.setProgress(0)
@@ -123,10 +115,9 @@ class InloopToolTask(QgsTask):
         # Note: buildings are not imported to database.
         # self.it._database.add_build_year_to_surface() just reads the build year without copying the layer
 
-        if self.use_index:
-            QgsMessageLog.logMessage(' -- Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
-            self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
-            QgsMessageLog.logMessage(' -- Finished adding index to inputs', MESSAGE_CATEGORY, level=Qgis.Info)
+        QgsMessageLog.logMessage(' -- Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
+        self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+        QgsMessageLog.logMessage(' -- Finished adding index to inputs', MESSAGE_CATEGORY, level=Qgis.Info)
 
         if self.parameters.gebruik_bag:
             QgsMessageLog.logMessage('Adding build year to surfaces', MESSAGE_CATEGORY, level=Qgis.Info)
@@ -137,12 +128,11 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage("Clipping inputs to extent", MESSAGE_CATEGORY, level=Qgis.Info)
             self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
             self.increase_progress()
-            if self.use_index:
-                QgsMessageLog.logMessage('Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
-                self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+            QgsMessageLog.logMessage('Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
 
         QgsMessageLog.logMessage("Calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.calculate_distances(parameters=self.parameters, use_index=self.use_index)
+        self.it.calculate_distances(parameters=self.parameters)
         self.increase_progress()
 
         QgsMessageLog.logMessage("Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
@@ -181,7 +171,7 @@ class InloopToolTask(QgsTask):
         else:
             if self.exception is None:
                 iface.messageBar().pushMessage(MESSAGE_CATEGORY,
-                                               "Bepalen afwateringskenmerken BGT afgebroken door gebruiker",
+                                               "Bepalen afwateringskenmerken BGT mislukt",
                                                level=Qgis.Info
                                                )
             else:
@@ -193,8 +183,8 @@ class InloopToolTask(QgsTask):
 
     def cancel(self):
         iface.messageBar().pushMessage(MESSAGE_CATEGORY,
-                                       "Bepalen afwateringskenmerken BGT afgebroken door gebruiker",
-                                       level=Qgis.Info
+                                       "Bepalen afwateringskenmerken BGT afgebroken door de foutmelding: {}",
+                                       level=Qgis.Critical
                                        )
         super().cancel()
 
@@ -520,8 +510,7 @@ class BGTInloopTool:
                                         pipe_file=pipe_file,
                                         building_file=building_file,
                                         kolken_file=kolken_file,
-                                        input_extent_mask_wkt=extent_geometry_wkt,
-                                        use_index=USE_INDEX)
+                                        input_extent_mask_wkt=extent_geometry_wkt)
 
         self.tm.addTask(inlooptooltask)
 
@@ -530,16 +519,8 @@ class BGTInloopTool:
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        # global USE_INDEX
         if self.first_start is True:
             self.first_start = False
-
-            if USE_INDEX is False:
-                self.iface.messageBar().pushMessage(
-                    MESSAGE_CATEGORY,
-                    "De Python package 'rtree' is niet geïnstalleerd, de berekening zal daardoor langer duren",
-                    level=Qgis.Warning
-                )
 
             self.dlg = BGTInloopToolDialog()
 

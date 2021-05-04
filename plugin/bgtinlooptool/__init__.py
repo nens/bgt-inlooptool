@@ -23,14 +23,21 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
+from bgtinlooptool import dependencies
+
+dependencies.ensure_everything_installed()
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
+
     """Load BGTInloopTool class from file BGTInloopTool.
 
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
-    #
+
+
+        
+    
     from .BGTInloopTool import BGTInloopTool
     return BGTInloopTool(iface)
