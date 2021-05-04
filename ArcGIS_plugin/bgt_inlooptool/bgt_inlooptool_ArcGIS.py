@@ -196,11 +196,6 @@ class BGTInloopToolArcGIS(BaseTool):
             input_extent_mask_wkt = parameters[4].valueAsText
             output_gpkg = parameters[5].valueAsText
 
-            if building_file is None:
-                building_file = ''
-            if kolken_file is None:
-                kolken_file = ''
-
             core_parameters = InputParameters(
                 max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
                 max_afstand_vlak_oppwater=parameters[7].value,
@@ -209,8 +204,8 @@ class BGTInloopToolArcGIS(BaseTool):
                 max_afstand_afgekoppeld=parameters[10].value,
                 max_afstand_drievoudig=parameters[11].value,
                 afkoppelen_hellende_daken=parameters[12].value,
-                gebruik_bag=building_file != '',
-                gebruik_kolken=kolken_file != '',
+                gebruik_bag=building_file != None,
+                gebruik_kolken=kolken_file != None,
                 bouwjaar_gescheiden_binnenhuisriolering=parameters[13].value,
                 verhardingsgraad_erf=parameters[14].value,
                 verhardingsgraad_half_verhard=parameters[15].value)
@@ -275,7 +270,7 @@ if __name__ == '__main__':
         # kolken_file
         params[3].value = None
         # area_file
-        params[4].value = r"C:\GitHub\bgt-inlooptool\test-data\interessegebied.gpkg\main.interessegebied"
+        params[4].value = None
         # output_location
         params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
 
