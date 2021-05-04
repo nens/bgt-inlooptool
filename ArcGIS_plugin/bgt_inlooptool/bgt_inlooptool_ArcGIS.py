@@ -202,9 +202,21 @@ class BGTInloopToolArcGIS(BaseTool):
             self.it.import_surfaces(bgt_file)
             self.arcgis_com.AddMessage("Importing pipe files")
             self.it.import_pipes(pipe_file)
-            self.arcgis_com.AddMessage("Importing building files")
-            self.it.import_buildings(building_file)
-            self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
+
+            # if self.parameters.gebruik_kolken:
+            #     self.it.import_kolken(self.kolken_file)
+            self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+
+            if self.parameters.gebruik_bag:
+                self.arcgis_com.AddMessage("Importing building files")
+                # self.it.import_buildings(building_file)
+                # self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
+                self.it._database.add_build_year_to_surface(file_path=building_file)
+
+            # if self.input_extent_mask_wkt is not None:
+            #     self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
+            #     self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+
             self.arcgis_com.AddMessage("Calculating distances")
             self.it.calculate_distances(parameters=core_parameters) #, use_index=self.use_index)
             self.arcgis_com.AddMessage("Calculating Runoff targets")
@@ -241,7 +253,7 @@ if __name__ == '__main__':
         # pipe_file
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
         # output_location
-        params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem17.gpkg"
+        params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[4].value = 40
