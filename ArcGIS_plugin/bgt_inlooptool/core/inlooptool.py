@@ -36,6 +36,11 @@ SQL_DIR = os.path.join(__file__, "sql")
 # Exceptions
 gdal.UseExceptions()
 
+import sys
+import arcpy
+from ArcGIS_plugin.bgt_inlooptool.cls_general_use import GeneralUse
+arcgis_com = GeneralUse(sys, arcpy)
+
 
 class DatabaseOperationError(Exception):
     """Raised when an invalid _database operation is requested"""
@@ -709,36 +714,40 @@ class Database:
 
     def classify_pipes(self, delete=True):
         """Assign pipe type based on GWSW pipe type. Optionally, delete pipes of type INTERNAL_PIPE_TYPE_IGNORE"""
-        layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
-        if layer is None:
-            raise DatabaseOperationError
 
-        layer.CreateField(ogr.FieldDefn(INTERNAL_PIPE_TYPE_FIELD, ogr.OFTString))
+        try:
+            layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
+            if layer is None:
+                raise DatabaseOperationError
 
-        delete_fids = []
-        for pipe_feat in layer:
-            if pipe_feat:
-                gwsw_pipe_type_uri = pipe_feat[GWSW_PIPE_TYPE_FIELD]
-                gwsw_pipe_type_clean = gwsw_pipe_type_uri.split('/')[-1]
-                try:
-                    internal_pipe_type = PIPE_MAP[gwsw_pipe_type_clean]
-                except KeyError:
-                    internal_pipe_type = INTERNAL_PIPE_TYPE_IGNORE
-                if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
-                    delete_fids.append(pipe_feat.GetFID())
-                elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
-                    gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
-                    gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split('/')[-1]
-                    if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
-                        internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
-                pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
-                layer.SetFeature(pipe_feat)
+            layer.CreateField(ogr.FieldDefn(INTERNAL_PIPE_TYPE_FIELD, ogr.OFTString))
 
-        if delete:
-            for fid in delete_fids:
-                layer.DeleteFeature(fid)
+            delete_fids = []
+            for pipe_feat in layer:
+                if pipe_feat:
+                    gwsw_pipe_type_uri = pipe_feat[GWSW_PIPE_TYPE_FIELD]
+                    gwsw_pipe_type_clean = gwsw_pipe_type_uri.split('/')[-1]
+                    try:
+                        internal_pipe_type = PIPE_MAP[gwsw_pipe_type_clean]
+                    except KeyError:
+                        internal_pipe_type = INTERNAL_PIPE_TYPE_IGNORE
+                    if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
+                        delete_fids.append(pipe_feat.GetFID())
+                    elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
+                        # gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
+                        gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split('/')[-1]
+                        if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
+                            internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
+                    pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
+                    layer.SetFeature(pipe_feat)
 
-        layer = None
+            if delete:
+                for fid in delete_fids:
+                    layer.DeleteFeature(fid)
+
+            layer = None
+        except Exception:
+            arcgis_com.Traceback()
 
     def classify_surfaces(self, parameters):
         """Determine NWRW surface type of all imported surfaces"""

@@ -196,6 +196,11 @@ class BGTInloopToolArcGIS(BaseTool):
             input_extent_mask_wkt = parameters[4].valueAsText
             output_gpkg = parameters[5].valueAsText
 
+            if building_file is None:
+                building_file = ''
+            if kolken_file is None:
+                kolken_file = ''
+
             core_parameters = InputParameters(
                 max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
                 max_afstand_vlak_oppwater=parameters[7].value,
@@ -204,6 +209,8 @@ class BGTInloopToolArcGIS(BaseTool):
                 max_afstand_afgekoppeld=parameters[10].value,
                 max_afstand_drievoudig=parameters[11].value,
                 afkoppelen_hellende_daken=parameters[12].value,
+                gebruik_bag=building_file != '',
+                gebruik_kolken=kolken_file != '',
                 bouwjaar_gescheiden_binnenhuisriolering=parameters[13].value,
                 verhardingsgraad_erf=parameters[14].value,
                 verhardingsgraad_half_verhard=parameters[15].value)
@@ -216,11 +223,11 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Importing pipe files")
             self.it.import_pipes(pipe_file)
 
-            if self.parameters.gebruik_kolken:
+            if core_parameters.gebruik_kolken:
                 self.it.import_kolken(kolken_file)
-            self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+            self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
 
-            if self.parameters.gebruik_bag:
+            if core_parameters.gebruik_bag:
                 self.arcgis_com.AddMessage("Importing building files")
                 # self.it.import_buildings(building_file)
                 # self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
@@ -228,7 +235,7 @@ class BGTInloopToolArcGIS(BaseTool):
 
             if input_extent_mask_wkt is not None:
                 self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
-                self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+                self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
 
             self.arcgis_com.AddMessage("Calculating distances")
             self.it.calculate_distances(parameters=core_parameters)
@@ -265,12 +272,12 @@ if __name__ == '__main__':
         params[1].value = r"C:\GIS\test_data_inlooptool\extract.zip"
         # pipe_file
         params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
-        # output_location
-        params[3].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
         # kolken_file
-        params[4].value = r"C:\GIS\test_data_inlooptool\extract.zip"
+        params[3].value = None
         # area_file
-        params[5].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
+        params[4].value = r"C:\GitHub\bgt-inlooptool\test-data\interessegebied.gpkg\main.interessegebied"
+        # output_location
+        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[6].value = 40
