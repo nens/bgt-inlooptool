@@ -1,6 +1,6 @@
 """
-Script Name: bgt inloop tool voor ArcGIS
-Description: bgt inloop tool voor ArcGIS
+Script Name: Download de BGT vlakken van PDOK
+Description: Download de BGT vlakken van PDOK
 Created By: Sjoerd Hoekstra
 Date: 29/09/2020
 """
@@ -27,8 +27,8 @@ class DownloadBGTVlakken(BaseTool):
         Initialization.
 
         """
-        self.label = 'bgt inloop tool voor ArcGIS'
-        self.description = '''bgt inloop tool voor ArcGIS'''
+        self.label = '1. Download de BGT vlakken van PDOK'
+        self.description = '''Download de BGT vlakken van PDOK'''
         self.canRunInBackground = True
 
     def getParameterInfo(self):
@@ -41,18 +41,16 @@ class DownloadBGTVlakken(BaseTool):
 
         # TODO volgende fase ook importeren als GDB of shapefiles
         self.parameters = [
-            parameter(displayName='BAG (als geopackage)',
+            parameter(displayName='Interesse gebied als polygon',
                       name='bag',
                       datatype="GPFeatureLayer",
                       parameterType="Required",
-                      direction="Input",
-                      defaultValue=r"C:\GIS\test_data_inlooptool\bag.gpkg"),
+                      direction="Input"),
             parameter(displayName='BGT download als zipfile van PDOK',
                       name='bgt_zip',
-                      datatype="DEFile",
+                      datatype="GPString",
                       parameterType="Required",
-                      direction="Input",
-                      defaultValue=r"C:\GIS\test_data_inlooptool\extract.zip")
+                      direction="Input")
         ]
 
         return self.parameters
@@ -62,6 +60,23 @@ class DownloadBGTVlakken(BaseTool):
         super(DownloadBGTVlakken, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
+
+        # Messages interesse gebied
+        if parameters[0].altered:
+            desc = arcpy.Describe(parameters[0].valueAsText)
+            if desc.dataType != 'FeatureClass':
+                parameters[0].setErrorMessage('De invoer is niet van het type featureclass/shapefile/gpkg layer!')
+            else:
+                if desc.shapeType != 'Polygon':
+                    parameters[0].setErrorMessage('De featureclass/shapefile/gpkg layer is niet van het type polygoon!')
+
+        # Messages output BGT zipfile
+        if parameters[1].altered:
+            if parameters[1].valueAsText[-4:].lower() != '.zip':
+                parameters[1].setErrorMessage('Het output bestand is geen zipfile! Zorg dat dit wel een zipfile is!')
+            else:
+                if os.path.exists(parameters[1].valueAsText):
+                    parameters[1].setErrorMessage('Het output bestand bestaat al, kies een nieuwe naam!')
 
         super(DownloadBGTVlakken, self).updateMessages(parameters)
 
@@ -74,8 +89,7 @@ class DownloadBGTVlakken(BaseTool):
             input_area = parameters[0].valueAsText
             bgt_zip = parameters[1].valueAsText
 
-            # todo get extent from gpkg or get extent from feature layer!
-            # mogen er meer dan 1 polygonen ingetekend zijn? of niet?
+            # todo mogen er meer dan 1 polygonen ingetekend zijn? of niet?
             with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
                 for row in cursor:
                     extent_wkt = row[0]

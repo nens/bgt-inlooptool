@@ -20,8 +20,7 @@ from common import BaseTool, parameter
 from add_layers_ArcGIS import add_layers_to_map
 
 # import bgt inlooptool
-# TODO voor arcmap mogelijk zonder core.
-from ArcGIS_plugin.bgt_inlooptool.core.inlooptool import InloopTool, InputParameters
+from core.inlooptool import InloopTool, InputParameters
 from core.defaults import (MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
                            MAX_AFSTAND_VLAK_OPPWATER,
                            MAX_AFSTAND_PAND_OPPWATER,
@@ -41,8 +40,8 @@ class BGTInloopToolArcGIS(BaseTool):
         Initialization.
 
         """
-        self.label = 'bgt inloop tool voor ArcGIS'
-        self.description = '''bgt inloop tool voor ArcGIS'''
+        self.label = '2. BGT inlooptool voor ArcGIS'
+        self.description = '''BGT inlooptool voor ArcGIS'''
         self.canRunInBackground = True
 
     def getParameterInfo(self):
@@ -63,7 +62,7 @@ class BGTInloopToolArcGIS(BaseTool):
                       defaultValue=r"C:\GIS\test_data_inlooptool\bag.gpkg"),
             parameter(displayName='BGT (als zipfile)',
                       name='bgt',
-                      datatype="DEFile",
+                      datatype="GPString",
                       parameterType="Required",
                       direction="Input",
                       defaultValue=r"C:\GIS\test_data_inlooptool\extract.zip"),
@@ -168,18 +167,36 @@ class BGTInloopToolArcGIS(BaseTool):
         bag_file = parameters[0]
         bgt_file = parameters[1]
         pipe_file = parameters[2]
+        kolken_file = parameters[3]
+        input_area = parameters[4]
+        output_gpkg = parameters[5]
 
         if bag_file.altered:
-            if bag_file.valueAsText[-5:] != ".gpkg":
+            if bag_file.valueAsText[-5:].lower() != ".gpkg":
                 bag_file.setErrorMessage('De input voor bag data moet een geopackage (.gpkg) zijn')
 
         if bgt_file.altered:
-            if bgt_file.valueAsText[-4:] != ".zip":
+            if bgt_file.valueAsText[-4:].lower() != ".zip":
                 bgt_file.setErrorMessage('De input voor bgt data moet een zip file zijn met .gml files')
 
         if pipe_file.altered:
-            if pipe_file.valueAsText[-5:] != ".gpkg":
+            if pipe_file.valueAsText[-5:].lower() != ".gpkg":
                 pipe_file.setErrorMessage('De input voor leidingen data moet een geopackage (.gpkg) zijn')
+
+        # # todo hoe moet een kolken file eruit zien?
+        # if kolken_file.altered:
+        #     if kolken_file.valueAsText[-5:].lower() != ".gpkg":
+        #         kolken_file.setErrorMessage('De input voor kolken moet een geopackage (.gpkg) zijn')
+        #
+        # # todo dit moet een gpkg layer zijn?
+        # if input_area.altered:
+        #     if input_area.valueAsText[-4:].lower() != ".zip":
+        #         input_area.setErrorMessage('Het input gebied moet een gpkg layer zijn')
+
+        # todo dit moet een gpkg layer zijn?
+        if output_gpkg.altered:
+            if output_gpkg.valueAsText[-5:].lower() != ".gpkg":
+                output_gpkg.setErrorMessage('Het output bestand moet een geopackage (.gpkg) zijn')
 
         super(BGTInloopToolArcGIS, self).updateMessages(parameters)
 
@@ -224,8 +241,6 @@ class BGTInloopToolArcGIS(BaseTool):
 
             if core_parameters.gebruik_bag:
                 self.arcgis_com.AddMessage("Importing building files")
-                # self.it.import_buildings(building_file)
-                # self.it._database.add_build_year_to_surface()  # use_index=self.use_index)
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
             if input_extent_mask_wkt is not None:

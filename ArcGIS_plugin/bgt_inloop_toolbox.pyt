@@ -5,7 +5,7 @@ Created By: Sjoerd Hoekstra
 Date: 29/09/2020
 """
 from bgt_inlooptool.bgt_inlooptool_ArcGIS import BGTInloopToolArcGIS
-from bgt_inlooptool.download_bgt_vlakken import BgtVlakkenWFS
+from bgt_inlooptool.download_bgt_vlakken import DownloadBGTVlakken
 
 
 class Toolbox(object):
@@ -16,4 +16,4 @@ class Toolbox(object):
         self.description = 'BGT Inloop Toolbox voor ArcGIS'
 
         # Explicitly define tools here.
-        self.tools = [BGTInloopToolArcGIS]
+        self.tools = [BGTInloopToolArcGIS, DownloadBGTVlakken]
