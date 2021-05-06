@@ -16,28 +16,33 @@ def install_rtree():
     Running from the toolbox .pyt just gives an import osr error and does not work to install it.
     The script has to be run manually
     """
-
-    try:
-        import rtree
-        print("rtree is succesvol geimporteerd")
+    python_version = int(str(sys.version)[0])
+    if python_version == 2:
+        print("Python 2 wordt gebruikt! rtree kan niet geinstalleerd worden op deze manier. "
+              "Installeer rtree op een andere manier")
         input("Press enter to exit")
-    except ImportError as ex:
+    else:
         try:
-            print("rtree kon niet geimporteerd worden, nu wordt geprobeerd om rtree te installeren")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", 'rtree'])
             import rtree
-            print("rtree is succesvol geinstalleerd")
-        except CalledProcessError as ex2:  # uitzoeken wat voor error
+            print("rtree is succesvol geimporteerd")
+            input("Press enter to exit")
+        except ImportError as ex:
             try:
-                print("rtree kan niet direct geinstalleerd worden, nu wordt geprobeerd pip te upgraden")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade"])
+                print("rtree kon niet geimporteerd worden, nu wordt geprobeerd om rtree te installeren")
                 subprocess.check_call([sys.executable, "-m", "pip", "install", 'rtree'])
                 import rtree
                 print("rtree is succesvol geinstalleerd")
-            except CalledProcessError as ex3:
-                print("pip is niet geupdate en rtree kon niet worden geinstalleerd.")
-                print("Neem contact op met bgtinlooptool@nelen-schuurmans.nl")
-        input("Press enter to exit")
+            except CalledProcessError as ex2:  # uitzoeken wat voor error
+                try:
+                    print("rtree kan niet direct geinstalleerd worden, nu wordt geprobeerd pip te upgraden")
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade"])
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", 'rtree'])
+                    import rtree
+                    print("rtree is succesvol geinstalleerd")
+                except CalledProcessError as ex3:
+                    print("pip is niet geupdate en rtree kon niet worden geinstalleerd.")
+                    print("Neem contact op met bgtinlooptool@nelen-schuurmans.nl")
+            input("Press enter to exit")
 
 
 if __name__ == '__main__':

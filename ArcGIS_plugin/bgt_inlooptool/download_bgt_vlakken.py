@@ -39,7 +39,6 @@ class DownloadBGTVlakken(BaseTool):
         parameter(displayName, name, datatype, defaultValue=None, parameterType='Required', direction='Input')
         '''
 
-        # TODO volgende fase ook importeren als GDB of shapefiles
         self.parameters = [
             parameter(displayName='Interesse gebied als polygon',
                       name='bag',
@@ -48,11 +47,10 @@ class DownloadBGTVlakken(BaseTool):
                       direction="Input"),
             parameter(displayName='BGT download als zipfile van PDOK',
                       name='bgt_zip',
-                      datatype="GPString",
+                      datatype="DEFile",
                       parameterType="Required",
-                      direction="Input")
+                      direction="Output")
         ]
-
         return self.parameters
 
     def updateParameters(self, parameters):
@@ -64,7 +62,7 @@ class DownloadBGTVlakken(BaseTool):
         # Messages interesse gebied
         if parameters[0].altered:
             desc = arcpy.Describe(parameters[0].valueAsText)
-            if desc.dataType not in ['FeatureClass', 'FeatureLayer']:
+            if desc.dataType not in ['FeatureClass', 'FeatureLayer', 'ShapeFile']:
                 parameters[0].setErrorMessage('De invoer is niet van het type featureclass/shapefile/gpkg layer!')
             else:
                 if desc.shapeType != 'Polygon':

@@ -58,20 +58,17 @@ class BGTInloopToolArcGIS(BaseTool):
                       name='bag',
                       datatype="DEDatasetType",
                       parameterType="Optional",
-                      direction="Input",
-                      defaultValue=r"C:\GIS\test_data_inlooptool\bag.gpkg"),
+                      direction="Input"),
             parameter(displayName='BGT (als zipfile)',
                       name='bgt',
-                      datatype="GPString",
+                      datatype="DEFile",
                       parameterType="Required",
-                      direction="Input",
-                      defaultValue=r"C:\GIS\test_data_inlooptool\extract.zip"),
+                      direction="Input"),
             parameter(displayName='GWSW Leidingen (als geopackage)',
                       name='leidingen',
                       datatype='DEDatasetType',
                       parameterType='Required',
-                      direction='Input',
-                      defaultValue=r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"),
+                      direction='Input'),
             parameter(displayName='Kolken (als geopackage)',
                       name='kolken_file',
                       datatype='DEDatasetType',
@@ -81,14 +78,12 @@ class BGTInloopToolArcGIS(BaseTool):
                       name='input_extent_mask_wkt',
                       datatype='DEDatasetType',
                       parameterType='Required',
-                      direction='Input',
-                      defaultValue=r"C:\GitHub\bgt-inlooptool\test-data\interessegebied.gpkg\main.interessegebied"),
+                      direction='Input'),
             parameter(displayName='Opslag locatie gpkg/gdb',
                       name='output_gpkg',
                       datatype='DEDatasetType',
                       parameterType='Required',
-                      direction='Output',
-                      defaultValue=r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem_database5.gpkg"),
+                      direction='Output'),
             parameter(displayName='maximale afstand vlak afwateringsvoorziening',
                       name='max_vlak_afwatervoorziening',
                       datatype='GPDouble',
@@ -155,11 +150,6 @@ class BGTInloopToolArcGIS(BaseTool):
 
     def updateParameters(self, parameters):
 
-        if parameters[3].value == True:
-            parameters[4].enabled = True  # Enable the output gdb
-        else:
-            parameters[4].enabled = False  # Disable the output gdb
-
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
@@ -194,7 +184,7 @@ class BGTInloopToolArcGIS(BaseTool):
         # Messages interesse gebied
         if input_area.altered:
             desc = arcpy.Describe(input_area.valueAsText)
-            if desc.dataType not in ['FeatureClass', 'FeatureLayer']:
+            if desc.dataType not in ['FeatureClass', 'FeatureLayer', 'ShapeFile']:
                 input_area.setErrorMessage('De invoer is niet van het type featureclass/shapefile/gpkg layer!')
             else:
                 if desc.shapeType != 'Polygon':
