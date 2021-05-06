@@ -8,7 +8,7 @@ dependency handling.
 ``constraints.txt``.
 
 :py:func:`ensure_everything_installed()` checks if :py:data:`DEPENDENCIES` are
-installed and installs them if needed.
+installed and dependencies them if needed.
 
 :py:func:`check_importability()` double-checks if everything is importable. It also
 logs the locations.
@@ -58,7 +58,7 @@ def ensure_everything_installed():
 def _ensure_prerequisite_is_installed(prerequisite="pip"):
     """Check the basics: pip.
 
-    People using OSGEO custom installs sometimes exclude those
+    People using OSGEO custom dependencies sometimes exclude those
     dependencies. Our install scripts fail, then, because of the missing
     'pip'.
 
