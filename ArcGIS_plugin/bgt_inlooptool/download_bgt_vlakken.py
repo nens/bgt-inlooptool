@@ -64,11 +64,15 @@ class DownloadBGTVlakken(BaseTool):
         # Messages interesse gebied
         if parameters[0].altered:
             desc = arcpy.Describe(parameters[0].valueAsText)
-            if desc.dataType != 'FeatureClass':
+            if desc.dataType not in ['FeatureClass', 'FeatureLayer']:
                 parameters[0].setErrorMessage('De invoer is niet van het type featureclass/shapefile/gpkg layer!')
             else:
                 if desc.shapeType != 'Polygon':
                     parameters[0].setErrorMessage('De featureclass/shapefile/gpkg layer is niet van het type polygoon!')
+                else:
+                    feature_count = int(arcpy.management.GetCount(parameters[0].valueAsText).getOutput(0))
+                    if feature_count != 1:
+                        parameters[0].setErrorMessage('Er is meer of minder dan 1 feature aanwezig of geselecteerd!')
 
         # Messages output BGT zipfile
         if parameters[1].altered:
@@ -89,7 +93,6 @@ class DownloadBGTVlakken(BaseTool):
             input_area = parameters[0].valueAsText
             bgt_zip = parameters[1].valueAsText
 
-            # todo mogen er meer dan 1 polygonen ingetekend zijn? of niet?
             with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
                 for row in cursor:
                     extent_wkt = row[0]

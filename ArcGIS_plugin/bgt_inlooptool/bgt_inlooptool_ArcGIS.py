@@ -183,17 +183,27 @@ class BGTInloopToolArcGIS(BaseTool):
             if pipe_file.valueAsText[-5:].lower() != ".gpkg":
                 pipe_file.setErrorMessage('De input voor leidingen data moet een geopackage (.gpkg) zijn')
 
-        # # todo hoe moet een kolken file eruit zien?
         # if kolken_file.altered:
         #     if kolken_file.valueAsText[-5:].lower() != ".gpkg":
         #         kolken_file.setErrorMessage('De input voor kolken moet een geopackage (.gpkg) zijn')
         #
-        # # todo dit moet een gpkg layer zijn?
         # if input_area.altered:
         #     if input_area.valueAsText[-4:].lower() != ".zip":
         #         input_area.setErrorMessage('Het input gebied moet een gpkg layer zijn')
 
-        # todo dit moet een gpkg layer zijn?
+        # Messages interesse gebied
+        if input_area.altered:
+            desc = arcpy.Describe(input_area.valueAsText)
+            if desc.dataType not in ['FeatureClass', 'FeatureLayer']:
+                input_area.setErrorMessage('De invoer is niet van het type featureclass/shapefile/gpkg layer!')
+            else:
+                if desc.shapeType != 'Polygon':
+                    input_area.setErrorMessage('De featureclass/shapefile/gpkg layer is niet van het type polygoon!')
+                else:
+                    feature_count = int(arcpy.management.GetCount(input_area.valueAsText).getOutput(0))
+                    if feature_count != 1:
+                        input_area.setErrorMessage('Er is meer of minder dan 1 feature aanwezig of geselecteerd!')
+
         if output_gpkg.altered:
             if output_gpkg.valueAsText[-5:].lower() != ".gpkg":
                 output_gpkg.setErrorMessage('Het output bestand moet een geopackage (.gpkg) zijn')
@@ -210,8 +220,13 @@ class BGTInloopToolArcGIS(BaseTool):
             bgt_file = parameters[1].valueAsText
             pipe_file = parameters[2].valueAsText
             kolken_file = parameters[3].valueAsText
-            input_extent_mask_wkt = parameters[4].valueAsText
+            input_area = parameters[4].valueAsText
             output_gpkg = parameters[5].valueAsText
+
+            # preparation
+            with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
+                for row in cursor:
+                    input_extent_mask_wkt = row[0]
 
             core_parameters = InputParameters(
                 max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
@@ -285,7 +300,7 @@ if __name__ == '__main__':
         # kolken_file
         params[3].value = None
         # area_file
-        # params[4].value = None
+        params[4].value = r'C:\GIS\test_data_inlooptool\interessegebied.gpkg\main.interessegebied'
         # output_location
         params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
 
