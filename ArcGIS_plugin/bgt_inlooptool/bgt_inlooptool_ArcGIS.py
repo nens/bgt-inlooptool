@@ -177,9 +177,6 @@ class BGTInloopToolArcGIS(BaseTool):
         #     if kolken_file.valueAsText[-5:].lower() != ".gpkg":
         #         kolken_file.setErrorMessage('De input voor kolken moet een geopackage (.gpkg) zijn')
         #
-        # if input_area.altered:
-        #     if input_area.valueAsText[-4:].lower() != ".zip":
-        #         input_area.setErrorMessage('Het input gebied moet een gpkg layer zijn')
 
         # Messages interesse gebied
         if input_area.altered:
@@ -235,35 +232,36 @@ class BGTInloopToolArcGIS(BaseTool):
             self.it = InloopTool(core_parameters)
 
             # Import surfaces and pipes
-            self.arcgis_com.AddMessage("Importing BGT files")
+            self.arcgis_com.AddMessage("Importeren van BGT bestanden")
             self.it.import_surfaces(bgt_file)
-            self.arcgis_com.AddMessage("Importing pipe files")
+            self.arcgis_com.AddMessage("Importeren van GWSW bestanden")
             self.it.import_pipes(pipe_file)
 
             if core_parameters.gebruik_kolken:
+                self.arcgis_com.AddMessage("Importeren van kolken bestanden")
                 self.it.import_kolken(kolken_file)
             self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
 
             if core_parameters.gebruik_bag:
-                self.arcgis_com.AddMessage("Importing building files")
+                self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
             if input_extent_mask_wkt is not None:
                 self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
                 self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
 
-            self.arcgis_com.AddMessage("Calculating distances")
+            self.arcgis_com.AddMessage("Afstanden aan het berekenen")
             self.it.calculate_distances(parameters=core_parameters)
-            self.arcgis_com.AddMessage("Calculating Runoff targets")
+            self.arcgis_com.AddMessage("Bereken Runoff targets")
             self.it.calculate_runoff_targets()
 
             # Export results
-            self.arcgis_com.AddMessage("Exporting to GPKG")
+            self.arcgis_com.AddMessage("Exporteren naar GPKG")
             self.it._database._write_to_disk(output_gpkg)
 
             # Add layers to the map
-            # TODO werkend maken van add_layers_to_map
-            self.arcgis_com.AddMessage("Visualiseren van resultaten BGT Inlooptool!")
+            # TODO werkend maken van add_layers_to_map, oplossing?
+            self.arcgis_com.AddMessage("Visualiseren van resultaten!")
             add_layers_to_map(output_gpkg, self.arcgis_com)
 
         except Exception:
