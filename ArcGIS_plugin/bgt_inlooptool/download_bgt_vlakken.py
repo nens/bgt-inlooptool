@@ -78,7 +78,7 @@ class DownloadBGTVlakken(BaseTool):
                 parameters[1].setErrorMessage('Het output bestand is geen zipfile! Zorg dat dit wel een zipfile is!')
             else:
                 if os.path.exists(parameters[1].valueAsText):
-                    parameters[1].setErrorMessage('Het output bestand bestaat al, kies een nieuwe naam!')
+                    parameters[1].setWarningMessage('Het output bestand bestaat al, kies een nieuwe naam!')
 
         super(DownloadBGTVlakken, self).updateMessages(parameters)
 

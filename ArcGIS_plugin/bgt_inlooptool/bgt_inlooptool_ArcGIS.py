@@ -205,11 +205,6 @@ class BGTInloopToolArcGIS(BaseTool):
             input_area = parameters[4].valueAsText
             output_gpkg = parameters[5].valueAsText
 
-            # preparation
-            with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
-                for row in cursor:
-                    input_extent_mask_wkt = row[0]
-
             core_parameters = InputParameters(
                 max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
                 max_afstand_vlak_oppwater=parameters[7].value,
@@ -241,7 +236,12 @@ class BGTInloopToolArcGIS(BaseTool):
                 self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
-            if input_extent_mask_wkt is not None:
+            if input_area is not None:
+                # preparation
+                with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
+                    for row in cursor:
+                        input_extent_mask_wkt = row[0]
+
                 self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
                 self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
 
