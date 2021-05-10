@@ -40,7 +40,7 @@ class BGTInloopToolArcGIS(BaseTool):
         Initialization.
 
         """
-        self.label = '2. BGT inlooptool voor ArcGIS'
+        self.label = '2. BGT Inlooptool'
         self.description = '''BGT inlooptool voor ArcGIS'''
         self.canRunInBackground = True
 

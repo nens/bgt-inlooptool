@@ -4,6 +4,7 @@ Description: BGT Inloop Toolbox voor ArcGIS
 Created By: Sjoerd Hoekstra
 Date: 29/09/2020
 """
+
 from bgt_inlooptool.bgt_inlooptool_ArcGIS import BGTInloopToolArcGIS
 from bgt_inlooptool.download_bgt_vlakken import DownloadBGTVlakken
 
@@ -17,3 +18,5 @@ class Toolbox(object):
 
         # Explicitly define tools here.
         self.tools = [BGTInloopToolArcGIS, DownloadBGTVlakken]
+
+
