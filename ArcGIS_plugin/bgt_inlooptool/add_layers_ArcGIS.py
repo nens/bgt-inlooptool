@@ -18,30 +18,17 @@ def add_layers_to_map(save_database, arcgis_com):
         arcgis_com.AddMessage('symbology_layer path is {}'.format(symbology_layer_path))
 
         # Read ArcGIS Pro project and Map
-        # aprx = arcpy.mp.ArcGISProject(r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
         aprx = arcpy.mp.ArcGISProject("CURRENT")
         map = aprx.listMaps()[0]
 
-        # # TODO if directly from gpkg, eerst moet N&S symbology veld toevoegen in code
-        # try:
-        #     layer = map.addDataFromPath(dataset)
-        #     symbology_layer = arcpy.mp.LayerFile(symbology_layer_path)
-        #     arcpy.ApplySymbologyFromLayer_management(layer, symbology_layer)
-        #     # TODO als Nelen en Schuurman dit in de core doet aanzetten!
-        # except Exception:
-        #     arcgis_com.Traceback()
-
-        # If gpkg does not work
         input_layer = map.addDataFromPath(dataset)
         layer_file = arcpy.mp.LayerFile(symbology_layer_path)
         for layer in layer_file.listLayers():
             sym_layer = layer
         arcpy.ApplySymbologyFromLayer_management(input_layer, sym_layer)
-        # TODO werkt wel vanuit test.py maar niet vanuit hier!
-        # Apply the symbology from the symbology layer to the input layer
-        # arcpy.ApplySymbologyFromLayer_management(new_layer, symbology_layer)
-        # door bug wordt dit niet goed weergegeven vanuit de tool. fix in ArcGIS Pro 2.7
-        # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDEyMDkwNg==
+        arcpy.SetParameterAsText(16, input_layer)
+        # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDExOTkwNw==
+        # workaround works when parameter 16 is defined as a layer and as parameterType Derived
         aprx.save()
 
     except:

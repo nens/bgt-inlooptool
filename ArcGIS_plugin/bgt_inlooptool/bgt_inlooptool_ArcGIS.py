@@ -143,7 +143,12 @@ class BGTInloopToolArcGIS(BaseTool):
                       datatype='GPDouble',
                       parameterType='Required',
                       direction='Input',
-                      defaultValue=VERHARDINGSGRAAD_HALF_VERHARD)
+                      defaultValue=VERHARDINGSGRAAD_HALF_VERHARD),
+            parameter(displayName='Symbologyie laag',
+                      name='symbology layer',
+                      datatype='GPLayer',
+                      parameterType='Derived',
+                      direction='Output')
             ]
 
         return self.parameters
