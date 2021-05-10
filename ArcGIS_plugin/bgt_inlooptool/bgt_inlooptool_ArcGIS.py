@@ -54,11 +54,6 @@ class BGTInloopToolArcGIS(BaseTool):
 
         # TODO volgende fase ook importeren als GDB of shapefiles
         self.parameters = [
-            parameter(displayName='BAG (als geopackage)',
-                      name='bag',
-                      datatype="DEDatasetType",
-                      parameterType="Optional",
-                      direction="Input"),
             parameter(displayName='BGT (als zipfile)',
                       name='bgt',
                       datatype="DEFile",
@@ -69,15 +64,20 @@ class BGTInloopToolArcGIS(BaseTool):
                       datatype='DEDatasetType',
                       parameterType='Required',
                       direction='Input'),
-            parameter(displayName='Kolken (als geopackage)',
+            parameter(displayName='BAG (als geopackage)',
+                      name='bag',
+                      datatype="DEDatasetType",
+                      parameterType="Optional",
+                      direction="Input"),
+            parameter(displayName='Kolken',
                       name='kolken_file',
-                      datatype='DEDatasetType',
-                      parameterType='Required',
+                      datatype='GPFeatureLayer',
+                      parameterType='Optional',
                       direction='Input'),
-            parameter(displayName='Analyse gebied (als geopackage), wordt beperkt tot dit gebied',
+            parameter(displayName='Analyse gebied',
                       name='input_extent_mask_wkt',
-                      datatype='DEDatasetType',
-                      parameterType='Required',
+                      datatype='GPFeatureLayer',
+                      parameterType='Optional',
                       direction='Input'),
             parameter(displayName='Opslag locatie gpkg/gdb',
                       name='output_gpkg',
@@ -154,16 +154,12 @@ class BGTInloopToolArcGIS(BaseTool):
 
     def updateMessages(self, parameters):
 
-        bag_file = parameters[0]
-        bgt_file = parameters[1]
-        pipe_file = parameters[2]
+        bgt_file = parameters[0]
+        pipe_file = parameters[1]
+        bag_file = parameters[2]
         kolken_file = parameters[3]
         input_area = parameters[4]
         output_gpkg = parameters[5]
-
-        if bag_file.altered:
-            if bag_file.valueAsText[-5:].lower() != ".gpkg":
-                bag_file.setErrorMessage('De input voor bag data moet een geopackage (.gpkg) zijn')
 
         if bgt_file.altered:
             if bgt_file.valueAsText[-4:].lower() != ".zip":
@@ -173,10 +169,9 @@ class BGTInloopToolArcGIS(BaseTool):
             if pipe_file.valueAsText[-5:].lower() != ".gpkg":
                 pipe_file.setErrorMessage('De input voor leidingen data moet een geopackage (.gpkg) zijn')
 
-        # if kolken_file.altered:
-        #     if kolken_file.valueAsText[-5:].lower() != ".gpkg":
-        #         kolken_file.setErrorMessage('De input voor kolken moet een geopackage (.gpkg) zijn')
-        #
+        if bag_file.altered:
+            if bag_file.valueAsText[-5:].lower() != ".gpkg":
+                bag_file.setErrorMessage('De input voor bag data moet een geopackage (.gpkg) zijn')
 
         # Messages interesse gebied
         if input_area.altered:
@@ -203,9 +198,9 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.StartAnalyse()
             self.arcgis_com.AddMessage("Start BGT Inlooptool!")
 
-            building_file = parameters[0].valueAsText
-            bgt_file = parameters[1].valueAsText
-            pipe_file = parameters[2].valueAsText
+            bgt_file = parameters[0].valueAsText
+            pipe_file = parameters[1].valueAsText
+            building_file = parameters[2].valueAsText
             kolken_file = parameters[3].valueAsText
             input_area = parameters[4].valueAsText
             output_gpkg = parameters[5].valueAsText
@@ -279,12 +274,12 @@ if __name__ == '__main__':
         tool = BGTInloopToolArcGIS()
         params = tool.getParameterInfo()
 
-        # bag_file
-        params[0].value = r"C:\GIS\test_data_inlooptool\bag.gpkg"
         # bgt_file
-        params[1].value = r"C:\GIS\test_data_inlooptool\extract.zip"
+        params[0].value = r"C:\GIS\test_data_inlooptool\extract.zip"
         # pipe_file
-        params[2].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
+        params[1].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
+        # bag_file
+        params[2].value = r"C:\GIS\test_data_inlooptool\bag.gpkg"
         # kolken_file
         params[3].value = None
         # area_file

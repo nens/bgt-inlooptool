@@ -41,7 +41,7 @@ class DownloadBGTVlakken(BaseTool):
 
         self.parameters = [
             parameter(displayName='Interesse gebied als polygon',
-                      name='bag',
+                      name='interesse_gebied',
                       datatype="GPFeatureLayer",
                       parameterType="Required",
                       direction="Input"),
