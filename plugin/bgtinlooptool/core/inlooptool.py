@@ -691,16 +691,14 @@ class Database:
                     geom_fixed = ogr.ForceToPolygon(geom)
                     f.SetGeometry(geom_fixed)
                     lyr.SetFeature(f)
-                elif geom_type in (ogr.wkbLineString, ogr.wkbCompoundCurve):
+                elif geom_type in (ogr.wkbLineString, ogr.wkbCompoundCurve, ogr.wkbCircularString):
                     # print('Deleting feature {} because it is a Linestring'.format(f.GetFID()))
                     delete_fids.append(f.GetFID())
                 else:
-                    # print('Fixing feature {} failed!'.format(f.GetFID()))
-                    raise Exception(
-                        "No procedure defined to clean up geometry type {}".format(
-                            str(geom_type)
-                        )
-                    )
+                    print('Warning: Fixing feature {fid} in {stype} failed! No procedure defined to clean up geometry '
+                          'type {geom_type}. Continuing anyway.'.format(fid=f.GetFID(), stype=stype, geom_type=str(geom_type))
+                          )
+                    continue
             for fid in delete_fids:
                 lyr.DeleteFeature(fid)
             print(f'cleaned import of {stype} layer has {lyr.GetFeatureCount()} features')
