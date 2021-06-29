@@ -582,17 +582,23 @@ class Database:
             )
 
         try:
+            nr_layers_with_features = 0
             for stype in ALL_USED_SURFACE_TYPES:
                 surface_source_fn = os.path.join(
                     "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
                 )
                 surface_source = ogr.Open(surface_source_fn)
                 src_layer = surface_source.GetLayerByName("{stype}".format(stype=stype))
-                self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
-                print(f'raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features')
+                if src_layer is None:
+                    continue
+                else:
+                    nr_layers_with_features += 1
+                    self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
+                    print(f'raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features')
+            if nr_layers_with_features == 0:
+                raise FileInputError(f"BGT zip file bevat alleen lagen zonder features")
         except Exception:
-            # TODO more specific exception
-            raise FileInputError("Ongeldige input: BGT zip file")
+            raise FileInputError(f"Probleem met laag {stype}.gml in BGT zip file")
 
     def import_kolken(self, file_path):
 
@@ -674,6 +680,8 @@ class Database:
         """
         for stype in ALL_USED_SURFACE_TYPES:
             lyr = self.mem_database.GetLayerByName(stype)
+            if lyr is None:  # this happens if this particular layer in the bgt input has no features
+                continue
             lyr.ResetReading()
             delete_fids = []
             for f in lyr:
@@ -810,6 +818,8 @@ class Database:
         previous_fcount = 0
         for stype in ALL_USED_SURFACE_TYPES:
             input_layer = self.mem_database.GetLayerByName(stype)
+            if input_layer is None:  # this happens if this particular layer in the bgt input has no features
+                continue
             for feature in input_layer:
                 if hasattr(feature, "eindRegistratie"):
                     if feature["eindRegistratie"] is not None:
