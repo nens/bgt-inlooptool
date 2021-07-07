@@ -23,7 +23,14 @@ GEOMETRY_TYPES = {  # See full list: https://gdal.org/doxygen/ogr__core_8h.html,
     4: 'MultiPoint',
     5: 'MultiLinestring',
     6: 'MultiPolygon',
-    10: 'CurvePolygon'
+    10: 'CurvePolygon',
+    2002: 'Linestring',
+    2005: 'MultiLinestring',
+    3002: 'Linestring',
+    3005: 'MultiLinestring',
+    2005: 'MultiLinestring',
+    -2147483646: 'Linestring',
+    -2147483643: 'MultiLinestring'
 }
 
 
