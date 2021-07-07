@@ -74,6 +74,7 @@ class DownloadBGTVlakken(BaseTool):
 
         # Messages output BGT zipfile
         if parameters[1].altered:
+            # TODO altijd als .zip aanvullen omdat dit toch niet anders kan
             if parameters[1].valueAsText[-4:].lower() != '.zip':
                 parameters[1].setErrorMessage('Het output bestand is geen zipfile! Zorg dat dit wel een zipfile is!')
             else:
@@ -91,6 +92,7 @@ class DownloadBGTVlakken(BaseTool):
             input_area = parameters[0].valueAsText
             bgt_zip = parameters[1].valueAsText
 
+            # todo if coordinate system is not 28992, then convert to rd new
             with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
                 for row in cursor:
                     extent_wkt = row[0]

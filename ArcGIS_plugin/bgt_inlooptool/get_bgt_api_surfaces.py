@@ -55,6 +55,7 @@ def get_bgt_api_surfaces(extent_wkt, output_zip):
 			request = requests.get(status_link)
 			status = request.json()['status']
 			if request.status_code >= 500:
+				# TODO of restricties vanuit Wifi! netwerk!
 				message = f"BGT API Server werkt niet zoals verwacht probeer het later nog eens status_code is {request.status_code}"
 				arcpy.AddError(message)
 				raise ValueError(message)

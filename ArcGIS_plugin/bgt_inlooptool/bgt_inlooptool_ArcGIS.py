@@ -167,6 +167,7 @@ class BGTInloopToolArcGIS(BaseTool):
         output_gpkg = parameters[5]
 
         if bgt_file.altered:
+            # todo standaard aanvullen van zip.
             if bgt_file.valueAsText[-4:].lower() != ".zip":
                 bgt_file.setErrorMessage('De input voor bgt data moet een zip file zijn met .gml files')
 
@@ -241,6 +242,7 @@ class BGTInloopToolArcGIS(BaseTool):
                 self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
+            # todo if coordinate system is not 28992, then convert to rd new
             if input_area is not None:
                 # preparation
                 with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
@@ -280,17 +282,17 @@ if __name__ == '__main__':
         params = tool.getParameterInfo()
 
         # bgt_file
-        params[0].value = r"C:\GIS\test_data_inlooptool\extract.zip"
+        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\bgtVijlen.zip"
         # pipe_file
-        params[1].value = r"C:\GIS\test_data_inlooptool\getGeoPackage_1134.gpkg"
+        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\getGeoPackage_2220.gpkg"
         # bag_file
-        params[2].value = r"C:\GIS\test_data_inlooptool\bag.gpkg"
+        params[2].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\Vijlen_BAG.gpkg"
         # kolken_file
         params[3].value = None
         # area_file
-        params[4].value = r'C:\GIS\test_data_inlooptool\interessegebied.gpkg\main.interessegebied'
+        params[4].value = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\Gebied.shp'
         # output_location
-        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem41.gpkg"
+        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\vijlen_bgtinlooptool.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[6].value = 40
