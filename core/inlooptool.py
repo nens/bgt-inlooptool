@@ -272,9 +272,7 @@ class InloopTool:
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
 
                     else:
-                        if gem_dichtst_bij():
-                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                        elif hwa_dichterbij_dan_hwavgs_en_infiltr():
+                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
                             result[TARGET_TYPE_HEMELWATERRIOOL] = 100
                         else:
                             result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
