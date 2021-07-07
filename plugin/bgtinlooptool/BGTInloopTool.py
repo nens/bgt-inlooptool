@@ -24,6 +24,8 @@
 
 import os.path
 import sys
+import json
+
 
 from PyQt5.QtCore import QUrl, QByteArray
 from PyQt5.QtNetwork import QNetworkRequest
