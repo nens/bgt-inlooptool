@@ -733,7 +733,6 @@ class Database:
                 if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
                     delete_fids.append(pipe_feat.GetFID())
                 elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
-                    gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
                     gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split('/')[-1]
                     if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
                         internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
