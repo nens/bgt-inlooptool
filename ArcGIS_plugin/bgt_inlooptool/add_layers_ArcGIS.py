@@ -6,6 +6,7 @@ import os
 def add_layers_to_map(save_database, arcgis_com):
     # Add layers to map
     try:
+        # TODO omschrijven naar nieuwe Visualize class structuur!
         dataset = os.path.join(save_database, 'main.bgt_inlooptabel')
         # temporary, create copy in a gdb, because the right field is not available
         dataset = _layers_to_gdb(save_database, dataset)

@@ -290,7 +290,7 @@ if __name__ == '__main__':
         # area_file
         params[4].value = r'C:\GIS\test_data_inlooptool\interessegebied.gpkg\main.interessegebied'
         # output_location
-        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem21.gpkg"
+        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\mem41.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[6].value = 40

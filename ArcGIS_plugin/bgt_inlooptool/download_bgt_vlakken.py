@@ -113,8 +113,8 @@ if __name__ == '__main__':
         params = tool.getParameterInfo()
 
         # bag_file
-        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\inputs.gdb\interessegebied"
-        params[1].value = r"C:\GIS\test_data_inlooptool\test_bgt_download1.zip"
+        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\ws.gdb\zwolle"
+        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\test_bgt_output"
 
         tool.execute(parameters=params, messages=None)
 
