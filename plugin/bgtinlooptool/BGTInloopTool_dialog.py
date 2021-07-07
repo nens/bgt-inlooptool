@@ -23,7 +23,7 @@
 """
 
 import os
-import ogr
+from osgeo import ogr
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets

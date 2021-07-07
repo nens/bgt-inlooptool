@@ -1,17 +1,11 @@
 # System imports
 import os
-import json
-import zipfile
-import time
-import tempfile
+
 
 # Third-party imports
-import osr
-import numpy as np
-from osgeo import ogr
+from osgeo import osr
 from osgeo import gdal
 from datetime import datetime
-import requests
 import rtree
 
 # Local imports
