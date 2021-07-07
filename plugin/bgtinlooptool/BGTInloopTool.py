@@ -41,15 +41,17 @@ from qgis.core import (
 from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
+from .resources import *
 
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
 
 # Import the BGT Inlooptool core
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from ArcGIS_plugin.bgt_inlooptool.core.inlooptool import *
+from core.inlooptool import *
 from core.constants import *
 from .ogr2qgis import *
+import rtree
 
 MESSAGE_CATEGORY = 'BGT Inlooptool'
 BGT_API_URL = 'https://api.pdok.nl/lv/bgt/download/v1_0/full/custom'
@@ -90,53 +92,56 @@ class InloopToolTask(QgsTask):
         self.setProgress(self.progress()+100/self.total_progress)
 
     def run(self):
-
-        QgsMessageLog.logMessage("Started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it = InloopTool(self.parameters)
-        self.increase_progress()
-
-        QgsMessageLog.logMessage("Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.import_surfaces(self.bgt_file)
-        self.increase_progress()
-
-        QgsMessageLog.logMessage("Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.import_pipes(self.pipe_file)
-        self.increase_progress()
-
-        if self.parameters.gebruik_kolken:
-            QgsMessageLog.logMessage("Importing kolken", MESSAGE_CATEGORY, level=Qgis.Info)
-            self.it.import_kolken(self.kolken_file)
+        try:
+            QgsMessageLog.logMessage("Started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it = InloopTool(self.parameters)
             self.increase_progress()
 
-        # Note: buildings are not imported to database.
-        # self.it._database.add_build_year_to_surface() just reads the build year without copying the layer
-
-        QgsMessageLog.logMessage(' -- Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
-        QgsMessageLog.logMessage(' -- Finished adding index to inputs', MESSAGE_CATEGORY, level=Qgis.Info)
-
-        if self.parameters.gebruik_bag:
-            QgsMessageLog.logMessage('Adding build year to surfaces', MESSAGE_CATEGORY, level=Qgis.Info)
-            self.it._database.add_build_year_to_surface(file_path=self.building_file)
+            QgsMessageLog.logMessage("Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it.import_surfaces(self.bgt_file)
             self.increase_progress()
 
-        if self.input_extent_mask_wkt is not None:
-            QgsMessageLog.logMessage("Clipping inputs to extent", MESSAGE_CATEGORY, level=Qgis.Info)
-            self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
+            QgsMessageLog.logMessage("Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it.import_pipes(self.pipe_file)
             self.increase_progress()
-            QgsMessageLog.logMessage('Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
+
+            if self.parameters.gebruik_kolken:
+                QgsMessageLog.logMessage("Importing kolken", MESSAGE_CATEGORY, level=Qgis.Info)
+                self.it.import_kolken(self.kolken_file)
+                self.increase_progress()
+
+            # Note: buildings are not imported to database.
+            # self.it._database.add_build_year_to_surface() just reads the build year without copying the layer
+
+            QgsMessageLog.logMessage(' -- Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
             self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
+            QgsMessageLog.logMessage(' -- Finished adding index to inputs', MESSAGE_CATEGORY, level=Qgis.Info)
 
-        QgsMessageLog.logMessage("Calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.calculate_distances(parameters=self.parameters)
-        self.increase_progress()
+            if self.parameters.gebruik_bag:
+                QgsMessageLog.logMessage('Adding build year to surfaces', MESSAGE_CATEGORY, level=Qgis.Info)
+                self.it._database.add_build_year_to_surface(file_path=self.building_file)
+                self.increase_progress()
 
-        QgsMessageLog.logMessage("Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
-        self.it.calculate_runoff_targets()
-        self.increase_progress()
+            if self.input_extent_mask_wkt is not None:
+                QgsMessageLog.logMessage("Clipping inputs to extent", MESSAGE_CATEGORY, level=Qgis.Info)
+                self.it._database.remove_input_features_outside_clip_extent(self.input_extent_mask_wkt)
+                self.increase_progress()
+                QgsMessageLog.logMessage('Adding index to inputs...', MESSAGE_CATEGORY, level=Qgis.Info)
+                self.it._database.add_index_to_inputs(kolken=self.parameters.gebruik_kolken)
 
-        QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
-        return True
+            QgsMessageLog.logMessage("Calculating distances", MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it.calculate_distances(parameters=self.parameters)
+            self.increase_progress()
+
+            QgsMessageLog.logMessage("Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
+            self.it.calculate_runoff_targets()
+            self.increase_progress()
+
+            QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
+            return True
+        except Exception as e:
+            self.exception = e
+            return False
 
     def finished(self, result):
 
@@ -168,11 +173,15 @@ class InloopToolTask(QgsTask):
             if self.exception is None:
                 iface.messageBar().pushMessage(MESSAGE_CATEGORY,
                                                "Bepalen afwateringskenmerken BGT mislukt",
-                                               level=Qgis.Info
+                                               level=Qgis.Critical
                                                )
             else:
+                message = "Bepalen afwateringskenmerken BGT mislukt"
+                if isinstance(self.exception, FileInputError):
+                    message += ': ' + str(self.exception)
+                iface.messageBar().clearWidgets()
                 iface.messageBar().pushMessage(MESSAGE_CATEGORY,
-                                               "Bepalen afwateringskenmerken BGT mislukt",
+                                               message,
                                                level=Qgis.Critical
                                                )
                 raise self.exception
