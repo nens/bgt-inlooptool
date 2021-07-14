@@ -36,50 +36,6 @@ def add_layers_to_map(save_database, arcgis_com):
         arcgis_com.Traceback()
 
 
-def _layers_to_gdb(save_database, dataset):
-
-    try:
-        # If gpkg does not work
-        save_gdb = save_database.replace('.gpkg', '.gdb')
-        if not arcpy.Exists(save_gdb):
-            arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename(save_gdb))
-        ws = save_gdb
-        arcpy.env.workspace = ws
-        arcpy.env.overwriteOutput = True
-        fc_name = 'main_bgt_inlooptabel'
-        out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, ws, fc_name))
-        _bgt_inloop_symbology(out_dataset)
-        # out_dataset = os.path.join(save_database, 'main_bgt_inlooptabel')
-
-        return out_dataset
-    except:
-        arcgis_com.Traceback()
-
-
-def _bgt_inloop_symbology(out_dataset):
-
-    # todo checken wat de goede symbology moet zijn!
-    try:
-        arcpy.AddField_management(out_dataset, 'categorie', 'TEXT', field_length=100)
-        field_list = ['hemelwaterriool', 'gemengd_riool', 'open_water', 'maaiveld', 'categorie']
-        with arcpy.da.UpdateCursor(out_dataset, field_list) as cursor:
-            for row in cursor:
-                if row[0] == 100:  # hemelwaterriool = 100
-                    categorie = "RWA"
-                elif row[1] == 100:  # gemengd riool = 100
-                    categorie = "Gemengd"
-                elif row[2] == 100 or row[3] == 100:  # niet_aangesloten = 100
-                    categorie = "Maaiveld (niet aangesloten op riolering)"
-                elif 0 < row[0] < 100 and 0 < row[1] < 100:
-                    categorie = "RWA / Gemengd 50-50"
-                else:
-                    categorie = "Alle andere waarden"
-                row[4] = categorie
-                cursor.updateRow(row)
-    except:
-        arcgis_com.Traceback()
-
-
 if __name__ == '__main__':
 
     from cls_general_use import GeneralUse

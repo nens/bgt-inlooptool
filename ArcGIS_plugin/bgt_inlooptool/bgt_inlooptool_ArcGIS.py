@@ -16,7 +16,9 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 
 # Set path to Generic modules
 from cls_general_use import GeneralUse
-from common import BaseTool, parameter, get_wkt_extent
+from common import BaseTool, parameter, get_wkt_extent, layers_to_gdb
+from common import add_bgt_inlooptabel_symbologyfield, add_gwsw_symbologyfield
+from visualize_layers import VisualizeLayers
 from add_layers_ArcGIS import add_layers_to_map
 
 # import bgt inlooptool
@@ -264,7 +266,21 @@ class BGTInloopToolArcGIS(BaseTool):
             # Add layers to the map
             # TODO werkend maken van add_layers_to_map, oplossing?
             self.arcgis_com.AddMessage("Visualiseren van resultaten!")
-            add_layers_to_map(output_gpkg, self.arcgis_com)
+            # add_layers_to_map(output_gpkg, self.arcgis_com)
+            main_bgt_inlooptabel = layers_to_gdb(output_gpkg, dataset='main.bgt_inlooptabel')
+            add_bgt_inlooptabel_symbologyfield(main_bgt_inlooptabel)
+
+            main_default_lijn = layers_to_gdb(pipe_file, dataset='main.default_lijn')
+            add_gwsw_symbologyfield(main_default_lijn)
+
+            visualize_layers = VisualizeLayers()  # arcgis_project=aprx)
+            layers = os.path.join(os.path.dirname(__file__), 'layers')
+            for x, grid_name in enumerate(grid_dict, 26):
+                visualize_layers.add_layer_to_map(in_dataset=grid_dict[grid_name],
+                                                  param_nr=x,
+                                                  symbology_layer=os.path.join(layers, f"{grid_name}.lyrx"))
+            visualize_layers.save()
+
 
         except Exception:
             self.arcgis_com.Traceback()

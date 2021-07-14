@@ -1,7 +1,54 @@
 import arcpy
 import os
+from bgt_inlooptool.cls_general_use import GeneralUse
+arcgis_com = GeneralUse()
 
 SPATIAL_REFERENCE_CODE = 28992  # RD_NEW
+
+
+def layers_to_gdb(save_database, dataset):
+
+    try:
+        # If gpkg does not work
+        save_gdb = save_database.replace('.gpkg', '.gdb')
+        if not arcpy.Exists(save_gdb):
+            arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename(save_gdb))
+        ws = save_gdb
+        arcpy.env.workspace = ws
+        arcpy.env.overwriteOutput = True
+        fc_name = dataset.replace('.', '_')
+        out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, ws, fc_name))
+
+        return out_dataset
+    except Exception:
+        arcgis_com.Traceback()
+
+
+def add_bgt_inlooptabel_symbologyfield(out_dataset):
+
+    # todo checken wat de goede symbology moet zijn!
+    try:
+        arcpy.AddField_management(out_dataset, 'categorie', 'TEXT', field_length=100)
+        field_list = ['hemelwaterriool', 'gemengd_riool', 'open_water', 'maaiveld', 'categorie']
+        with arcpy.da.UpdateCursor(out_dataset, field_list) as cursor:
+            for row in cursor:
+                if row[0] == 100:  # hemelwaterriool = 100
+                    categorie = "RWA"
+                elif row[1] == 100:  # gemengd riool = 100
+                    categorie = "Gemengd"
+                elif row[2] == 100 or row[3] == 100:  # niet_aangesloten = 100
+                    categorie = "Maaiveld (niet aangesloten op riolering)"
+                elif 0 < row[0] < 100 and 0 < row[1] < 100:
+                    categorie = "RWA / Gemengd 50-50"
+                else:
+                    categorie = "Alle andere waarden"
+                row[4] = categorie
+                cursor.updateRow(row)
+    except Exception:
+        arcgis_com.Traceback()
+
+def add_gwsw_symbologyfield():
+    pass
 
 
 def get_wkt_extent(input_fc):
