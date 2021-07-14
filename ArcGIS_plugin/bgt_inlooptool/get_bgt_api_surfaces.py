@@ -54,15 +54,15 @@ def get_bgt_api_surfaces(extent_wkt, output_zip):
 		while status != 'COMPLETED':
 			request = requests.get(status_link)
 			status = request.json()['status']
-			if request.status_code >= 500:
-				# TODO of restricties vanuit Wifi! netwerk!
-				message = f"BGT API Server werkt niet zoals verwacht probeer het later nog eens status_code is {request.status_code}"
-				arcpy.AddError(message)
-				raise ValueError(message)
-			elif request.status_code >= 400:
-				message = f"Er is iets anders fout gegaan, status_code is {request.status_code}"
-				arcpy.AddError(message)
-				raise ValueError(message)
+			# if request.status_code >= 500:
+			# 	# TODO of restricties vanuit Wifi! netwerk!
+			# 	message = f"BGT API Server werkt niet zoals verwacht probeer het later nog eens status_code is {request.status_code}"
+			# 	arcpy.AddError(message)
+			# 	raise ValueError(message)
+			# elif request.status_code >= 400:
+			# 	message = f"Er is iets anders fout gegaan, status_code is {request.status_code}"
+			# 	arcpy.AddError(message)
+			# 	raise ValueError(message)
 			time.sleep(5)
 
 		download_url_extract = request.json()['_links']['download']['href']

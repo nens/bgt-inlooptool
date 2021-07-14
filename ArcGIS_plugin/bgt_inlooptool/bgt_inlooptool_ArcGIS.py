@@ -154,22 +154,27 @@ class BGTInloopToolArcGIS(BaseTool):
         return self.parameters
 
     def updateParameters(self, parameters):
-
-
+        """
+        updates a parameter in the interface if specified
+        """
+        output_gpkg = parameters[5]
+        if output_gpkg.altered:
+            if output_gpkg.valueAsText[-5:].lower() != ".gpkg":
+                output_gpkg.value = output_gpkg.valueAsText + ".gpkg"
 
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
-
+        """
+        returns messages in the interface the wrong paths are filled in for the different parameters
+        """
         bgt_file = parameters[0]
         pipe_file = parameters[1]
         bag_file = parameters[2]
         kolken_file = parameters[3]
         input_area = parameters[4]
-        output_gpkg = parameters[5]
 
         if bgt_file.altered:
-            # todo standaard aanvullen van zip.
             if bgt_file.valueAsText[-4:].lower() != ".zip":
                 bgt_file.setErrorMessage('De input voor bgt data moet een zip file zijn met .gml files')
 
@@ -193,10 +198,6 @@ class BGTInloopToolArcGIS(BaseTool):
                     feature_count = int(arcpy.management.GetCount(input_area.valueAsText).getOutput(0))
                     if feature_count != 1:
                         input_area.setErrorMessage('Er is meer of minder dan 1 feature aanwezig of geselecteerd!')
-
-        if output_gpkg.altered:
-            if output_gpkg.valueAsText[-5:].lower() != ".gpkg":
-                output_gpkg.setErrorMessage('Het output bestand moet een geopackage (.gpkg) zijn')
 
         super(BGTInloopToolArcGIS, self).updateMessages(parameters)
 
@@ -244,6 +245,7 @@ class BGTInloopToolArcGIS(BaseTool):
                 self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
+            if input_area is not None:
                 # get the input extent as wkt from the input_area
                 input_extent_mask_wkt = get_wkt_extent(input_area)
 

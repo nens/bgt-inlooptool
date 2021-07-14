@@ -54,11 +54,19 @@ class DownloadBGTVlakken(BaseTool):
         return self.parameters
 
     def updateParameters(self, parameters):
+        """
+        updates a parameter in the interface if specified
+        """
+        if parameters[1].altered:
+            if parameters[1].valueAsText[-4:].lower() != '.zip':
+                parameters[1].value = parameters[1].valueAsText + ".zip"
 
         super(DownloadBGTVlakken, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
-
+        """
+        returns messages in the interface the wrong paths are filled in for the different parameters
+        """
         # Messages interesse gebied
         if parameters[0].altered:
             desc = arcpy.Describe(parameters[0].valueAsText)
@@ -74,12 +82,8 @@ class DownloadBGTVlakken(BaseTool):
 
         # Messages output BGT zipfile
         if parameters[1].altered:
-            # TODO altijd als .zip aanvullen omdat dit toch niet anders kan
-            if parameters[1].valueAsText[-4:].lower() != '.zip':
-                parameters[1].setErrorMessage('Het output bestand is geen zipfile! Zorg dat dit wel een zipfile is!')
-            else:
-                if os.path.exists(parameters[1].valueAsText):
-                    parameters[1].setWarningMessage('Het output bestand bestaat al, kies een nieuwe naam!')
+            if os.path.exists(parameters[1].valueAsText):
+                parameters[1].setWarningMessage('Het output bestand bestaat al, kies een nieuwe naam!')
 
         super(DownloadBGTVlakken, self).updateMessages(parameters)
 
@@ -94,7 +98,6 @@ class DownloadBGTVlakken(BaseTool):
 
             # get the input extent as wkt from the input_area
             extent_wkt = get_wkt_extent(input_area)
-
             get_bgt_api_surfaces(extent_wkt, bgt_zip)
 
         except Exception:
@@ -114,7 +117,7 @@ if __name__ == '__main__':
 
         # bag_file
         params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\ws.gdb\zwolle"
-        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\test_bgt_output"
+        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\nieuwe_plek.zip"
 
         tool.execute(parameters=params, messages=None)
 
