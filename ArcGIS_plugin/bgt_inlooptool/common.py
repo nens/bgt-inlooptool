@@ -1,17 +1,43 @@
-"""
-Common things that can be used elsewhere.
-"""
+import arcpy
+import os
+
+SPATIAL_REFERENCE_CODE = 28992  # RD_NEW
+
+
+def get_wkt_extent(input_fc):
+    """
+    if the spatial reference is not RD then create a new fc or shapefile next to the existing fc
+    """
+    if input_fc is not None:
+        spatial_reference_code = arcpy.Describe(input_fc).SpatialReference.factoryCode
+        if spatial_reference_code != SPATIAL_REFERENCE_CODE:
+            dir_name = os.path.dirname(input_fc)
+            fc_name = os.path.basename(input_fc)
+            if fc_name[-4:] == '.shp':
+                new_fc_name = f"{fc_name[-4:]}_rd.shp"
+            else:
+                new_fc_name = f"{fc_name[-4:]}_rd"
+            area_fc = arcpy.Project_management(in_dataset=input_fc,
+                                               out_dataset=os.path.join(dir_name, new_fc_name),
+                                               out_coor_system=arcpy.SpatialReference(SPATIAL_REFERENCE_CODE))
+        else:
+            area_fc = input_fc
+        with arcpy.da.SearchCursor(area_fc, ['Shape@WKT']) as cursor:
+            for row in cursor:
+                input_extent_mask_wkt = row[0]
+
+    return input_extent_mask_wkt
 
 
 def parameter(displayName, name, datatype, defaultValue=None, parameterType='Required', direction='Input',
               enabled=True, multiValue=False):
-    '''
+    """
     The parameter implementation makes it a little difficult to quickly
     create parameters with defaults. This method prepopulates the paramaeterType
     and direction parameters and leaves the setting a default value for the
     newly created parameter as optional. The displayName, name and datatype are
     the only required inputs.
-    '''
+    """
     # create parameter with a few defaults
     import arcpy
     param = arcpy.Parameter(
@@ -90,7 +116,3 @@ class BaseTool(object):
 
         """
         pass
-
-
-if __name__ == '__main__':
-    pass

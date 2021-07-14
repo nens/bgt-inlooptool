@@ -16,7 +16,7 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 
 # Set path to Generic modules
 from cls_general_use import GeneralUse
-from common import BaseTool, parameter
+from common import BaseTool, parameter, get_wkt_extent
 from get_bgt_api_surfaces import get_bgt_api_surfaces
 
 
@@ -92,10 +92,8 @@ class DownloadBGTVlakken(BaseTool):
             input_area = parameters[0].valueAsText
             bgt_zip = parameters[1].valueAsText
 
-            # todo if coordinate system is not 28992, then convert to rd new
-            with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
-                for row in cursor:
-                    extent_wkt = row[0]
+            # get the input extent as wkt from the input_area
+            extent_wkt = get_wkt_extent(input_area)
 
             get_bgt_api_surfaces(extent_wkt, bgt_zip)
 

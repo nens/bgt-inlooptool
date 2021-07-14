@@ -16,7 +16,7 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
 
 # Set path to Generic modules
 from cls_general_use import GeneralUse
-from common import BaseTool, parameter
+from common import BaseTool, parameter, get_wkt_extent
 from add_layers_ArcGIS import add_layers_to_map
 
 # import bgt inlooptool
@@ -155,6 +155,8 @@ class BGTInloopToolArcGIS(BaseTool):
 
     def updateParameters(self, parameters):
 
+
+
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
     def updateMessages(self, parameters):
@@ -242,12 +244,8 @@ class BGTInloopToolArcGIS(BaseTool):
                 self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
                 self.it._database.add_build_year_to_surface(file_path=building_file)
 
-            # todo if coordinate system is not 28992, then convert to rd new
-            if input_area is not None:
-                # preparation
-                with arcpy.da.SearchCursor(input_area, ['Shape@WKT']) as cursor:
-                    for row in cursor:
-                        input_extent_mask_wkt = row[0]
+                # get the input extent as wkt from the input_area
+                input_extent_mask_wkt = get_wkt_extent(input_area)
 
                 self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
                 self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
