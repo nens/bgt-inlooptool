@@ -1,15 +1,15 @@
 {
   "type" : "CIMLayerDocument",
-  "version" : "2.7.0",
-  "build" : 26828,
+  "version" : "2.8.0",
+  "build" : 29751,
   "layers" : [
-    "CIMPATH=map/main_bgt_inlooptabel.xml"
+    "CIMPATH=map/main_bgt_inlooptabel4.xml"
   ],
   "layerDefinitions" : [
     {
       "type" : "CIMFeatureLayer",
       "name" : "main_bgt_inlooptabel",
-      "uRI" : "CIMPATH=map/main_bgt_inlooptabel.xml",
+      "uRI" : "CIMPATH=map/main_bgt_inlooptabel4.xml",
       "sourceModifiedTime" : {
         "type" : "TimeInstant"
       },
@@ -30,6 +30,7 @@
       "refreshRate" : -1,
       "refreshRateUnit" : "esriTimeUnitsSeconds",
       "blendingMode" : "Alpha",
+      "allowDrapingOnIntegratedMesh" : true,
       "autoGenerateFeatureTemplates" : true,
       "featureElevationExpression" : "0",
       "featureTable" : {
@@ -38,7 +39,7 @@
         "editable" : true,
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "DATABASE=..\\..\\..\\..\\..\\Users\\hsc\\OneDrive - Tauw Group bv\\ArcGIS\\Projects\\bgt_inlooptool\\mem_database.gdb",
+          "workspaceConnectionString" : "DATABASE=..\\..\\..\\..\\..\\Users\\hsc\\OneDrive - Tauw Group bv\\ArcGIS\\Projects\\bgt_inlooptool\\hollands_kroon\\bgt_inlooptabel.gdb",
           "workspaceFactory" : "FileGDB",
           "dataset" : "main_bgt_inlooptabel",
           "datasetType" : "esriDTFeatureClass"
@@ -46,6 +47,170 @@
         "studyAreaSpatialRel" : "esriSpatialRelUndefined",
         "searchOrder" : "esriSearchOrderSpatial"
       },
+      "featureTemplates" : [
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Hemelwaterriool 100%",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Hemelwaterriool 100%"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "VGS Hemelwaterriool 100%",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "VGS Hemelwaterriool 100%"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Gemengd 100%",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Gemengd 100%"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Hemelwaterriool en Gemengd",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Hemelwaterriool en Gemengd"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Infiltratievoorziening 100%",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Infiltratievoorziening 100%"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Maaiveld 100%",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Maaiveld 100%"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Open water 100%",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Open water 100%"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Overig (wel valide, totaal = 100)",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Overig (wel valide, totaal = 100)"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "Overig (niet valide, totaal \u2260 100)",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "categorie",
+              "Overig (niet valide, totaal \u2260 100)"
+            ]
+          }
+        }
+      ],
       "htmlPopupEnabled" : true,
       "selectable" : true,
       "featureCacheType" : "Session",
@@ -100,7 +265,8 @@
                   "visible" : true,
                   "splitAfter" : true
                 }
-              ]
+              ],
+              "trimStackingSeparators" : true
             },
             "lineFeatureType" : "General",
             "linePlacementMethod" : "OffsetCurvedFromLine",
@@ -307,11 +473,11 @@
                 "type" : "CIMSolidFill",
                 "enable" : true,
                 "color" : {
-                  "type" : "CIMRGBColor",
+                  "type" : "CIMHSVColor",
                   "values" : [
-                    130,
-                    130,
-                    130,
+                    282.44999999999999,
+                    27.52,
+                    99.099999999999994,
                     100
                   ]
                 }
@@ -329,7 +495,7 @@
             "classes" : [
               {
                 "type" : "CIMUniqueValueClass",
-                "label" : "Gemengd",
+                "label" : "Hemelwaterriool 100%",
                 "patch" : "Default",
                 "symbol" : {
                   "type" : "CIMSymbolReference",
@@ -343,14 +509,14 @@
                         "joinStyle" : "Round",
                         "lineStyle3D" : "Strip",
                         "miterLimit" : 10,
-                        "width" : 0.40000000000000002,
+                        "width" : 0.69999999999999996,
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            0,
-                            0,
-                            0,
-                            0
+                            255,
+                            255,
+                            255,
+                            100
                           ]
                         }
                       },
@@ -360,8 +526,8 @@
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            0,
-                            197,
+                            165,
+                            183,
                             255,
                             100
                           ]
@@ -374,7 +540,7 @@
                   {
                     "type" : "CIMUniqueValue",
                     "fieldValues" : [
-                      "Gemengd"
+                      "Hemelwaterriool 100%"
                     ]
                   }
                 ],
@@ -382,7 +548,7 @@
               },
               {
                 "type" : "CIMUniqueValueClass",
-                "label" : "Maaiveld (niet aangesloten op riolering)",
+                "label" : "VGS Hemelwaterriool 100%",
                 "patch" : "Default",
                 "symbol" : {
                   "type" : "CIMSymbolReference",
@@ -396,14 +562,14 @@
                         "joinStyle" : "Round",
                         "lineStyle3D" : "Strip",
                         "miterLimit" : 10,
-                        "width" : 0,
+                        "width" : 0.69999999999999996,
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            0,
-                            0,
-                            0,
-                            0
+                            255,
+                            255,
+                            255,
+                            100
                           ]
                         }
                       },
@@ -413,8 +579,8 @@
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            204,
-                            237,
+                            165,
+                            183,
                             255,
                             100
                           ]
@@ -427,7 +593,7 @@
                   {
                     "type" : "CIMUniqueValue",
                     "fieldValues" : [
-                      "Maaiveld (niet aangesloten op riolering)"
+                      "VGS Hemelwaterriool 100%"
                     ]
                   }
                 ],
@@ -435,7 +601,7 @@
               },
               {
                 "type" : "CIMUniqueValueClass",
-                "label" : "RWA",
+                "label" : "Gemengd 100%",
                 "patch" : "Default",
                 "symbol" : {
                   "type" : "CIMSymbolReference",
@@ -449,14 +615,14 @@
                         "joinStyle" : "Round",
                         "lineStyle3D" : "Strip",
                         "miterLimit" : 10,
-                        "width" : 0,
+                        "width" : 0.69999999999999996,
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            0,
-                            0,
-                            0,
-                            0
+                            255,
+                            255,
+                            255,
+                            100
                           ]
                         }
                       },
@@ -466,9 +632,9 @@
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            191,
-                            217,
-                            153,
+                            255,
+                            213,
+                            181,
                             100
                           ]
                         }
@@ -480,7 +646,7 @@
                   {
                     "type" : "CIMUniqueValue",
                     "fieldValues" : [
-                      "RWA"
+                      "Gemengd 100%"
                     ]
                   }
                 ],
@@ -488,7 +654,121 @@
               },
               {
                 "type" : "CIMUniqueValueClass",
-                "label" : "RWA / Gemengd 50-50",
+                "label" : "Hemelwaterriool en Gemengd",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMPolygonSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMHatchFill",
+                        "enable" : true,
+                        "lineSymbol" : {
+                          "type" : "CIMLineSymbol",
+                          "symbolLayers" : [
+                            {
+                              "type" : "CIMSolidStroke",
+                              "enable" : true,
+                              "capStyle" : "Butt",
+                              "joinStyle" : "Miter",
+                              "lineStyle3D" : "Strip",
+                              "miterLimit" : 10,
+                              "width" : 2,
+                              "color" : {
+                                "type" : "CIMRGBColor",
+                                "values" : [
+                                  165,
+                                  183,
+                                  255,
+                                  100
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "rotation" : 45,
+                        "separation" : 5
+                      },
+                      {
+                        "type" : "CIMSolidFill",
+                        "enable" : true,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            213,
+                            181,
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : false,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 1,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            0,
+                            0,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "scaleDependentSizeVariation" : [
+                    {
+                      "type" : "CIMScaleDependentSizeVariation",
+                      "scale" : 100000000,
+                      "size" : 0.40000000000000002
+                    },
+                    {
+                      "type" : "CIMScaleDependentSizeVariation",
+                      "scale" : 20000000,
+                      "size" : 0.40000000000000002
+                    },
+                    {
+                      "type" : "CIMScaleDependentSizeVariation",
+                      "scale" : 500000,
+                      "size" : 0.40000000000000002
+                    },
+                    {
+                      "type" : "CIMScaleDependentSizeVariation",
+                      "scale" : 50000,
+                      "size" : 0.40000000000000002
+                    },
+                    {
+                      "type" : "CIMScaleDependentSizeVariation",
+                      "scale" : 10000,
+                      "size" : 0.40000000000000002
+                    },
+                    {
+                      "type" : "CIMScaleDependentSizeVariation",
+                      "scale" : 1000,
+                      "size" : 0.40000000000000002
+                    }
+                  ]
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "Hemelwaterriool en Gemengd"
+                    ]
+                  }
+                ],
+                "visible" : true
+              },
+              {
+                "type" : "CIMUniqueValueClass",
+                "label" : "Infiltratievoorziening 100%",
                 "patch" : "Default",
                 "symbol" : {
                   "type" : "CIMSymbolReference",
@@ -502,14 +782,14 @@
                         "joinStyle" : "Round",
                         "lineStyle3D" : "Strip",
                         "miterLimit" : 10,
-                        "width" : 0,
+                        "width" : 0.69999999999999996,
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            0,
-                            0,
-                            0,
-                            0
+                            255,
+                            255,
+                            255,
+                            100
                           ]
                         }
                       },
@@ -519,9 +799,9 @@
                         "color" : {
                           "type" : "CIMRGBColor",
                           "values" : [
-                            240,
-                            219,
-                            216,
+                            163,
+                            205,
+                            185,
                             100
                           ]
                         }
@@ -533,7 +813,219 @@
                   {
                     "type" : "CIMUniqueValue",
                     "fieldValues" : [
-                      "RWA / Gemengd 50-50"
+                      "Infiltratievoorziening 100%"
+                    ]
+                  }
+                ],
+                "visible" : true
+              },
+              {
+                "type" : "CIMUniqueValueClass",
+                "label" : "Maaiveld 100%",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMPolygonSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : true,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 0.69999999999999996,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            255,
+                            255,
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "type" : "CIMSolidFill",
+                        "enable" : true,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            167,
+                            255,
+                            159,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "Maaiveld 100%"
+                    ]
+                  }
+                ],
+                "visible" : true
+              },
+              {
+                "type" : "CIMUniqueValueClass",
+                "label" : "Open water 100%",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMPolygonSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : true,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 0.69999999999999996,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            255,
+                            255,
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "type" : "CIMSolidFill",
+                        "enable" : true,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            67,
+                            162,
+                            209,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "Open water 100%"
+                    ]
+                  }
+                ],
+                "visible" : true
+              },
+              {
+                "type" : "CIMUniqueValueClass",
+                "label" : "Overig (wel valide, totaal = 100)",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMPolygonSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : true,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 0.69999999999999996,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            255,
+                            255,
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "type" : "CIMSolidFill",
+                        "enable" : true,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            201,
+                            201,
+                            201,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "Overig (wel valide, totaal = 100)"
+                    ]
+                  }
+                ],
+                "visible" : true
+              },
+              {
+                "type" : "CIMUniqueValueClass",
+                "label" : "Overig (niet valide, totaal \u2260 100)",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMPolygonSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : true,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 0.69999999999999996,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            255,
+                            255,
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "type" : "CIMSolidFill",
+                        "enable" : true,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            255,
+                            1,
+                            1,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "Overig (niet valide, totaal \u2260 100)"
                     ]
                   }
                 ],
@@ -543,7 +1035,6 @@
             "heading" : "categorie"
           }
         ],
-        "useDefaultSymbol" : true,
         "polygonSymbolColorTarget" : "Fill"
       },
       "scaleSymbols" : true,

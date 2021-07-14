@@ -1,7 +1,9 @@
 import arcpy
 import os
+import sys
 from bgt_inlooptool.cls_general_use import GeneralUse
-arcgis_com = GeneralUse()
+from collections import namedtuple
+arcgis_com = GeneralUse(sys, arcpy)
 
 SPATIAL_REFERENCE_CODE = 28992  # RD_NEW
 
@@ -13,11 +15,10 @@ def layers_to_gdb(save_database, dataset):
         save_gdb = save_database.replace('.gpkg', '.gdb')
         if not arcpy.Exists(save_gdb):
             arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename(save_gdb))
-        ws = save_gdb
-        arcpy.env.workspace = ws
+        arcpy.env.workspace = save_gdb
         arcpy.env.overwriteOutput = True
-        fc_name = dataset.replace('.', '_')
-        out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, ws, fc_name))
+        fc_name = os.path.basename(dataset).replace('.', '_')
+        out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, save_gdb, fc_name))
 
         return out_dataset
     except Exception:
@@ -25,27 +26,42 @@ def layers_to_gdb(save_database, dataset):
 
 
 def add_bgt_inlooptabel_symbologyfield(out_dataset):
-
-    # todo checken wat de goede symbology moet zijn!
+    """
+    Maakt een categorie veld aan waarop de output symbology voor de BGTInlooptool op gebaseerd is.
+    Dit is gemaakt zoals de QML styles voor de QGIS plugin
+    """
     try:
         arcpy.AddField_management(out_dataset, 'categorie', 'TEXT', field_length=100)
-        field_list = ['hemelwaterriool', 'gemengd_riool', 'open_water', 'maaiveld', 'categorie']
+        field_list = ['hemelwaterriool', 'vgs_hemelwaterriool', 'gemengd_riool', 'vuilwaterriool',
+                      'infiltratievoorziening', 'open_water', 'maaiveld', 'categorie']
+        field_tuple = namedtuple('field_tuple', field_list)
         with arcpy.da.UpdateCursor(out_dataset, field_list) as cursor:
             for row in cursor:
-                if row[0] == 100:  # hemelwaterriool = 100
-                    categorie = "RWA"
-                elif row[1] == 100:  # gemengd riool = 100
-                    categorie = "Gemengd"
-                elif row[2] == 100 or row[3] == 100:  # niet_aangesloten = 100
-                    categorie = "Maaiveld (niet aangesloten op riolering)"
-                elif 0 < row[0] < 100 and 0 < row[1] < 100:
-                    categorie = "RWA / Gemengd 50-50"
+                data = field_tuple._make(row)
+                total_percentage = sum(row[:-1])
+                if total_percentage != 100:
+                    categorie = "Overig (niet valide, totaal ≠ 100)"
+                elif data.hemelwaterriool == 100:  # hemelwaterriool = 100
+                    categorie = "Hemelwaterriool 100%"
+                elif data.vgs_hemelwaterriool == 100:
+                    categorie = "VGS Hemelwaterriool 100%"
+                elif data.gemengd_riool == 100:
+                    categorie = "Gemengd 100%"
+                elif 0 < data.hemelwaterriool < 100 and 0 < data.gemengd_riool < 100:
+                    categorie = "Hemelwaterriool en Gemengd"
+                elif data.infiltratievoorziening == 100:
+                    categorie = "Infiltratievoorziening 100%"
+                elif data.maaiveld == 100:
+                    categorie = "Maaiveld 100%"
+                elif data.open_water == 100:
+                    categorie = "Open water 100%"
                 else:
-                    categorie = "Alle andere waarden"
-                row[4] = categorie
+                    categorie = "Overig (wel valide, totaal = 100)"
+                row[7] = categorie
                 cursor.updateRow(row)
     except Exception:
         arcgis_com.Traceback()
+
 
 def add_gwsw_symbologyfield():
     pass
@@ -175,3 +191,13 @@ class BaseTool(object):
 
         """
         pass
+
+
+if __name__ == '__main__':
+
+    ws = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg'
+    dataset = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg\main.bgt_inlooptabel'
+
+    gdb_dataset = layers_to_gdb(ws, dataset)
+    add_bgt_inlooptabel_symbologyfield(gdb_dataset)
+    print('klaar!')
