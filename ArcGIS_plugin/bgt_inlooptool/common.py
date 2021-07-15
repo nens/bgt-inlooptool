@@ -1,6 +1,7 @@
 import arcpy
 import os
 import sys
+import json
 from bgt_inlooptool.cls_general_use import GeneralUse
 from collections import namedtuple
 arcgis_com = GeneralUse(sys, arcpy)
@@ -8,17 +9,18 @@ arcgis_com = GeneralUse(sys, arcpy)
 SPATIAL_REFERENCE_CODE = 28992  # RD_NEW
 
 
-def layers_to_gdb(save_database, dataset):
-
+def layers_to_gdb(input_dataset, output_gdb):
+    """
+    Converts the gpkg features to a feature class in a gdb
+    """
     try:
-        # If gpkg does not work
-        save_gdb = save_database.replace('.gpkg', '.gdb')
-        if not arcpy.Exists(save_gdb):
-            arcpy.CreateFileGDB_management(os.path.dirname(save_gdb), os.path.basename(save_gdb))
-        arcpy.env.workspace = save_gdb
+        if not arcpy.Exists(output_gdb):
+            arcpy.CreateFileGDB_management(os.path.dirname(output_gdb), os.path.basename(output_gdb))
+        arcpy.env.workspace = output_gdb
         arcpy.env.overwriteOutput = True
-        fc_name = os.path.basename(dataset).replace('.', '_')
-        out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(dataset, save_gdb, fc_name))
+
+        fc_name = os.path.basename(input_dataset).replace('.', '_')
+        out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(input_dataset, output_gdb, fc_name))
 
         return out_dataset
     except Exception:
@@ -63,8 +65,33 @@ def add_bgt_inlooptabel_symbologyfield(out_dataset):
         arcgis_com.Traceback()
 
 
-def add_gwsw_symbologyfield():
-    pass
+def add_gwsw_symbologyfield(out_dataset):
+    """
+    Maakt een categorie veld aan waarop de output symbology voor de GWSW is gebaseerd!
+    """
+    try:
+        gwsw_json = os.path.join(os.path.dirname(__file__), 'gwsw_lijn.json')
+        with open(gwsw_json, 'r') as config_file:
+            gwsw_translation = json.load(config_file)
+
+        arcpy.AddField_management(out_dataset, 'type_kort', 'TEXT', field_length=100)
+        field_list = ['type', 'type_kort']
+        field_tuple = namedtuple('field_tuple', field_list)
+        with arcpy.da.UpdateCursor(out_dataset, field_list) as cursor:
+            for row in cursor:
+                data = field_tuple._make(row)
+                type_temp = data.type.split('/')[-1]
+                if type_temp in gwsw_translation:
+                    type_kort = gwsw_translation[type_temp]
+                else:
+                    type_kort = "Default (overig)"
+                row[1] = type_kort
+                cursor.updateRow(row)
+
+        print('oki!')
+
+    except Exception:
+        arcgis_com.Traceback()
 
 
 def get_wkt_extent(input_fc):
@@ -105,7 +132,7 @@ def get_wkt_extent(input_fc):
 
 
 def parameter(displayName, name, datatype, defaultValue=None, parameterType='Required', direction='Input',
-              enabled=True, multiValue=False):
+              enabled=True, multiValue=False, symbology=None):
     """
     The parameter implementation makes it a little difficult to quickly
     create parameters with defaults. This method prepopulates the paramaeterType
@@ -122,7 +149,8 @@ def parameter(displayName, name, datatype, defaultValue=None, parameterType='Req
         parameterType=parameterType,
         direction=direction,
         enabled=enabled,
-        multiValue=multiValue)
+        multiValue=multiValue,
+        symbology=symbology)
 
     # set new parameter to a default value
     param.value = defaultValue
@@ -195,9 +223,13 @@ class BaseTool(object):
 
 if __name__ == '__main__':
 
-    ws = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg'
-    dataset = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg\main.bgt_inlooptabel'
+    # ws = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg'
+    # dataset = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg\main.bgt_inlooptabel'
 
-    gdb_dataset = layers_to_gdb(ws, dataset)
-    add_bgt_inlooptabel_symbologyfield(gdb_dataset)
+    in_dataset = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\getGeoPackage_2318.gpkg\main.default_lijn'
+    out_gdb = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gdb'
+
+    gdb_dataset = layers_to_gdb(input_dataset=in_dataset,
+                                output_gdb=out_gdb)
+    add_gwsw_symbologyfield(gdb_dataset)
     print('klaar!')

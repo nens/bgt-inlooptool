@@ -53,9 +53,9 @@ class BGTInloopToolArcGIS(BaseTool):
         parameters using commas.
         parameter(displayName, name, datatype, defaultValue=None, parameterType='Required', direction='Input')
         '''
+        layers = os.path.join(os.path.dirname(__file__), 'layers')
 
-        # TODO volgende fase ook importeren als GDB of shapefiles
-        self.parameters = [
+        parameters = [
             parameter(displayName='BGT (als zipfile)',
                       name='bgt',
                       datatype="DEFile",
@@ -146,14 +146,27 @@ class BGTInloopToolArcGIS(BaseTool):
                       parameterType='Required',
                       direction='Input',
                       defaultValue=VERHARDINGSGRAAD_HALF_VERHARD),
-            parameter(displayName='Symbologyie laag',
-                      name='symbology layer',
+            parameter(displayName='bgt_oppervlakken_symb',
+                      name='BGT oppervlakken symbology',
                       datatype='GPLayer',
                       parameterType='Derived',
-                      direction='Output')
+                      direction='Output',
+                      symbology=os.path.join(layers, 'bgt_oppervlakken.lyrx')),
+            parameter(displayName='bgt_inlooptabel_symb',
+                      name='BGT Inlooptabel symoblogy',
+                      datatype='GPLayer',
+                      parameterType='Derived',
+                      direction='Output',
+                      symbology=os.path.join(layers, 'bgt_inlooptabel.lyrx')),
+            parameter(displayName='gwsw_lijn',
+                      name='GWSW lijnen symbology',
+                      datatype='GPLayer',
+                      parameterType='Derived',
+                      direction='Output',
+                      symbology=os.path.join(layers, 'gwsw_lijn.lyrx')),
             ]
 
-        return self.parameters
+        return parameters
 
     def updateParameters(self, parameters):
         """
@@ -264,21 +277,25 @@ class BGTInloopToolArcGIS(BaseTool):
             self.it._database._write_to_disk(output_gpkg)
 
             # Add layers to the map
-            # TODO werkend maken van add_layers_to_map, oplossing?
+            layer_dict = {}
+            
             self.arcgis_com.AddMessage("Visualiseren van resultaten!")
-            # add_layers_to_map(output_gpkg, self.arcgis_com)
-            main_bgt_inlooptabel = layers_to_gdb(output_gpkg, dataset='main.bgt_inlooptabel')
+            out_gdb = output_gpkg.replace('.gpkg', '.gdb')
+            # add symbologyfield for bgt_inlooptabel
+            main_bgt_inlooptabel = layers_to_gdb(input_dataset=os.path.join(output_gpkg, 'main.bgt_inlooptabel'),
+                                                 output_gdb=out_gdb)
             add_bgt_inlooptabel_symbologyfield(main_bgt_inlooptabel)
-
-            main_default_lijn = layers_to_gdb(pipe_file, dataset='main.default_lijn')
+            # add symbologyfield for GWSW
+            main_default_lijn = layers_to_gdb(input_dataset=os.path.join(pipe_file, 'main.default_lijn'),
+                                              output_gdb=out_gdb)
             add_gwsw_symbologyfield(main_default_lijn)
 
             visualize_layers = VisualizeLayers()  # arcgis_project=aprx)
             layers = os.path.join(os.path.dirname(__file__), 'layers')
-            for x, grid_name in enumerate(grid_dict, 26):
-                visualize_layers.add_layer_to_map(in_dataset=grid_dict[grid_name],
-                                                  param_nr=x,
-                                                  symbology_layer=os.path.join(layers, f"{grid_name}.lyrx"))
+            for x, layer_name in enumerate(layer_dict, 26):
+                visualize_layers.add_layer_to_map(in_dataset=layer_dict[layer_name]) #  ,
+                                                  # param_nr=x,
+                                                  # symbology_layer=os.path.join(layers, f"{layer_name}.lyrx"))
             visualize_layers.save()
 
 
