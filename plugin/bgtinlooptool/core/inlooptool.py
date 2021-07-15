@@ -272,9 +272,7 @@ class InloopTool:
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
 
                     else:
-                        if gem_dichtst_bij():
-                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                        elif hwa_dichterbij_dan_hwavgs_en_infiltr():
+                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
                             result[TARGET_TYPE_HEMELWATERRIOOL] = 100
                         else:
                             result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
@@ -582,15 +580,20 @@ class Database:
                     "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
                 )
                 surface_source = ogr.Open(surface_source_fn)
-                src_layer = surface_source.GetLayerByName("{stype}".format(stype=stype))
-                if src_layer is None:
-                    continue
+                if surface_source is None:
+                    continue  # TODO Warning
                 else:
-                    nr_layers_with_features += 1
-                    self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
-                    print(f'raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features')
+                    src_layer = surface_source.GetLayerByName("{stype}".format(stype=stype))
+                    if src_layer is None:
+                        continue  # TODO Warning
+                    else:
+                        nr_layers_with_features += 1
+                        self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
+                        print(f'raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features')
             if nr_layers_with_features == 0:
-                raise FileInputError(f"BGT zip file bevat alleen lagen zonder features")
+                raise FileInputError(f"BGT zip file is leeg of bevat alleen lagen zonder features")
+        except FileInputError:
+            raise
         except Exception:
             raise FileInputError(f"Probleem met laag {stype}.gml in BGT zip file")
 

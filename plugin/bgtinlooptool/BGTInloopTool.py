@@ -186,7 +186,7 @@ class InloopToolTask(QgsTask):
                                                message,
                                                level=Qgis.Critical
                                                )
-                raise self.exception
+                # raise self.exception
 
     def cancel(self):
         iface.messageBar().pushMessage(MESSAGE_CATEGORY,
