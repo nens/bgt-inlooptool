@@ -25,6 +25,7 @@ class VisualizeLayers:
         try:
             # add data to the map
             output_layer = self.map.addDataFromPath(in_param.valueAsText)
+
             if in_param.symbology is not None:
                 layer_file = arcpy.mp.LayerFile(in_param.symbology)
                 for layer in layer_file.listLayers():
@@ -32,8 +33,9 @@ class VisualizeLayers:
                     break
                 else:  # TODO hier onderzoeken hoe die layer file structuur in elkaar zit!
                     sym_layer = layer_file
+                output_layer.name = sym_layer.name
                 arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer)
-                # arcpy.SetParameterAsText(param_nr, output_layer)
+                arcpy.SetParameterAsText(param_nr, output_layer)
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDExOTkwNw==
             # workaround works when parameter 16 is defined as a layer and as parameterType Derived
         except Exception:

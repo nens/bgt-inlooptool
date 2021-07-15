@@ -228,57 +228,58 @@ class BGTInloopToolArcGIS(BaseTool):
             kolken_file = parameters[3].valueAsText
             input_area = parameters[4].valueAsText
             output_gpkg = parameters[5].valueAsText
-            # Layers
+
+            core_parameters = InputParameters(
+                max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
+                max_afstand_vlak_oppwater=parameters[7].value,
+                max_afstand_pand_oppwater=parameters[8].value,
+                max_afstand_vlak_kolk=parameters[9].value,
+                max_afstand_afgekoppeld=parameters[10].value,
+                max_afstand_drievoudig=parameters[11].value,
+                afkoppelen_hellende_daken=parameters[12].value,
+                gebruik_bag=building_file != None,
+                gebruik_kolken=kolken_file != None,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[13].value,
+                verhardingsgraad_erf=parameters[14].value,
+                verhardingsgraad_half_verhard=parameters[15].value)
+
+            # Output layers
             bgt_oppervlakken_symb = parameters[16]
             bgt_inlooptabel_symb = parameters[17]
             gwsw_lijn_symb = parameters[18]
 
-            # core_parameters = InputParameters(
-            #     max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
-            #     max_afstand_vlak_oppwater=parameters[7].value,
-            #     max_afstand_pand_oppwater=parameters[8].value,
-            #     max_afstand_vlak_kolk=parameters[9].value,
-            #     max_afstand_afgekoppeld=parameters[10].value,
-            #     max_afstand_drievoudig=parameters[11].value,
-            #     afkoppelen_hellende_daken=parameters[12].value,
-            #     gebruik_bag=building_file != None,
-            #     gebruik_kolken=kolken_file != None,
-            #     bouwjaar_gescheiden_binnenhuisriolering=parameters[13].value,
-            #     verhardingsgraad_erf=parameters[14].value,
-            #     verhardingsgraad_half_verhard=parameters[15].value)
-            #
-            # self.it = InloopTool(core_parameters)
-            #
-            # # Import surfaces and pipes
-            # self.arcgis_com.AddMessage("Importeren van BGT bestanden")
-            # self.it.import_surfaces(bgt_file)
-            # self.arcgis_com.AddMessage("Importeren van GWSW bestanden")
-            # self.it.import_pipes(pipe_file)
-            #
-            # if core_parameters.gebruik_kolken:
-            #     self.arcgis_com.AddMessage("Importeren van kolken bestanden")
-            #     self.it.import_kolken(kolken_file)
-            # self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
-            #
-            # if core_parameters.gebruik_bag:
-            #     self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
-            #     self.it._database.add_build_year_to_surface(file_path=building_file)
-            #
-            # if input_area is not None:
-            #     # get the input extent as wkt from the input_area
-            #     input_extent_mask_wkt = get_wkt_extent(input_area)
-            #
-            #     self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
-            #     self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
-            #
-            # self.arcgis_com.AddMessage("Afstanden aan het berekenen")
-            # self.it.calculate_distances(parameters=core_parameters)
-            # self.arcgis_com.AddMessage("Bereken Runoff targets")
-            # self.it.calculate_runoff_targets()
-            #
-            # # Export results
-            # self.arcgis_com.AddMessage("Exporteren naar GPKG")
-            # self.it._database._write_to_disk(output_gpkg)
+            self.it = InloopTool(core_parameters)
+
+            # Import surfaces and pipes
+            self.arcgis_com.AddMessage("Importeren van BGT bestanden")
+            self.it.import_surfaces(bgt_file)
+            self.arcgis_com.AddMessage("Importeren van GWSW bestanden")
+            self.it.import_pipes(pipe_file)
+
+            if core_parameters.gebruik_kolken:
+                self.arcgis_com.AddMessage("Importeren van kolken bestanden")
+                self.it.import_kolken(kolken_file)
+            self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
+
+            if core_parameters.gebruik_bag:
+                self.arcgis_com.AddMessage("Importeren van BAG gebouw bestanden")
+                self.it._database.add_build_year_to_surface(file_path=building_file)
+
+            if input_area is not None:
+                # get the input extent as wkt from the input_area
+                input_extent_mask_wkt = get_wkt_extent(input_area)
+
+                self.it._database.remove_input_features_outside_clip_extent(input_extent_mask_wkt)
+                self.it._database.add_index_to_inputs(kolken=core_parameters.gebruik_kolken)
+
+            self.arcgis_com.AddMessage("Afstanden aan het berekenen")
+            self.it.calculate_distances(parameters=core_parameters)
+            self.arcgis_com.AddMessage("Bereken Runoff targets")
+            self.it.calculate_runoff_targets()
+
+            # Export results
+            self.arcgis_com.AddMessage("Exporteren naar GPKG")
+            self.it._database._write_to_disk(output_gpkg)
 
             # Add layers to the map
             layer_list = []
@@ -289,25 +290,20 @@ class BGTInloopToolArcGIS(BaseTool):
             main_bgt_inlooptabel = layers_to_gdb(input_dataset=os.path.join(output_gpkg, 'main.bgt_inlooptabel'),
                                                  output_gdb=out_gdb)
             add_bgt_inlooptabel_symbologyfield(main_bgt_inlooptabel)
-            # arcpy.SetParameterAsText(16, main_bgt_inlooptabel)
             bgt_oppervlakken_symb.value = main_bgt_inlooptabel
-            # arcpy.SetParameterAsText(17, main_bgt_inlooptabel)
             bgt_inlooptabel_symb.value = main_bgt_inlooptabel
 
             # add symbologyfield for GWSW
             main_default_lijn = layers_to_gdb(input_dataset=os.path.join(pipe_file, 'main.default_lijn'),
                                               output_gdb=out_gdb)
             add_gwsw_symbologyfield(main_default_lijn)
-            arcpy.SetParameterAsText(18, main_default_lijn)
             gwsw_lijn_symb.value = main_default_lijn
 
             test_aprx = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx"
-            visualize_layers = VisualizeLayers(test_aprx)  # arcgis_project=aprx)
-            # layers = os.path.join(os.path.dirname(__file__), 'layers')
-            for layer_parameter in [bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb]:
-                visualize_layers.add_layer_to_map(in_param=layer_parameter)
+            visualize_layers = VisualizeLayers()  # arcgis_project=aprx)
+            for x, layer_parameter in enumerate([bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb], 16):
+                visualize_layers.add_layer_to_map(in_param=layer_parameter, param_nr=x)
             visualize_layers.save()
-
 
         except Exception:
             self.arcgis_com.Traceback()
