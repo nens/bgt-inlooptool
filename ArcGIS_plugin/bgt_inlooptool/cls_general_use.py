@@ -1,9 +1,11 @@
-class GeneralUse():
-    def __init__(self, sys, arcpy, logPrint=False, debug=False):
+import sys
+import arcpy
+
+
+class GeneralUse:
+    def __init__(self, logPrint=False, debug=False):
         """"Pass sys, arcpy. Starttime is initialised.
         logPrint = False voor logging zonder print functie"""
-        self.sys = sys
-        self.arcpy = arcpy
         import time
         self.startTime = time.clock()
         self.logPrint = logPrint
@@ -18,13 +20,13 @@ class GeneralUse():
         """"Returns error messages in ArcPy object and prints them."""
         import traceback
 
-        tb = self.sys.exc_info()[2]
+        tb = sys.exc_info()[2]
         tbinfo = traceback.format_tb(tb)[0]
         pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + \
-            "\nError Info:\n" + str(self.sys.exc_info()[1])
-        msgs = "\nArcPy ERRORS:\n" + self.arcpy.GetMessages(2) + "\n"
-        self.arcpy.AddError(pymsg)
-        self.arcpy.AddError(msgs)
+            "\nError Info:\n" + str(sys.exc_info()[1])
+        msgs = "\nArcPy ERRORS:\n" + arcpy.GetMessages(2) + "\n"
+        arcpy.AddError(pymsg)
+        arcpy.AddError(msgs)
         if self.logPrint:
             print(pymsg + "\n")
             print(msgs)
@@ -32,11 +34,11 @@ class GeneralUse():
     def AddMessage(self, strMessage, urg=0):
         """Urg = 1 is Error Message, Urg = 2 is Warning Message."""
         if urg == 1:
-            self.arcpy.AddError(strMessage)
+            arcpy.AddError(strMessage)
         elif urg == 2:
-            self.arcpy.AddWarning(strMessage)
+            arcpy.AddWarning(strMessage)
         else:
-            self.arcpy.AddMessage(strMessage)
+            arcpy.AddMessage(strMessage)
 
     def AddTimeMessage(self, strMessage, urg=0):
         """Urg = 1 is Error Message, Urg = 2 is Warning Message."""
@@ -45,27 +47,22 @@ class GeneralUse():
             str(round(time.clock() - self.startTime)) + \
             " seconds on " + time.strftime("%H:%M:%S") + "."
         if urg == 1:
-            self.arcpy.AddError(strMessage)
-            self.arcpy.AddMessage(strTime)
+            arcpy.AddError(strMessage)
+            arcpy.AddMessage(strTime)
         elif urg == 2:
-            self.arcpy.AddWarning(strMessage)
-            self.arcpy.AddMessage(strTime)
+            arcpy.AddWarning(strMessage)
+            arcpy.AddMessage(strTime)
         else:
-            self.arcpy.AddMessage(strMessage)
-            self.arcpy.AddMessage(strTime)
+            arcpy.AddMessage(strMessage)
+            arcpy.AddMessage(strTime)
         if self.logPrint:
             print(strMessage)
             print(strTime)
 
     def AddDebug(self, strMessage):
         if self.debug is True:
-            self.arcpy.AddMessage(strMessage)
+            arcpy.AddMessage(strMessage)
             try:
                 print(strMessage)
             except IOError:
                 pass
-
-
-if __name__ == '__main__':
-
-    pass

@@ -88,8 +88,6 @@ def add_gwsw_symbologyfield(out_dataset):
                 row[1] = type_kort
                 cursor.updateRow(row)
 
-        print('oki!')
-
     except Exception:
         arcgis_com.Traceback()
 
