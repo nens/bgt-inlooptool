@@ -479,6 +479,9 @@ class BGTInloopTool:
             duration=20  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
         )
         self.dlg.bgt_file.setFilePath(output_zip)
+        self.dlg.inputExtentComboBox.setLayer(extent_layer)
+        self.dlg.inputExtentComboBox.setEnabled(True)
+        self.dlg.inputExtentGroupBox.setChecked(True)
 
     def on_run(self):
 
