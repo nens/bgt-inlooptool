@@ -273,9 +273,7 @@ class InloopTool:
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
 
                     else:
-                        if gem_dichtst_bij():
-                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
-                        elif hwa_dichterbij_dan_hwavgs_en_infiltr():
+                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
                             result[TARGET_TYPE_HEMELWATERRIOOL] = 100
                         else:
                             result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
@@ -693,8 +691,6 @@ class Database:
             for f in lyr:
                 geom = f.GetGeometryRef()
                 geom_type = geom.GetGeometryType()
-                if f['gml_id'] == 'bfc74f5f7-8a57-1a98-e86c-17938680cc88':
-                    print(f'geom_type = {geom_type}')
                 if geom_type == ogr.wkbPolygon:
                     pass
                 elif geom_type == ogr.wkbCurvePolygon:
