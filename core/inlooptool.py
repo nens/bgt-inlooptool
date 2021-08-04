@@ -1,7 +1,6 @@
 # System imports
 import os
 
-
 # Third-party imports
 from osgeo import osr
 from osgeo import gdal
@@ -13,6 +12,7 @@ from core.table_schemas import *
 from core.constants import *
 from core.constants import (
     ALL_USED_SURFACE_TYPES,
+    MULTIPLE_GEOMETRY_SURFACE_TYPES,
     SURFACES_TABLE_NAME,
     RESULT_TABLE_FIELD_GRAAD_VERHARDING,
     RESULT_TABLE_FIELD_TYPE_VERHARDING,
@@ -25,10 +25,11 @@ from core.constants import (
 from core.defaults import *
 
 # Globals
-SQL_DIR = os.path.join(__file__, "sql")
+GFS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gfs")
 
 # Exceptions
 gdal.UseExceptions()
+ogr.UseExceptions()
 
 
 class DatabaseOperationError(Exception):
@@ -272,7 +273,9 @@ class InloopTool:
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
 
                     else:
-                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
+                        if gem_dichtst_bij():
+                            result[TARGET_TYPE_GEMENGD_RIOOL] = 100
+                        elif hwa_dichterbij_dan_hwavgs_en_infiltr():
                             result[TARGET_TYPE_HEMELWATERRIOOL] = 100
                         else:
                             result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
@@ -481,8 +484,7 @@ class Database:
         self.srs = osr.SpatialReference()
         self.srs.ImportFromEPSG(epsg)
         self.mem_database = MEM_DRIVER.CreateDataSource('')
-        self.create_table(table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA),
-        self._sql_dir = SQL_DIR
+        self.create_table(table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA)
 
     @property
     def result_table(self):
@@ -579,7 +581,14 @@ class Database:
                 surface_source_fn = os.path.join(
                     "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
                 )
-                surface_source = ogr.Open(surface_source_fn)
+                if stype in MULTIPLE_GEOMETRY_SURFACE_TYPES:
+                    surface_source_gfs_fn = os.path.join(GFS_DIR, f'bgt_{stype}.gfs')
+                    if not os.path.isfile(surface_source_gfs_fn):
+                        raise ValueError(f'GFS file for {stype} not found')
+                    surface_source = gdal.OpenEx(surface_source_fn,
+                                                 open_options=[f'GFS_TEMPLATE={surface_source_gfs_fn}'])
+                else:
+                    surface_source = ogr.Open(surface_source_fn)
                 if surface_source is None:
                     continue  # TODO Warning
                 else:
@@ -684,6 +693,8 @@ class Database:
             for f in lyr:
                 geom = f.GetGeometryRef()
                 geom_type = geom.GetGeometryType()
+                if f['gml_id'] == 'bfc74f5f7-8a57-1a98-e86c-17938680cc88':
+                    print(f'geom_type = {geom_type}')
                 if geom_type == ogr.wkbPolygon:
                     pass
                 elif geom_type == ogr.wkbCurvePolygon:
