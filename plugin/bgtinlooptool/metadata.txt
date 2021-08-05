@@ -1,14 +1,10 @@
-# This file contains metadata for your plugin.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=BGT Inlooptool
 qgisMinimumVersion=3.10
 description=BGT Inlooptool
-version=0.5
-author=Emile de Badts
-email=emile.debadts@nelen-schuurmans.nl
+version=1.0
+author=Emile de Badts, Leendert van Wolfswinkel, Chris Kerklaan
+email=bgtinlooptool@nelen-schuurmans.nl
 
 about=Bereken afwateringskenmerken BGT vlakken.
 
