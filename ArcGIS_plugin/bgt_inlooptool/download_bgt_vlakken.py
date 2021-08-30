@@ -58,8 +58,11 @@ class DownloadBGTVlakken(BaseTool):
         updates a parameter in the interface if specified
         """
         if parameters[1].altered:
-            if parameters[1].valueAsText[-4:].lower() != '.zip':
-                parameters[1].value = parameters[1].valueAsText + ".zip"
+            # TODO pad default naar projectmap
+            if parameters[1].valueAsText[-2:] == '.*':
+                parameters[1].value = parameters[1].valueAsText.replace('.*', '.zip')
+            elif parameters[1].valueAsText[-4:].lower() != '.zip':
+                parameters[1].value = parameters[1].valueAsText + '.zip'
 
         super(DownloadBGTVlakken, self).updateParameters(parameters)
 

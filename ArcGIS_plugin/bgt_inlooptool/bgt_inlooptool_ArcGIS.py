@@ -80,7 +80,7 @@ class BGTInloopToolArcGIS(BaseTool):
                       datatype='GPFeatureLayer',
                       parameterType='Optional',
                       direction='Input'),
-            parameter(displayName='Opslag locatie gpkg/gdb',
+            parameter(displayName='Opslag locatie gpkg',
                       name='output_gpkg',
                       datatype='DEDatasetType',
                       parameterType='Required',
@@ -173,7 +173,10 @@ class BGTInloopToolArcGIS(BaseTool):
         """
         output_gpkg = parameters[5]
         if output_gpkg.altered:
-            if output_gpkg.valueAsText[-5:].lower() != ".gpkg":
+            # TODO pad default naar projectmap
+            if parameters[1].valueAsText[-2:] == '.*':
+                parameters[1].value = parameters[1].valueAsText.replace('.*', ".gpkg")
+            elif output_gpkg.valueAsText[-5:].lower() != ".gpkg":
                 output_gpkg.value = output_gpkg.valueAsText + ".gpkg"
 
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
