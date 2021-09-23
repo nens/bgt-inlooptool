@@ -174,10 +174,10 @@ class BGTInloopToolArcGIS(BaseTool):
         output_gpkg = parameters[5]
         if output_gpkg.altered:
             # TODO pad default naar projectmap
-            if parameters[1].valueAsText[-2:] == '.*':
-                parameters[1].value = parameters[1].valueAsText.replace('.*', ".gpkg")
-            elif output_gpkg.valueAsText[-5:].lower() != ".gpkg":
-                output_gpkg.value = output_gpkg.valueAsText + ".gpkg"
+            if '.' in output_gpkg.valueAsText:
+                output_gpkg.value = output_gpkg.valueAsText.split('.')[0] + '.gpkg'
+            else:
+                output_gpkg.value = output_gpkg.valueAsText + '.gpkg'
 
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
@@ -318,17 +318,17 @@ if __name__ == '__main__':
         params = tool.getParameterInfo()
 
         # bgt_file
-        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\bgtVijlen.zip"
+        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\BGT2.zip"
         # pipe_file
-        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\getGeoPackage_2220.gpkg"
+        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\getGeoPackage_2318.gpkg"
         # bag_file
-        params[2].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\Vijlen_BAG.gpkg"
+        params[2].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\BAG pand.gpkg"
         # kolken_file
         params[3].value = None
         # area_file
-        params[4].value = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\Gebied.shp'
+        params[4].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\Gebied.shp"
         # output_location
-        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\vijlen\vijlen_bgtinlooptool2.gpkg"
+        params[5].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\output_test_new.gpkg"
 
         # maximale afstand vlak afwateringsvoorziening
         params[6].value = 40

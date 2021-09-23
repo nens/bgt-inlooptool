@@ -2,7 +2,7 @@ import arcpy
 import os
 import sys
 import json
-from bgt_inlooptool.cls_general_use import GeneralUse
+from cls_general_use import GeneralUse
 from collections import namedtuple
 arcgis_com = GeneralUse(sys, arcpy)
 
