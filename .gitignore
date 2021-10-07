@@ -1,2 +1,14 @@
 .idea/
 *.pyc
+ArcGIS_plugin/bgt_inlooptool/Rtree-0.9.7.dist-info/LICENSE.txt
+ArcGIS_plugin/bgt_inlooptool/Rtree-0.9.7.dist-info/METADATA
+ArcGIS_plugin/bgt_inlooptool/Rtree-0.9.7.dist-info/RECORD
+ArcGIS_plugin/bgt_inlooptool/Rtree-0.9.7.dist-info/top_level.txt
+ArcGIS_plugin/bgt_inlooptool/Rtree-0.9.7.dist-info/WHEEL
+ArcGIS_plugin/bgt_inlooptool/rtree/__init__.py
+ArcGIS_plugin/bgt_inlooptool/rtree/core.py
+ArcGIS_plugin/bgt_inlooptool/rtree/exceptions.py
+ArcGIS_plugin/bgt_inlooptool/rtree/finder.py
+ArcGIS_plugin/bgt_inlooptool/rtree/index.py
+ArcGIS_plugin/bgt_inlooptool/rtree/lib/spatialindex-64.dll
+ArcGIS_plugin/bgt_inlooptool/rtree/lib/spatialindex_c-64.dll
