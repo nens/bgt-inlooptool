@@ -59,9 +59,9 @@ class DownloadBGTVlakken(BaseTool):
         """
         if parameters[1].altered:
             # TODO pad default naar projectmap
-            if parameters[1].valueAsText[-2:] == '.*':
-                parameters[1].value = parameters[1].valueAsText.replace('.*', '.zip')
-            elif parameters[1].valueAsText[-4:].lower() != '.zip':
+            if '.' in parameters[1].valueAsText:
+                parameters[1].value = parameters[1].valueAsText.split('.')[0] + '.zip'
+            else:
                 parameters[1].value = parameters[1].valueAsText + '.zip'
 
         super(DownloadBGTVlakken, self).updateParameters(parameters)

@@ -3,20 +3,18 @@
   "version" : "2.8.0",
   "build" : 29751,
   "layers" : [
-    "CIMPATH=map/bgt_oppervlakken.xml"
+    "CIMPATH=map/main_bgt_inlooptabel3.xml"
   ],
   "layerDefinitions" : [
     {
       "type" : "CIMFeatureLayer",
-      "name" : "bgt_oppervlakken",
-      "uRI" : "CIMPATH=map/bgt_oppervlakken.xml",
+      "name" : "main.bgt_inlooptabel",
+      "uRI" : "CIMPATH=map/main_bgt_inlooptabel3.xml",
       "sourceModifiedTime" : {
-        "type" : "TimeInstant",
-        "start" : 978307200000
+        "type" : "TimeInstant"
       },
-      "metadataURI" : "CIMPATH=Metadata/3c69225f32ce8c45c926a4151d30f668.xml",
       "useSourceMetadata" : true,
-      "description" : "main_bgt_inlooptabel",
+      "description" : "main.bgt_inlooptabel",
       "layerElevation" : {
         "type" : "CIMLayerElevationSurface",
         "mapElevationID" : "{2F551E78-EA2E-42C2-A0F1-800C9F69BCD4}"
@@ -39,16 +37,504 @@
         "type" : "CIMFeatureTable",
         "displayField" : "id",
         "editable" : true,
+        "fieldDescriptions" : [
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "fid",
+            "fieldName" : "fid",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "readOnly" : true,
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "geom",
+            "fieldName" : "geom",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "id",
+            "fieldName" : "id",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 0
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "laatste_wijziging",
+            "fieldName" : "laatste_wijziging",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "bgt_identificatie",
+            "fieldName" : "bgt_identificatie",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "type_verharding",
+            "fieldName" : "type_verharding",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "graad_verharding",
+            "fieldName" : "graad_verharding",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "hellingstype",
+            "fieldName" : "hellingstype",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "hellingspercentage",
+            "fieldName" : "hellingspercentage",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "type_private_voorziening",
+            "fieldName" : "type_private_voorziening",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "berging_private_voorziening",
+            "fieldName" : "berging_private_voorziening",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "code_voorziening",
+            "fieldName" : "code_voorziening",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "putcode",
+            "fieldName" : "putcode",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "leidingcode",
+            "fieldName" : "leidingcode",
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "gemengd_riool",
+            "fieldName" : "gemengd_riool",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "hemelwaterriool",
+            "fieldName" : "hemelwaterriool",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "vgs_hemelwaterriool",
+            "fieldName" : "vgs_hemelwaterriool",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "vuilwaterriool",
+            "fieldName" : "vuilwaterriool",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "infiltratievoorziening",
+            "fieldName" : "infiltratievoorziening",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "open_water",
+            "fieldName" : "open_water",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          },
+          {
+            "type" : "CIMFieldDescription",
+            "alias" : "maaiveld",
+            "fieldName" : "maaiveld",
+            "numberFormat" : {
+              "type" : "CIMNumericFormat",
+              "alignmentOption" : "esriAlignRight",
+              "alignmentWidth" : 0,
+              "roundingOption" : "esriRoundNumberOfDecimals",
+              "roundingValue" : 6
+            },
+            "visible" : true,
+            "searchMode" : "Exact"
+          }
+        ],
         "dataConnection" : {
-          "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "DATABASE=..\\..\\..\\..\\..\\Users\\hsc\\OneDrive - Tauw Group bv\\ArcGIS\\Projects\\bgt_inlooptool\\vijlen\\vijlen_bgtinlooptool7.gdb",
-          "workspaceFactory" : "FileGDB",
-          "dataset" : "main_bgt_inlooptabel",
-          "datasetType" : "esriDTFeatureClass"
+          "type" : "CIMSqlQueryDataConnection",
+          "workspaceConnectionString" : "DATABASE=C:\\Users\\hsc\\OneDrive - Tauw Group bv\\ArcGIS\\Projects\\bgt_inlooptool\\hollands_kroon\\bgt_inlooptabel.gpkg;AUTHENTICATION_MODE=OSA",
+          "workspaceFactory" : "Sql",
+          "dataset" : "main.%bgt_inlooptabel",
+          "datasetType" : "esriDTFeatureClass",
+          "sqlQuery" : "select fid,geom,id,laatste_wijziging,bgt_identificatie,type_verharding,graad_verharding,hellingstype,hellingspercentage,type_private_voorziening,berging_private_voorziening,code_voorziening,putcode,leidingcode,gemengd_riool,hemelwaterriool,vgs_hemelwaterriool,vuilwaterriool,infiltratievoorziening,open_water,maaiveld from main.bgt_inlooptabel",
+          "srid" : "28992",
+          "spatialReference" : {
+            "wkid" : 28992,
+            "latestWkid" : 28992
+          },
+          "oIDFields" : "fid",
+          "geometryType" : "esriGeometryPolygon",
+          "extent" : {
+            "xmin" : 113780.116000000387,
+            "ymin" : 538797.425999999046,
+            "xmax" : 120545.758000001311,
+            "ymax" : 544157.11400000006,
+            "spatialReference" : {
+              "wkid" : 28992,
+              "latestWkid" : 28992
+            }
+          },
+          "queryFields" : [
+            {
+              "name" : "fid",
+              "type" : "esriFieldTypeInteger",
+              "alias" : "fid"
+            },
+            {
+              "name" : "geom",
+              "type" : "esriFieldTypeGeometry",
+              "alias" : "geom",
+              "geometryDef" : {
+                "avgNumPoints" : 0,
+                "geometryType" : "esriGeometryPolygon",
+                "hasM" : false,
+                "hasZ" : false,
+                "spatialReference" : {
+                  "wkid" : 28992,
+                  "latestWkid" : 28992
+                }
+              }
+            },
+            {
+              "name" : "id",
+              "type" : "esriFieldTypeInteger",
+              "alias" : "id"
+            },
+            {
+              "name" : "laatste_wijziging",
+              "type" : "esriFieldTypeString",
+              "alias" : "laatste_wijziging",
+              "length" : 255
+            },
+            {
+              "name" : "bgt_identificatie",
+              "type" : "esriFieldTypeString",
+              "alias" : "bgt_identificatie",
+              "length" : 255
+            },
+            {
+              "name" : "type_verharding",
+              "type" : "esriFieldTypeString",
+              "alias" : "type_verharding",
+              "length" : 255
+            },
+            {
+              "name" : "graad_verharding",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "graad_verharding"
+            },
+            {
+              "name" : "hellingstype",
+              "type" : "esriFieldTypeString",
+              "alias" : "hellingstype",
+              "length" : 255
+            },
+            {
+              "name" : "hellingspercentage",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "hellingspercentage"
+            },
+            {
+              "name" : "type_private_voorziening",
+              "type" : "esriFieldTypeString",
+              "alias" : "type_private_voorziening",
+              "length" : 255
+            },
+            {
+              "name" : "berging_private_voorziening",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "berging_private_voorziening"
+            },
+            {
+              "name" : "code_voorziening",
+              "type" : "esriFieldTypeString",
+              "alias" : "code_voorziening",
+              "length" : 255
+            },
+            {
+              "name" : "putcode",
+              "type" : "esriFieldTypeString",
+              "alias" : "putcode",
+              "length" : 255
+            },
+            {
+              "name" : "leidingcode",
+              "type" : "esriFieldTypeString",
+              "alias" : "leidingcode",
+              "length" : 255
+            },
+            {
+              "name" : "gemengd_riool",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "gemengd_riool"
+            },
+            {
+              "name" : "hemelwaterriool",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "hemelwaterriool"
+            },
+            {
+              "name" : "vgs_hemelwaterriool",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "vgs_hemelwaterriool"
+            },
+            {
+              "name" : "vuilwaterriool",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "vuilwaterriool"
+            },
+            {
+              "name" : "infiltratievoorziening",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "infiltratievoorziening"
+            },
+            {
+              "name" : "open_water",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "open_water"
+            },
+            {
+              "name" : "maaiveld",
+              "type" : "esriFieldTypeDouble",
+              "alias" : "maaiveld"
+            }
+          ],
+          "spatialStorageType" : 11
         },
         "studyAreaSpatialRel" : "esriSpatialRelUndefined",
         "searchOrder" : "esriSearchOrderSpatial"
       },
+      "featureTemplates" : [
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "dak",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "type_verharding",
+              "dak"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "gesloten verhard",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "type_verharding",
+              "gesloten verhard"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "open verhard",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "type_verharding",
+              "open verhard"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "onverhard",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "type_verharding",
+              "onverhard"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "water",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "type_verharding",
+              "water"
+            ]
+          }
+        },
+        {
+          "type" : "CIMFeatureTemplate",
+          "name" : "<Null>",
+          "tags" : "Polygon",
+          "toolProgID" : "8f79967b-66a0-4a1c-b884-f44bc7e26921",
+          "toolFilter" : [
+            "6c6970a7-5ca9-448c-9c7d-0d716cd2ac64",
+            "a281e635-0f22-47d4-a438-e4d29b920e22",
+            "d304243a-5c3a-4ccc-b98b-93684b15fd83"
+          ],
+          "defaultValues" : {
+            "type" : "PropertySet",
+            "propertySetItems" : [
+              "type_verharding",
+              "<Null>"
+            ]
+          }
+        }
+      ],
       "htmlPopupEnabled" : true,
       "selectable" : true,
       "featureCacheType" : "Session",
@@ -321,8 +807,7 @@
                 }
               }
             ]
-          },
-          "symbolName" : "Level_1"
+          }
         },
         "defaultSymbolPatch" : "Default",
         "fields" : [
@@ -440,59 +925,6 @@
               },
               {
                 "type" : "CIMUniqueValueClass",
-                "label" : "onverhard",
-                "patch" : "Default",
-                "symbol" : {
-                  "type" : "CIMSymbolReference",
-                  "symbol" : {
-                    "type" : "CIMPolygonSymbol",
-                    "symbolLayers" : [
-                      {
-                        "type" : "CIMSolidStroke",
-                        "enable" : true,
-                        "capStyle" : "Round",
-                        "joinStyle" : "Round",
-                        "lineStyle3D" : "Strip",
-                        "miterLimit" : 10,
-                        "width" : 0.69999999999999996,
-                        "color" : {
-                          "type" : "CIMRGBColor",
-                          "values" : [
-                            143,
-                            181,
-                            131,
-                            100
-                          ]
-                        }
-                      },
-                      {
-                        "type" : "CIMSolidFill",
-                        "enable" : true,
-                        "color" : {
-                          "type" : "CIMRGBColor",
-                          "values" : [
-                            169,
-                            238,
-                            146,
-                            100
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                "values" : [
-                  {
-                    "type" : "CIMUniqueValue",
-                    "fieldValues" : [
-                      "onverhard"
-                    ]
-                  }
-                ],
-                "visible" : true
-              },
-              {
-                "type" : "CIMUniqueValueClass",
                 "label" : "open verhard",
                 "patch" : "Default",
                 "symbol" : {
@@ -539,6 +971,59 @@
                     "type" : "CIMUniqueValue",
                     "fieldValues" : [
                       "open verhard"
+                    ]
+                  }
+                ],
+                "visible" : true
+              },
+              {
+                "type" : "CIMUniqueValueClass",
+                "label" : "onverhard",
+                "patch" : "Default",
+                "symbol" : {
+                  "type" : "CIMSymbolReference",
+                  "symbol" : {
+                    "type" : "CIMPolygonSymbol",
+                    "symbolLayers" : [
+                      {
+                        "type" : "CIMSolidStroke",
+                        "enable" : true,
+                        "capStyle" : "Round",
+                        "joinStyle" : "Round",
+                        "lineStyle3D" : "Strip",
+                        "miterLimit" : 10,
+                        "width" : 0.69999999999999996,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            143,
+                            181,
+                            131,
+                            100
+                          ]
+                        }
+                      },
+                      {
+                        "type" : "CIMSolidFill",
+                        "enable" : true,
+                        "color" : {
+                          "type" : "CIMRGBColor",
+                          "values" : [
+                            169,
+                            238,
+                            146,
+                            100
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "values" : [
+                  {
+                    "type" : "CIMUniqueValue",
+                    "fieldValues" : [
+                      "onverhard"
                     ]
                   }
                 ],
@@ -657,14 +1142,10 @@
         "polygonSymbolColorTarget" : "Fill"
       },
       "scaleSymbols" : true,
-      "snappable" : true
-    }
-  ],
-  "binaryReferences" : [
-    {
-      "type" : "CIMBinaryReference",
-      "uRI" : "CIMPATH=Metadata/3c69225f32ce8c45c926a4151d30f668.xml",
-      "data" : "<?xml version=\"1.0\"?>\r\n<metadata xml:lang=\"nl\"><Esri><CreaDate>20210715</CreaDate><CreaTime>16064700</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce></Esri></metadata>\r\n"
+      "snappable" : true,
+      "symbolLayerDrawing" : {
+        "type" : "CIMSymbolLayerDrawing"
+      }
     }
   ],
   "elevationSurfaces" : [

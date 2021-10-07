@@ -1,5 +1,5 @@
 import arcpy
-from bgt_inlooptool.cls_general_use import GeneralUse
+from cls_general_use import GeneralUse
 
 
 class VisualizeLayers:
