@@ -1,10 +1,17 @@
 # System imports
 import os
+import sys
+from pathlib import Path
 
 # Third-party imports
 from osgeo import osr
 from osgeo import gdal
 from datetime import datetime
+
+# Rtree installation
+from .rtree_installer import unpack_rtree
+unpack_rtree()
+sys.path.append(Path(__file__).parent.parent)
 import rtree
 
 # Local imports
