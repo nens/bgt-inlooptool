@@ -46,7 +46,6 @@ def get_wheel_filename(search_path: Union[Path, str], distribution: str, version
             wheel_stem = str(path.stem)
             keys = ['distribution', 'version', 'python_tag', 'abi_tag', 'platform_tag']
             wheel_dict = dict(zip(keys,wheel_stem.split('-')))
-            print(wheel_dict)
             if wheel_dict['distribution'] == distribution and \
                     (version is None or wheel_dict['version'] == version) and \
                     (wheel_dict['python_tag'] == python_tag) and \
