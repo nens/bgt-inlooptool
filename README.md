@@ -16,7 +16,7 @@ De BGT-inlooptabel en -inlooptool zijn bedoeld om de basisdata voor modellering 
 
 Ga dus aan de slag met de BGT-inlooptabel en BGT-inlooptool. De BGT-Inlooptool tool is beschikbaar gesteld in twee GIS-software pakketten:
 *	In QGIS kan de tool worden gevonden in de plugin-manager (te benaderen vanuit de applicatie zelf).
-*	In ArcGIS kan de tool binnen [ArcGIS online](https://tauw.maps.arcgis.com/home/item.html?id=c8e8759e32af4967be181544a1d1c807) worden gevonden op de pagina van ontwikkelaar TAUW
+*	In ArcGIS kan de tool binnen [ArcGIS online](https://www.arcgis.com/home/item.html?id=c8e8759e32af4967be181544a1d1c807) worden gevonden op de pagina van ontwikkelaar TAUW
 
 Download de gebruiksinstructie voor de BGT-inlooptool hieronder:
 *	Voor [QGIS](https://github.com/nens/bgt-inlooptool/raw/master/docs/Handleiding%20BGT-inlooptool%20QGIS.pdf)
