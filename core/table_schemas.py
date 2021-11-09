@@ -1,4 +1,4 @@
-import ogr
+from osgeo import ogr
 from core.constants import *
 
 
