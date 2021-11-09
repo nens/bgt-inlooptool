@@ -24,37 +24,35 @@ def get_wheel_filename(search_path: Union[Path, str], distribution: str, version
     :param abi_tag_suffix: e.g. 'abi3', or 'm'. See https://www.python.org/dev/peps/pep-0425/#id12
 
     """
-    if python_tag_prefix is None:
-        python_tag = 'any'
-        abi_tag = 'none'
-    else:
-        python_major_version = sys.version_info[0]
-        python_minor_version = sys.version_info[1]
-        python_tag=python_tag_prefix + str(python_major_version) + str(python_minor_version)
+    python_major_version = sys.version_info[0]
+    python_minor_version = sys.version_info[1]
+    python_minor_version_proxy = python_minor_version
+    while python_minor_version_proxy > 0: # proxy is used to find earlier version if current version is not available
+        python_version_str = str(python_major_version) + str(python_minor_version_proxy)
+        python_tag = python_tag_prefix + python_version_str
         abi_tag=python_tag + abi_tag_suffix
 
-    platform_short_name = platform.platform(terse=True).lower()
-    if 'win' in platform_short_name:
-        platform_tag_platform = 'win'
-    elif 'mac' in platform_short_name:
-        platform_tag_platform = 'mac'
-    else:
-        platform_tag_platform = 'linux'
+        platform_short_name = platform.platform(terse=True).lower()
+        if 'win' in platform_short_name:
+            platform_tag_platform = 'win'
+        elif 'mac' in platform_short_name:
+            platform_tag_platform = 'mac'
+        else:
+            platform_tag_platform = 'linux'
 
-    pathlist = Path(search_path).rglob('*.whl')
-    for path in pathlist:
-        # because path is object not string
-        wheel_stem = str(path.stem)
-
-        keys = ['distribution', 'version', 'python_tag', 'abi_tag', 'platform_tag']
-        wheel_dict = dict(zip(keys,wheel_stem.split('-')))
-        print(wheel_dict)
-        if wheel_dict['distribution'] == distribution and \
-                (version is None or wheel_dict['version'] == version) and \
-                (wheel_dict['python_tag'] == python_tag) and \
-                (wheel_dict['abi_tag'] == abi_tag ) and \
-                (platform_tag_platform in wheel_dict['platform_tag']):
-            return str(path)
+        pathlist = Path(search_path).rglob('*.whl')
+        for path in pathlist:
+            # because path is object not string
+            wheel_stem = str(path.stem)
+            keys = ['distribution', 'version', 'python_tag', 'abi_tag', 'platform_tag']
+            wheel_dict = dict(zip(keys,wheel_stem.split('-')))
+            if wheel_dict['distribution'] == distribution and \
+                    (version is None or wheel_dict['version'] == version) and \
+                    (wheel_dict['python_tag'] == python_tag) and \
+                    (wheel_dict['abi_tag'] == abi_tag) and \
+                    (platform_tag_platform in wheel_dict['platform_tag']):
+                return str(path)
+        python_minor_version_proxy -= 1
 
 
 def unpack_whl(whl_file, package_name, extract_dir):

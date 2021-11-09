@@ -12,7 +12,6 @@ import os
 import sys
 
 # Third-party imports
-import ogr
 import unittest
 
 # Globals
@@ -28,7 +27,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 # sys.path.append(os.path.dirname(__file__))
 
 # Local/test imports
-from .inlooptool import *
+from ArcGIS_plugin.bgt_inlooptool.core.inlooptool import *
 from core.constants import *
 
 
