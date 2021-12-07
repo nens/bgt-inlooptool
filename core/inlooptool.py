@@ -42,8 +42,8 @@ ogr.UseExceptions()
 
 class DatabaseOperationError(Exception):
     """Raised when an invalid _database operation is requested"""
-
-    pass
+    def __init__(self, msg='Database error', *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 
 class FileInputError(Exception):
@@ -126,7 +126,7 @@ class InloopTool:
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
 
-    def import_pipes(self, file_path, design, pipe_type_field, pipe_code_field, pipe_map, pipe_layer_name= SOURCE_PIPES_TABLE_NAME, relevant_only=True):
+    def import_pipes(self, file_path, design=False, pipe_type_field=None, pipe_code_field=None, pipe_map=None, pipe_layer_name=None, relevant_only=True):
         """
         Import pipes to database and classify their type
         :param file_path: path to GWSW Geopackage that contains the pipes
@@ -804,18 +804,18 @@ class Database:
 
         layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
         if layer is None:
-            raise DatabaseOperationError
+            raise DatabaseOperationError('Failed to open pipes layer')
             
         # Rename the code field to the internal used code field
         layer_dfn = layer.GetLayerDefn()
         field_idx = layer.FindFieldIndex(pipe_code_field,1)
-        
-        if field_index != -1:
+                
+        if field_idx != -1:
             field_dfn = layer_dfn.GetFieldDefn(field_idx)
             field_dfn.SetName(INTERNAL_PIPE_CODE_FIELD)
             field_dfn = None
         else:
-            raise DatabaseOperationError
+            raise DatabaseOperationError('Pipe code field not in layer')
 
         layer.CreateField(ogr.FieldDefn(INTERNAL_PIPE_TYPE_FIELD, ogr.OFTString))
 

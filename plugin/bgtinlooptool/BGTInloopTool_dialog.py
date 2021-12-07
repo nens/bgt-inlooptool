@@ -68,8 +68,25 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # connect signals
         self.bgt_file.fileChanged.connect(self.validate)
         self.pipe_file.fileChanged.connect(self.validate)
+        self.pipe_file.fileChanged.connect(self.design_sewerage)
         self.building_file.fileChanged.connect(self.validate)
         self.kolken_file.fileChanged.connect(self.validate)
+        self.pipe_input_type_dropdown.currentIndexChanged.connect(self.design_sewerage)        
+        self.ontwerp_laag_naam.currentIndexChanged.connect(self.design_sewerage_field_names)        
+
+        # Info window
+        self.info_window.document().setDefaultStyleSheet(
+            'body {color: #333; font-size: 14px;} '
+            'h2 {background: #CCF; color: #443;} '
+            'h1 {background: #001133; color: white;} '
+        )
+
+        # TextBrowser background is a widget style, not a document style
+        self.info_window.setStyleSheet('background-color: #EEF;')
+        
+        html_file = os.path.join(os.path.dirname(__file__), 'info_html', 'test.html')
+        with open(html_file, 'r') as fh:
+            self.info_window.insertHtml(fh.read())
 
         # Setting defaults
         self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
@@ -90,6 +107,9 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         # BGT Api extract settings
         self.bgtApiOutput.setStorageMode(QgsFileWidget.SaveFile)
+        
+        # Pipe input types
+        self.pipe_input_type_dropdown.addItems(['GWSW', 'Ontwerp'])
 
         self.BGTExtentCombobox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
 
@@ -136,3 +156,54 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
             valid = False
 
         self.pushButtonRun.setEnabled(valid)
+        
+    def design_sewerage(self):
+        
+        if self.pipe_input_type_dropdown.currentText() == 'GWSW':
+            self.ontwerp_gemengd_naam.setEnabled(False)
+            self.ontwerp_hemelwater_naam.setEnabled(False)
+            self.ontwerp_infiltratie_naam.setEnabled(False)
+            self.ontwerp_vgs_naam.setEnabled(False)
+            self.ontwerp_leidingcode_kolom.setEnabled(False)            
+            self.ontwerp_riooltype_kolom.setEnabled(False)  
+            self.ontwerp_laag_naam.setEnabled(False)
+            
+        elif self.pipe_input_type_dropdown.currentText() == 'Ontwerp':
+            self.ontwerp_gemengd_naam.setEnabled(True)
+            self.ontwerp_hemelwater_naam.setEnabled(True)
+            self.ontwerp_infiltratie_naam.setEnabled(True)
+            self.ontwerp_vgs_naam.setEnabled(True)
+            self.ontwerp_leidingcode_kolom.setEnabled(True)            
+            self.ontwerp_riooltype_kolom.setEnabled(True)
+            self.ontwerp_laag_naam.setEnabled(True)
+            
+            # add options to dropdown
+            pipe_file = self.pipe_file.filePath()
+            if is_valid_ogr_file(pipe_file, optional=False):
+                
+                pipe_layer_ds = ogr.Open(pipe_file)
+                pipe_layer_names = [layer.GetName() for layer in pipe_layer_ds]
+                self.ontwerp_laag_naam.clear()
+                self.ontwerp_laag_naam.addItems(pipe_layer_names)
+
+    def design_sewerage_field_names(self):
+        
+        pipe_file = self.pipe_file.filePath()
+        pipe_ds = ogr.Open(pipe_file)
+            
+        layer_name = self.ontwerp_laag_naam.currentText()
+        pipe_layer = pipe_ds.GetLayer(layer_name)
+        field_names = [field.name for field in pipe_layer.schema]
+
+        self.ontwerp_leidingcode_kolom.clear()
+        self.ontwerp_riooltype_kolom.clear()
+        self.ontwerp_leidingcode_kolom.addItems(field_names)
+        self.ontwerp_riooltype_kolom.addItems(field_names)                
+
+            
+            
+            
+
+        
+        
+        
