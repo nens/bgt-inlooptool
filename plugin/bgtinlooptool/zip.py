@@ -17,7 +17,8 @@ ROOT_DIR_FILES = [
 
 DIRECTORIES = [
     'core',
-    'style'
+    'style',
+    'info_html'
 ]
 
 IGNORE = [
