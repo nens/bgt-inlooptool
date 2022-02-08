@@ -151,7 +151,7 @@ class InloopToolTask(QgsTask):
             self.increase_progress()
 
             QgsMessageLog.logMessage("Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info)
-            self.it.calculate_runoff_targets()
+            self.it.calculate_runoff_targets(parameters=self.parameters)
             self.increase_progress()
 
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
@@ -527,7 +527,9 @@ class BGTInloopTool:
             gebruik_kolken=kolken_file != '',
             bouwjaar_gescheiden_binnenhuisriolering=self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(),
             verhardingsgraad_erf=self.dlg.verhardingsgraad_erf.value(),
-            verhardingsgraad_half_verhard=self.dlg.verhardingsgraad_half_verhard.value())
+            verhardingsgraad_half_verhard=self.dlg.verhardingsgraad_half_verhard.value(),
+            max_oppervlakte_bgt_vlak = self.dlg.max_oppervlak_bgt_vlak.value())
+            
 
         # Invoer voor ontwerpriool
         if self.dlg.pipe_input_type_dropdown.currentText() == 'Ontwerp':

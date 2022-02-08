@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>940</width>
-    <height>677</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>340</x>
-     <y>630</y>
+     <y>660</y>
      <width>241</width>
      <height>28</height>
     </rect>
@@ -48,7 +48,7 @@
      <x>20</x>
      <y>30</y>
      <width>561</width>
-     <height>591</height>
+     <height>611</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -284,125 +284,145 @@
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>411</width>
-       <height>311</height>
+       <width>384</width>
+       <height>341</height>
       </rect>
      </property>
      <property name="title">
       <string>Standaard instellingen</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Max. afstand afwateringsvoorziening [m]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_afwateringsvoorziening"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Max. afstand verhardingsvlak - opp. water [m]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_oppwater"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Max. afstand pand - opp. water [m]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QgsDoubleSpinBox" name="max_afstand_pand_oppwater"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Max. afstand verhardingsvlak - kolk [m]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_kolk"/>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Max. afstand afgekoppeld stelsel [m]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QgsDoubleSpinBox" name="max_afstand_afgekoppeld"/>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Max. afstand drievoudig stelsel [m]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QgsDoubleSpinBox" name="max_afstand_drievoudig"/>
-      </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_15">
-        <property name="text">
-         <string>Verhardingsgraad erf [%]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="QgsDoubleSpinBox" name="verhardingsgraad_erf"/>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_16">
-        <property name="text">
-         <string>Verhardingsgraad half verhard [%]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QgsDoubleSpinBox" name="verhardingsgraad_half_verhard"/>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Afkoppelen hellende daken [ja/nee]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QCheckBox" name="afkoppelen_hellende_daken">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>Bouwjaar gescheiden binnenhuisriolering [-]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="1">
-       <widget class="QSpinBox" name="bouwjaar_gescheiden_binnenhuisriolering"/>
-      </item>
-     </layout>
+     <widget class="QWidget" name="">
+      <property name="geometry">
+       <rect>
+        <x>12</x>
+        <y>28</y>
+        <width>362</width>
+        <height>308</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Max. afstand afwateringsvoorziening [m]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_afwateringsvoorziening"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Max. afstand verhardingsvlak - opp. water [m]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_oppwater"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Max. afstand pand - opp. water [m]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_afstand_pand_oppwater"/>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Max. afstand verhardingsvlak - kolk [m]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_afstand_vlak_kolk"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Max. afstand afgekoppeld stelsel [m]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_afstand_afgekoppeld"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Max. afstand drievoudig stelsel [m]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_afstand_drievoudig"/>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>Verhardingsgraad erf [%]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QgsDoubleSpinBox" name="verhardingsgraad_erf"/>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label_16">
+         <property name="text">
+          <string>Verhardingsgraad half verhard [%]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QgsDoubleSpinBox" name="verhardingsgraad_half_verhard"/>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_9">
+         <property name="text">
+          <string>Afkoppelen hellende daken [ja/nee]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QCheckBox" name="afkoppelen_hellende_daken">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>Bouwjaar gescheiden binnenhuisriolering [-]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QSpinBox" name="bouwjaar_gescheiden_binnenhuisriolering"/>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_26">
+         <property name="text">
+          <string>Maximale oppervlakte BGT vlak [m2]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QgsDoubleSpinBox" name="max_oppervlak_bgt_vlak"/>
+       </item>
+      </layout>
+     </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>350</y>
+       <y>370</y>
        <width>411</width>
        <height>201</height>
       </rect>
@@ -491,7 +511,7 @@
      <x>590</x>
      <y>50</y>
      <width>331</width>
-     <height>571</height>
+     <height>591</height>
     </rect>
    </property>
   </widget>
