@@ -551,6 +551,11 @@ class InloopTool:
                             split_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding)
                             split_feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding)
                             split_feature.SetField(tt, percentage_split)
+                            # Set other target types to 0
+                            for tt_other in TARGET_TYPES:
+                                if tt_other != tt:
+                                    split_feature.SetField(tt_other, 0)
+                            
                             split_feature.SetField('pipe_code_'+tt, pipe_code_list[i])
                             
                             result_table.CreateFeature(split_feature)
