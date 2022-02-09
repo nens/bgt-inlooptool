@@ -508,6 +508,7 @@ class InloopTool:
 
         for surface in bgt_surfaces:
             
+            
             surface_id = surface.identificatie_lokaalid
             feature = ogr.Feature(feature_defn)
             surface_geometry = surface.GetGeometryRef()
@@ -515,14 +516,13 @@ class InloopTool:
             feature.SetGeometry(fixed_geometry)
                  
             feature_area = fixed_geometry.Area()
-            max_feature_area = 1000
                                 
             # If the surface is larger than the given max area
             # Calculate what system it should go to 
             # Divide into the max possible amount of sub surfaces using the large surface pipe distance dictionary
              
             afwatering = self.decision_tree(surface, self.parameters)
-            if feature_area > parameters.max_oppervlakte_bgt_vlak and afwatering[OPEN_WATER] != 100:
+            if feature_area > parameters.max_oppervlakte_bgt_vlak and afwatering[TARGET_TYPE_OPEN_WATER] != 100 and afwatering[TARGET_TYPE_MAAIVELD] != 100:
                                 
                 for tt in TARGET_TYPES:
                     if afwatering[tt] > 0 and tt in DISTANCE_PIPE_TYPES:
