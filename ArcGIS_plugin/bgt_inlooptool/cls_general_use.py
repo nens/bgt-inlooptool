@@ -4,9 +4,10 @@ import arcpy
 
 class GeneralUse:
     def __init__(self, logPrint=False, debug=False):
-        """"Pass sys, arcpy. Starttime is initialised.
+        """ "Pass sys, arcpy. Starttime is initialised.
         logPrint = False voor logging zonder print functie"""
         import time
+
         self.startTime = time.clock()
         self.logPrint = logPrint
         self.debug = debug
@@ -14,16 +15,21 @@ class GeneralUse:
     def StartAnalyse(self):
         """Reinitialise internal clock"""
         import time
+
         self.startTime = time.clock()
 
     def Traceback(self):
-        """"Returns error messages in ArcPy object and prints them."""
+        """ "Returns error messages in ArcPy object and prints them."""
         import traceback
 
         tb = sys.exc_info()[2]
         tbinfo = traceback.format_tb(tb)[0]
-        pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + \
-            "\nError Info:\n" + str(sys.exc_info()[1])
+        pymsg = (
+            "PYTHON ERRORS:\nTraceback info:\n"
+            + tbinfo
+            + "\nError Info:\n"
+            + str(sys.exc_info()[1])
+        )
         msgs = "\nArcPy ERRORS:\n" + arcpy.GetMessages(2) + "\n"
         arcpy.AddError(pymsg)
         arcpy.AddError(msgs)
@@ -43,9 +49,14 @@ class GeneralUse:
     def AddTimeMessage(self, strMessage, urg=0):
         """Urg = 1 is Error Message, Urg = 2 is Warning Message."""
         import time
-        strTime = "Elapsed time from start " + \
-            str(round(time.clock() - self.startTime)) + \
-            " seconds on " + time.strftime("%H:%M:%S") + "."
+
+        strTime = (
+            "Elapsed time from start "
+            + str(round(time.clock() - self.startTime))
+            + " seconds on "
+            + time.strftime("%H:%M:%S")
+            + "."
+        )
         if urg == 1:
             arcpy.AddError(strMessage)
             arcpy.AddMessage(strTime)

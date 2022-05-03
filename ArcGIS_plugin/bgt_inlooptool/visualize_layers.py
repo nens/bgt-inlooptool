@@ -3,7 +3,6 @@ from cls_general_use import GeneralUse
 
 
 class VisualizeLayers:
-
     def __init__(self, arcgis_project=None) -> None:
 
         if arcgis_project is None:
@@ -18,7 +17,9 @@ class VisualizeLayers:
     def save(self):
         self.arcgis_project.save()
 
-    def add_layer_to_map(self, in_param, in_dataset=None, param_nr=None, symbology_layer=None):
+    def add_layer_to_map(
+        self, in_param, in_dataset=None, param_nr=None, symbology_layer=None
+    ):
         """
         Add layers to map with symbology if a symbology layer is specified
         """

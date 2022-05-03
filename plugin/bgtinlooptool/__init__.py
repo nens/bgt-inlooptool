@@ -33,8 +33,6 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
 
-
-        
-    
     from .BGTInloopTool import BGTInloopTool
+
     return BGTInloopTool(iface)

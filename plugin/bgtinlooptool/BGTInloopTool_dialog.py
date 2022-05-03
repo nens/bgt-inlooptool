@@ -28,12 +28,13 @@ from osgeo import ogr
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 
-from qgis.core import QgsMapLayerProxyModel 
+from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsFileWidget
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'BGTInloopTool_dialog_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "BGTInloopTool_dialog_base.ui")
+)
 
 from .core.defaults import *
 
@@ -41,7 +42,7 @@ ogr.UseExceptions()
 
 
 def is_valid_ogr_file(path: str, optional: bool = False):
-    if path == '':  # optional input
+    if path == "":  # optional input
         if optional:
             valid = True
         else:
@@ -54,7 +55,6 @@ def is_valid_ogr_file(path: str, optional: bool = False):
 
 
 class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
-    
     def __init__(self, parent=None):
         """Constructor."""
         super(BGTInloopToolDialog, self).__init__(parent)
@@ -71,32 +71,38 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pipe_file.fileChanged.connect(self.design_sewerage)
         self.building_file.fileChanged.connect(self.validate)
         self.kolken_file.fileChanged.connect(self.validate)
-        self.pipe_input_type_dropdown.currentIndexChanged.connect(self.design_sewerage)        
-        self.ontwerp_laag_naam.currentIndexChanged.connect(self.design_sewerage_field_names)        
+        self.pipe_input_type_dropdown.currentIndexChanged.connect(self.design_sewerage)
+        self.ontwerp_laag_naam.currentIndexChanged.connect(
+            self.design_sewerage_field_names
+        )
 
         # Info window
         self.info_window.document().setDefaultStyleSheet(
-            'body {color: #333; font-size: 14px;} '
-            'h2 {background: #CCF; color: #443;} '
-            'h1 {background: #001133; color: white;} '
+            "body {color: #333; font-size: 14px;} "
+            "h2 {background: #CCF; color: #443;} "
+            "h1 {background: #001133; color: white;} "
         )
 
         # TextBrowser background is a widget style, not a document style
-        self.info_window.setStyleSheet('background-color: #EEF;')
-        
-        html_file = os.path.join(os.path.dirname(__file__), 'info_html', 'test.html')
-        with open(html_file, 'r') as fh:
+        self.info_window.setStyleSheet("background-color: #EEF;")
+
+        html_file = os.path.join(os.path.dirname(__file__), "info_html", "test.html")
+        with open(html_file, "r") as fh:
             self.info_window.insertHtml(fh.read())
 
         # Setting defaults
-        self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
+        self.max_afstand_vlak_afwateringsvoorziening.setValue(
+            MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
+        )
         self.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
         self.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
         self.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
         self.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
         self.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
         self.bouwjaar_gescheiden_binnenhuisriolering.setMaximum(10000)
-        self.bouwjaar_gescheiden_binnenhuisriolering.setValue(BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING)
+        self.bouwjaar_gescheiden_binnenhuisriolering.setValue(
+            BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
+        )
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
@@ -104,12 +110,12 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         # Run button default disable
         self.pushButtonRun.setEnabled(False)
         self.validate()
-        
+
         # BGT Api extract settings
         self.bgtApiOutput.setStorageMode(QgsFileWidget.SaveFile)
-        
+
         # Pipe input types
-        self.pipe_input_type_dropdown.addItems(['GWSW', 'Ontwerp'])
+        self.pipe_input_type_dropdown.addItems(["GWSW", "Ontwerp"])
 
         self.BGTExtentCombobox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
 
@@ -117,7 +123,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.inputExtentGroupBox.clicked.connect(self.inputExtentGroupBoxChanged)
         self.inputExtentComboBox.setEnabled(False)
         self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-    
+
         # TESTING
         # self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/extract.zip')
         # self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/getGeoPackage_1134.gpkg')
@@ -126,23 +132,23 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     def inputExtentGroupBoxChanged(self):
         state = self.inputExtentGroupBox.isChecked()
         self.inputExtentComboBox.setEnabled(state)
-    
+
     def validate(self):
-        
+
         valid = True
-        
+
         # Check bgt file
         bgt_file = self.bgt_file.filePath()
         if not os.path.isfile(bgt_file):
             valid = False
-        elif os.path.splitext(bgt_file)[1] != '.zip':
+        elif os.path.splitext(bgt_file)[1] != ".zip":
             valid = False
-        
-        # Check pipe file 
+
+        # Check pipe file
         pipe_file = self.pipe_file.filePath()
         if not is_valid_ogr_file(pipe_file, optional=False):
             valid = False
-        if os.path.splitext(pipe_file)[1] != '.gpkg':
+        if os.path.splitext(pipe_file)[1] != ".gpkg":
             valid = False
 
         # Check building (BAG) file (optional)
@@ -156,41 +162,41 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
             valid = False
 
         self.pushButtonRun.setEnabled(valid)
-        
+
     def design_sewerage(self):
-        
-        if self.pipe_input_type_dropdown.currentText() == 'GWSW':
+
+        if self.pipe_input_type_dropdown.currentText() == "GWSW":
             self.ontwerp_gemengd_naam.setEnabled(False)
             self.ontwerp_hemelwater_naam.setEnabled(False)
             self.ontwerp_infiltratie_naam.setEnabled(False)
             self.ontwerp_vgs_naam.setEnabled(False)
-            self.ontwerp_leidingcode_kolom.setEnabled(False)            
-            self.ontwerp_riooltype_kolom.setEnabled(False)  
+            self.ontwerp_leidingcode_kolom.setEnabled(False)
+            self.ontwerp_riooltype_kolom.setEnabled(False)
             self.ontwerp_laag_naam.setEnabled(False)
-            
-        elif self.pipe_input_type_dropdown.currentText() == 'Ontwerp':
+
+        elif self.pipe_input_type_dropdown.currentText() == "Ontwerp":
             self.ontwerp_gemengd_naam.setEnabled(True)
             self.ontwerp_hemelwater_naam.setEnabled(True)
             self.ontwerp_infiltratie_naam.setEnabled(True)
             self.ontwerp_vgs_naam.setEnabled(True)
-            self.ontwerp_leidingcode_kolom.setEnabled(True)            
+            self.ontwerp_leidingcode_kolom.setEnabled(True)
             self.ontwerp_riooltype_kolom.setEnabled(True)
             self.ontwerp_laag_naam.setEnabled(True)
-            
+
             # add options to dropdown
             pipe_file = self.pipe_file.filePath()
             if is_valid_ogr_file(pipe_file, optional=False):
-                
+
                 pipe_layer_ds = ogr.Open(pipe_file)
                 pipe_layer_names = [layer.GetName() for layer in pipe_layer_ds]
                 self.ontwerp_laag_naam.clear()
                 self.ontwerp_laag_naam.addItems(pipe_layer_names)
 
     def design_sewerage_field_names(self):
-        
+
         pipe_file = self.pipe_file.filePath()
         pipe_ds = ogr.Open(pipe_file)
-            
+
         layer_name = self.ontwerp_laag_naam.currentText()
         pipe_layer = pipe_ds.GetLayer(layer_name)
         field_names = [field.name for field in pipe_layer.schema]
@@ -198,12 +204,4 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.ontwerp_leidingcode_kolom.clear()
         self.ontwerp_riooltype_kolom.clear()
         self.ontwerp_leidingcode_kolom.addItems(field_names)
-        self.ontwerp_riooltype_kolom.addItems(field_names)                
-
-            
-            
-            
-
-        
-        
-        
+        self.ontwerp_riooltype_kolom.addItems(field_names)

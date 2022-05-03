@@ -8,9 +8,9 @@
 
 """
 
-__author__ = 'emile.debadts@nelen-schuurmans.nl'
-__date__ = '2020-08-12'
-__copyright__ = 'Copyright 2020, Emile de Badts'
+__author__ = "emile.debadts@nelen-schuurmans.nl"
+__date__ = "2020-08-12"
+__copyright__ = "Copyright 2020, Emile de Badts"
 
 import unittest
 
@@ -19,6 +19,7 @@ from qgis.PyQt.QtGui import QDialogButtonBox, QDialog
 from BGTInloopTool_dialog import BGTInloopToolDialog
 
 from utilities import get_qgis_app
+
 QGIS_APP = get_qgis_app()
 
 
@@ -48,8 +49,8 @@ class BGTInloopToolDialogTest(unittest.TestCase):
         result = self.dialog.result()
         self.assertEqual(result, QDialog.Rejected)
 
+
 if __name__ == "__main__":
     suite = unittest.makeSuite(BGTInloopToolDialogTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
-

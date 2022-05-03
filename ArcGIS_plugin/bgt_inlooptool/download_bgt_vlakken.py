@@ -12,7 +12,7 @@ import arcpy
 # Relative imports don't work well in arcgis, therefore paths are appended to sys
 bgt_inlooptool_dir = os.path.dirname(__file__)
 sys.path.append(bgt_inlooptool_dir)
-sys.path.append(os.path.join(bgt_inlooptool_dir, 'core'))
+sys.path.append(os.path.join(bgt_inlooptool_dir, "core"))
 
 # Set path to Generic modules
 from cls_general_use import GeneralUse
@@ -21,35 +21,38 @@ from get_bgt_api_surfaces import get_bgt_api_surfaces
 
 
 class DownloadBGTVlakken(BaseTool):
-
     def __init__(self):
         """
         Initialization.
 
         """
-        self.label = '1. Download de BGT vlakken van PDOK'
-        self.description = '''Download de BGT vlakken van PDOK'''
+        self.label = "1. Download de BGT vlakken van PDOK"
+        self.description = """Download de BGT vlakken van PDOK"""
         self.canRunInBackground = True
 
     def getParameterInfo(self):
-        """ return Parameter definitions."""
-        '''Create your parameters here using the paramater function.
+        """return Parameter definitions."""
+        """Create your parameters here using the paramater function.
         Make sure you leave the enclosing brackets and separate your
         parameters using commas.
         parameter(displayName, name, datatype, defaultValue=None, parameterType='Required', direction='Input')
-        '''
+        """
 
         self.parameters = [
-            parameter(displayName='Interesse gebied als polygon',
-                      name='interesse_gebied',
-                      datatype="GPFeatureLayer",
-                      parameterType="Required",
-                      direction="Input"),
-            parameter(displayName='BGT download als zipfile van PDOK',
-                      name='bgt_zip',
-                      datatype="DEFile",
-                      parameterType="Required",
-                      direction="Output")
+            parameter(
+                displayName="Interesse gebied als polygon",
+                name="interesse_gebied",
+                datatype="GPFeatureLayer",
+                parameterType="Required",
+                direction="Input",
+            ),
+            parameter(
+                displayName="BGT download als zipfile van PDOK",
+                name="bgt_zip",
+                datatype="DEFile",
+                parameterType="Required",
+                direction="Output",
+            ),
         ]
         return self.parameters
 
@@ -59,10 +62,10 @@ class DownloadBGTVlakken(BaseTool):
         """
         if parameters[1].altered:
             # TODO pad default naar projectmap
-            if '.' in parameters[1].valueAsText:
-                parameters[1].value = parameters[1].valueAsText.split('.')[0] + '.zip'
+            if "." in parameters[1].valueAsText:
+                parameters[1].value = parameters[1].valueAsText.split(".")[0] + ".zip"
             else:
-                parameters[1].value = parameters[1].valueAsText + '.zip'
+                parameters[1].value = parameters[1].valueAsText + ".zip"
 
         super(DownloadBGTVlakken, self).updateParameters(parameters)
 
@@ -73,20 +76,32 @@ class DownloadBGTVlakken(BaseTool):
         # Messages interesse gebied
         if parameters[0].altered:
             desc = arcpy.Describe(parameters[0].valueAsText)
-            if desc.dataType not in ['FeatureClass', 'FeatureLayer', 'ShapeFile']:
-                parameters[0].setErrorMessage('De invoer is niet van het type featureclass/shapefile/gpkg layer!')
+            if desc.dataType not in ["FeatureClass", "FeatureLayer", "ShapeFile"]:
+                parameters[0].setErrorMessage(
+                    "De invoer is niet van het type featureclass/shapefile/gpkg layer!"
+                )
             else:
-                if desc.shapeType != 'Polygon':
-                    parameters[0].setErrorMessage('De featureclass/shapefile/gpkg layer is niet van het type polygoon!')
+                if desc.shapeType != "Polygon":
+                    parameters[0].setErrorMessage(
+                        "De featureclass/shapefile/gpkg layer is niet van het type polygoon!"
+                    )
                 else:
-                    feature_count = int(arcpy.management.GetCount(parameters[0].valueAsText).getOutput(0))
+                    feature_count = int(
+                        arcpy.management.GetCount(parameters[0].valueAsText).getOutput(
+                            0
+                        )
+                    )
                     if feature_count != 1:
-                        parameters[0].setErrorMessage('Er is meer of minder dan 1 feature aanwezig of geselecteerd!')
+                        parameters[0].setErrorMessage(
+                            "Er is meer of minder dan 1 feature aanwezig of geselecteerd!"
+                        )
 
         # Messages output BGT zipfile
         if parameters[1].altered:
             if os.path.exists(parameters[1].valueAsText):
-                parameters[1].setWarningMessage('Het output bestand bestaat al, kies een nieuwe naam!')
+                parameters[1].setWarningMessage(
+                    "Het output bestand bestaat al, kies een nieuwe naam!"
+                )
 
         super(DownloadBGTVlakken, self).updateMessages(parameters)
 
@@ -110,7 +125,7 @@ class DownloadBGTVlakken(BaseTool):
         return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # This is used for debugging. Using this separated structure makes it much
     # easier to debug using standard Python development tools.
 
@@ -119,10 +134,14 @@ if __name__ == '__main__':
         params = tool.getParameterInfo()
 
         # bag_file
-        params[0].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\ws.gdb\zwolle"
-        params[1].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\nieuwe_plek.zip"
+        params[
+            0
+        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\ws.gdb\zwolle"
+        params[
+            1
+        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\nieuwe_plek.zip"
 
         tool.execute(parameters=params, messages=None)
 
     except Exception as ex:
-        print('iets ging fout!')
+        print("iets ging fout!")
