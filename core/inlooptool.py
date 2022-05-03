@@ -6,6 +6,7 @@ from pathlib import Path
 # Third-party imports
 from osgeo import osr
 from osgeo import gdal
+from osgeo import ogr
 from datetime import datetime
 
 # Rtree installation
@@ -688,6 +689,7 @@ class Database:
         Update the surfaces layer to include polygons only.
         Linestring features are removed.
         Multipolygons, multisurfaces, curved polygons are forced to polygon.
+        
         """
         for stype in ALL_USED_SURFACE_TYPES:
             lyr = self.mem_database.GetLayerByName(stype)
@@ -708,8 +710,17 @@ class Database:
                 elif geom_type in [ogr.wkbMultiSurface, ogr.wkbMultiPolygon]:
                     # print('Fixing MultiSurface or MultiPolygon feature {}'.format(f.GetFID()))
                     geom_fixed = ogr.ForceToPolygon(geom)
-                    f.SetGeometry(geom_fixed)
-                    lyr.SetFeature(f)
+                    geom_fixed = geom_fixed.MakeValid()
+                    if geom_fixed.GetGeometryType() == ogr.wkbMultiPolygon:
+                        for subgeom in geom_fixed:
+                            if subgeom.GetGeometryType() == ogr.wkbPolygon:
+                                cf = f.Clone()
+                                cf.SetGeometry(subgeom)
+                                lyr.SetFeature(cf)
+                    else:
+                        f.SetGeometry(geom_fixed)
+                        lyr.SetFeature(f)
+                        
                 elif geom_type in (ogr.wkbLineString, ogr.wkbCompoundCurve, ogr.wkbCircularString):
                     # print('Deleting feature {} because it is a Linestring'.format(f.GetFID()))
                     delete_fids.append(f.GetFID())
