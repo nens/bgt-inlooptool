@@ -430,6 +430,7 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
         else:
             extent_geometry_wkt = extent_geometry.asWkt()
+            
 
         return (extent_geometry_wkt)
 
