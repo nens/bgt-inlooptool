@@ -4,26 +4,20 @@ import os
 from distutils.dir_util import copy_tree, remove_tree
 
 ROOT_DIR_FILES = [
-    '__init__.py',
-    'BGTInloopTool.py',
-    'BGTInloopTool_dialog.py',
-    'BGTInloopTool_dialog_base.ui',
-    'icon.png',
-    'metadata.txt',
-    'ogr2qgis.py',
-    'resources.py',
-    'resources.qrc'
+    "__init__.py",
+    "BGTInloopTool.py",
+    "BGTInloopTool_dialog.py",
+    "BGTInloopTool_dialog_base.ui",
+    "icon.png",
+    "metadata.txt",
+    "ogr2qgis.py",
+    "resources.py",
+    "resources.qrc",
 ]
 
-DIRECTORIES = [
-    'core',
-    'style'
-]
+DIRECTORIES = ["core", "style", "info_html"]
 
-IGNORE = [
-    'core/__pycache__',
-    'core/.gitignore'
-]
+IGNORE = ["core/__pycache__", "core/.gitignore"]
 
 
 def zipdir(path, zipfile_handle, path_in_zip, ignore: List = None):
@@ -40,7 +34,7 @@ def zipdir(path, zipfile_handle, path_in_zip, ignore: List = None):
 
 # Copy core to bgtinlooptool
 try:
-    remove_tree('core')
+    remove_tree("core")
 except FileNotFoundError:
     pass
 copy_tree("../../core", "core")
@@ -48,18 +42,23 @@ copy_tree("../../core", "core")
 
 # create a ZipFile object
 try:
-    os.remove('bgtinlooptool.zip')
+    os.remove("bgtinlooptool.zip")
 except FileNotFoundError:
     pass
-tgt_zip = ZipFile('bgtinlooptool.zip', 'w')
+tgt_zip = ZipFile("bgtinlooptool.zip", "w")
 
 # Files in root
 for file in ROOT_DIR_FILES:
-    tgt_zip.write(file, os.path.join('bgtinlooptool', os.path.basename(file)))
+    tgt_zip.write(file, os.path.join("bgtinlooptool", os.path.basename(file)))
 
 # Folders in root
 for directory in DIRECTORIES:
-    zipdir(path=directory, zipfile_handle=tgt_zip, path_in_zip='bgtinlooptool', ignore=IGNORE)
+    zipdir(
+        path=directory,
+        zipfile_handle=tgt_zip,
+        path_in_zip="bgtinlooptool",
+        ignore=IGNORE,
+    )
 
 # close the Zip File
 tgt_zip.close()
