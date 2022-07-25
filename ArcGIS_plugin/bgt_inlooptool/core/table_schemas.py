@@ -1,4 +1,4 @@
-import ogr
+from osgeo import ogr
 from core.constants import *
 
 
@@ -22,6 +22,10 @@ surfaces_table_fields = {
 }
 for dist_type in DISTANCE_TYPES:
     surfaces_table_fields["distance_" + dist_type] = ogr.OFTReal
+
+for dist_type in DISTANCE_PIPE_TYPES:
+    surfaces_table_fields["pipe_code_" + dist_type] = ogr.OFTString
+
 del dist_type
 
 SURFACES_TABLE_SCHEMA = TableSchema(
@@ -47,10 +51,15 @@ RESULT_TABLE_SCHEMA = TableSchema(
         RESULT_TABLE_FIELD_PUTCODE: ogr.OFTString,
         RESULT_TABLE_FIELD_LEIDINGCODE: ogr.OFTString,
         TARGET_TYPE_GEMENGD_RIOOL: ogr.OFTReal,
+        "pipe_code_" + TARGET_TYPE_GEMENGD_RIOOL: ogr.OFTString,
         TARGET_TYPE_HEMELWATERRIOOL: ogr.OFTReal,
+        "pipe_code_" + TARGET_TYPE_HEMELWATERRIOOL: ogr.OFTString,
         TARGET_TYPE_VGS_HEMELWATERRIOOL: ogr.OFTReal,
+        "pipe_code_" + TARGET_TYPE_VGS_HEMELWATERRIOOL: ogr.OFTString,
         TARGET_TYPE_VUILWATERRIOOL: ogr.OFTReal,
+        "pipe_code_" + TARGET_TYPE_VUILWATERRIOOL: ogr.OFTString,
         TARGET_TYPE_INFILTRATIEVOORZIENING: ogr.OFTReal,
+        "pipe_code_" + TARGET_TYPE_INFILTRATIEVOORZIENING: ogr.OFTString,
         TARGET_TYPE_OPEN_WATER: ogr.OFTReal,
         TARGET_TYPE_MAAIVELD: ogr.OFTReal,
     },

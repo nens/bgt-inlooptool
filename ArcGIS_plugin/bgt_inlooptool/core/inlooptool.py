@@ -2,17 +2,19 @@
 import os
 import sys
 from pathlib import Path
+import configparser
 
 # Third-party imports
 from osgeo import osr
 from osgeo import gdal
+from osgeo import ogr
 from datetime import datetime
 
 # Rtree installation
 from .rtree_installer import unpack_rtree
 
 unpack_rtree()
-sys.path.append(Path(__file__).parent.parent)
+sys.path.append(str(Path(__file__).parent.parent))
 import rtree
 
 # Local imports
@@ -43,7 +45,8 @@ ogr.UseExceptions()
 class DatabaseOperationError(Exception):
     """Raised when an invalid _database operation is requested"""
 
-    pass
+    def __init__(self, msg="Database error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 
 class FileInputError(Exception):
@@ -74,6 +77,7 @@ class InputParameters:
         bouwjaar_gescheiden_binnenhuisriolering=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
         verhardingsgraad_erf=VERHARDINGSGRAAD_ERF,
         verhardingsgraad_half_verhard=VERHARDINGSGRAAD_HALF_VERHARD,
+        max_oppervlakte_bgt_vlak=MAX_OPPERVLAKTE_BGT_VLAK,
     ):
         self.max_afstand_vlak_afwateringsvoorziening = (
             max_afstand_vlak_afwateringsvoorziening
@@ -91,9 +95,33 @@ class InputParameters:
         )
         self.verhardingsgraad_erf = verhardingsgraad_erf
         self.verhardingsgraad_half_verhard = verhardingsgraad_half_verhard
+        self.max_oppervlakte_bgt_vlak = max_oppervlakte_bgt_vlak
 
-    def from_file(self):
-        pass
+    def from_file(self, file):
+
+        config = configparser.ConfigParser()
+        config.read(file)
+        params = config["PARAMETERS"]
+
+        self.max_afstand_vlak_afwateringsvoorziening = float(
+            params["MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING"]
+        )
+        self.max_afstand_vlak_oppwater = float(params["MAX_AFSTAND_VLAK_OPPWATER"])
+        self.max_afstand_pand_oppwater = float(params["MAX_AFSTAND_PAND_OPPWATER"])
+        self.max_afstand_vlak_kolk = float(params["MAX_AFSTAND_VLAK_KOLK"])
+        self.max_afstand_afgekoppeld = float(params["MAX_AFSTAND_AFGEKOPPELD"])
+        self.max_afstand_drievoudig = float(params["MAX_AFSTAND_DRIEVOUDIG"])
+        self.afkoppelen_hellende_daken = params.getboolean("AFKOPPELEN_HELLENDE_DAKEN")
+        self.gebruik_bag = params.getboolean("GEBRUIK_BAG")
+        self.gebruik_kolken = params.getboolean("GEBRUIK_KOLKEN")
+        self.bouwjaar_gescheiden_binnenhuisriolering = int(
+            params["BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING"]
+        )
+        self.verhardingsgraad_erf = int(params["VERHARDINGSGRAAD_ERF"])
+        self.verhardingsgraad_half_verhard = int(
+            params["VERHARDINGSGRAAD_HALF_VERHARD"]
+        )
+        self.max_oppervlakte_bgt_vlak = float(params["MAX_OPPERVLAKTE_BGT_VLAK"])
 
     def to_file(self):
         pass
@@ -116,15 +144,30 @@ class InloopTool:
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
 
-    def import_pipes(self, file_path, relevant_only=True):
+    def import_pipes(
+        self,
+        file_path,
+        design=False,
+        pipe_type_field=None,
+        pipe_code_field=None,
+        pipe_map=None,
+        pipe_layer_name=None,
+        relevant_only=True,
+    ):
         """
         Import pipes to database and classify their type
         :param file_path: path to GWSW Geopackage that contains the pipes
         :param relevant_only: import only the pipes that are used by the InloopTool
         :return: None
         """
-        self._database.import_pipes(file_path=file_path)
-        self._database.classify_pipes(delete=relevant_only)
+        if design:
+            self._database.import_pipes(file_path=file_path, layer_name=pipe_layer_name)
+            self._database.classify_pipes_design(
+                pipe_type_field, pipe_code_field, pipe_map
+            )
+        else:
+            self._database.import_pipes(file_path=file_path, layer_name=pipe_layer_name)
+            self._database.classify_pipes_gwsw(delete=relevant_only)
 
     def import_kolken(self, file_path):
         """
@@ -382,6 +425,8 @@ class InloopTool:
         self._database.bgt_surfaces.ResetReading()
         self._database.bgt_surfaces.SetSpatialFilter(None)
 
+        self.large_surface_pipe_registry = {}
+
         if self.parameters.gebruik_kolken:
             self._database.kolken.ResetReading()
             self._database.kolken.SetSpatialFilter(None)
@@ -389,6 +434,7 @@ class InloopTool:
         surface_water_buffer_dist = max(
             [parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater]
         )
+
         print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
 
         # Distance to pipes
@@ -401,8 +447,11 @@ class InloopTool:
             surface_geom_buffer_afwateringsvoorziening = surface_geom.Buffer(
                 parameters.max_afstand_vlak_afwateringsvoorziening
             )
+            # Parameters max surface 1000m2?, 'wat is dichtbij', 15m?
+            surface_area = surface_geom.Area()
 
             distances = {}
+            pipe_codes = {}
             for pipe_id in self._database.pipes_idx.intersection(
                 surface_geom_buffer_afwateringsvoorziening.GetEnvelope()
             ):
@@ -410,20 +459,22 @@ class InloopTool:
                 pipe_geom = pipe.geometry().Clone()
                 if pipe_geom.Intersects(surface_geom_buffer_afwateringsvoorziening):
                     internal_pipe_type = pipe[INTERNAL_PIPE_TYPE_FIELD]
+                    pipe_code = pipe[INTERNAL_PIPE_CODE_FIELD]
                     if internal_pipe_type != INTERNAL_PIPE_TYPE_IGNORE:
                         if (
                             internal_pipe_type not in distances.keys()
                         ):  # Leiding van dit type is nog niet langsgekomen
-                            distances[internal_pipe_type] = pipe_geom.Distance(
-                                surface_geom
-                            )
+                            distances[internal_pipe_type] = []
+                            pipe_codes[internal_pipe_type] = []
+                            distances[internal_pipe_type] += [
+                                pipe_geom.Distance(surface_geom)
+                            ]
+                            pipe_codes[internal_pipe_type] += [pipe_code]
                         else:
-                            if distances[internal_pipe_type] > pipe_geom.Distance(
-                                surface_geom
-                            ):
-                                distances[internal_pipe_type] = pipe_geom.Distance(
-                                    surface_geom
-                                )
+                            distances[internal_pipe_type] += [
+                                pipe_geom.Distance(surface_geom)
+                            ]
+                            pipe_codes[internal_pipe_type] += [pipe_code]
 
             # Distance to water surface
             if surface.surface_type != SURFACE_TYPE_WATERDEEL:
@@ -471,13 +522,43 @@ class InloopTool:
                     # add to dict
                     distances[KOLK] = min_kolk_distance
 
+            # Sort distances and pipe codes
+            for distance_type in distances.keys():
+                if distance_type not in [KOLK, OPEN_WATER]:
+                    distance_list = distances[distance_type]
+                    pipe_code_list = pipe_codes[distance_type]
+                    distances_sorted, pipe_codes_sorted = map(
+                        list, zip(*sorted(zip(distance_list, pipe_code_list)))
+                    )
+                    distances[distance_type] = distances_sorted
+                    pipe_codes[distance_type] = pipe_codes_sorted
+
+            # Only register for the large surfaces
+            if surface_area > parameters.max_oppervlakte_bgt_vlak:
+                self.large_surface_pipe_registry[surface["identificatie_lokaalid"]] = [
+                    distances,
+                    pipe_codes,
+                ]
+
             # Write distances to surfaces layer
             for distance_type in DISTANCE_TYPES:
 
                 if distance_type in distances:
+
+                    # Select first distance and pipe code for this type
+                    if distance_type in [KOLK, OPEN_WATER]:
+                        distance = distances[distance_type]
+                    else:
+                        distance = distances[distance_type][0]
+                        pipe_code = pipe_codes[distance_type][0]
+
                     if distances[distance_type] == PSEUDO_INFINITE:
                         distances[distance_type] = None
-                    surface["distance_" + distance_type] = distances[distance_type]
+
+                    surface["distance_" + distance_type] = distance
+
+                    if distance_type in DISTANCE_PIPE_TYPES:
+                        surface["pipe_code_" + distance_type] = pipe_code
 
             self._database.bgt_surfaces.SetFeature(surface)
             surface = None
@@ -485,7 +566,7 @@ class InloopTool:
         self._database.bgt_surfaces.ResetReading()
         self._database.bgt_surfaces.SetSpatialFilter(None)
 
-    def calculate_runoff_targets(self):
+    def calculate_runoff_targets(self, parameters):
         """
         Fill the 'target type' columns of the result table
         Import BGT Surfaces and Pipes to _database first
@@ -496,39 +577,108 @@ class InloopTool:
         feature_defn = result_table.GetLayerDefn()
 
         for surface in bgt_surfaces:
+
+            surface_id = surface.identificatie_lokaalid
             feature = ogr.Feature(feature_defn)
             surface_geometry = surface.GetGeometryRef()
             fixed_geometry = ogr.ForceToPolygon(surface_geometry)
             feature.SetGeometry(fixed_geometry)
 
-            afwatering = self.decision_tree(surface, self.parameters)
-            feature.SetField(
-                RESULT_TABLE_FIELD_ID,
-                surface.GetFID(),
-            )
-            feature.SetField(
-                RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            )
-            feature.SetField(
-                RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
-            )
+            feature_area = fixed_geometry.Area()
 
-            feature.SetField(
-                RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding
-            )
-            feature.SetField(
-                RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding
-            )
-            # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val) # not yet implemented
-            # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val) # not yet implemented
-            # feature.SetField(RESULT_TABLE_FIELD_BERGING_DAK, val) # not yet implemented
-            # feature.SetField(RESULT_TABLE_FIELD_PUTCODE, val) # not yet implemented
-            # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
-            for tt in TARGET_TYPES:
-                feature.SetField(tt, afwatering[tt])
-            result_table.CreateFeature(feature)
-            feature = None
+            # If the surface is larger than the given max area
+            # Calculate what system it should go to
+            # Divide into the max possible amount of sub surfaces using the large surface pipe distance dictionary
+
+            afwatering = self.decision_tree(surface, self.parameters)
+            if (
+                feature_area > parameters.max_oppervlakte_bgt_vlak
+                and afwatering[TARGET_TYPE_OPEN_WATER] != 100
+                and afwatering[TARGET_TYPE_MAAIVELD] != 100
+            ):
+
+                for tt in TARGET_TYPES:
+                    if afwatering[tt] > 0 and tt in DISTANCE_PIPE_TYPES:
+                        # If the afwatering is larger than 0, we find how many pipes this should be divided to
+                        # Optional to limit the amount of pipes by selecting within a certain distance
+                        distance_list = self.large_surface_pipe_registry[surface_id][0][
+                            tt
+                        ]
+                        pipe_code_list = self.large_surface_pipe_registry[surface_id][
+                            1
+                        ][tt]
+                        percentage_afwatering_distance_type = afwatering[tt]
+                        percentage_split = percentage_afwatering_distance_type / len(
+                            distance_list
+                        )
+                        for i in range(0, len(distance_list)):
+                            split_feature = ogr.Feature(feature_defn)
+                            split_feature.SetGeometry(fixed_geometry)
+
+                            split_feature.SetField(
+                                RESULT_TABLE_FIELD_ID,
+                                surface.GetFID(),
+                            )
+                            split_feature.SetField(
+                                RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
+                                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            )
+                            split_feature.SetField(
+                                RESULT_TABLE_FIELD_BGT_IDENTIFICATIE,
+                                surface.identificatie_lokaalid,
+                            )
+
+                            split_feature.SetField(
+                                RESULT_TABLE_FIELD_TYPE_VERHARDING,
+                                surface.type_verharding,
+                            )
+                            split_feature.SetField(
+                                RESULT_TABLE_FIELD_GRAAD_VERHARDING,
+                                surface.graad_verharding,
+                            )
+                            split_feature.SetField(tt, percentage_split)
+                            # Set other target types to 0
+                            for tt_other in TARGET_TYPES:
+                                if tt_other != tt:
+                                    split_feature.SetField(tt_other, 0)
+
+                            split_feature.SetField("pipe_code_" + tt, pipe_code_list[i])
+
+                            result_table.CreateFeature(split_feature)
+                            split_feature = None
+
+            else:
+                feature.SetField(
+                    RESULT_TABLE_FIELD_ID,
+                    surface.GetFID(),
+                )
+                feature.SetField(
+                    RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                )
+                feature.SetField(
+                    RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
+                )
+
+                feature.SetField(
+                    RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding
+                )
+                feature.SetField(
+                    RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding
+                )
+                # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val) # not yet implemented
+                # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val) # not yet implemented
+                # feature.SetField(RESULT_TABLE_FIELD_BERGING_DAK, val) # not yet implemented
+                # feature.SetField(RESULT_TABLE_FIELD_PUTCODE, val) # not yet implemented
+                # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, surface.) # not yet implemented
+                for tt in TARGET_TYPES:
+                    feature.SetField(tt, afwatering[tt])
+
+                    if tt in DISTANCE_PIPE_TYPES:
+                        feature.SetField("pipe_code_" + tt, surface["pipe_code_" + tt])
+
+                result_table.CreateFeature(feature)
+                feature = None
 
 
 class Database:
@@ -595,7 +745,7 @@ class Database:
 
         lyr = None
 
-    def import_pipes(self, file_path):
+    def import_pipes(self, layer_name, file_path):
         """
         Copy the required contents of the GWSW GeoPackage file to self.mem_database
         :param file_path: GWSW GeoPackage
@@ -610,7 +760,7 @@ class Database:
         # TODO more thorough checks of validity of input geopackage
         try:
             self.mem_database.CopyLayer(
-                lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME
+                lines_ds.GetLayerByName(layer_name), PIPES_TABLE_NAME
             )
         except Exception:
             # TODO more specific exception
@@ -741,6 +891,7 @@ class Database:
         Update the surfaces layer to include polygons only.
         Linestring features are removed.
         Multipolygons, multisurfaces, curved polygons are forced to polygon.
+
         """
         for stype in ALL_USED_SURFACE_TYPES:
             lyr = self.mem_database.GetLayerByName(stype)
@@ -763,8 +914,17 @@ class Database:
                 elif geom_type in [ogr.wkbMultiSurface, ogr.wkbMultiPolygon]:
                     # print('Fixing MultiSurface or MultiPolygon feature {}'.format(f.GetFID()))
                     geom_fixed = ogr.ForceToPolygon(geom)
-                    f.SetGeometry(geom_fixed)
-                    lyr.SetFeature(f)
+                    geom_fixed = geom_fixed.MakeValid()
+                    if geom_fixed.GetGeometryType() == ogr.wkbMultiPolygon:
+                        for subgeom in geom_fixed:
+                            if subgeom.GetGeometryType() == ogr.wkbPolygon:
+                                cf = f.Clone()
+                                cf.SetGeometry(subgeom)
+                                lyr.SetFeature(cf)
+                    else:
+                        f.SetGeometry(geom_fixed)
+                        lyr.SetFeature(f)
+
                 elif geom_type in (
                     ogr.wkbLineString,
                     ogr.wkbCompoundCurve,
@@ -788,7 +948,11 @@ class Database:
 
             lyr = None
 
-    def classify_pipes(self, delete=True):
+    def split_polygons(self, parameters):
+        """Split all polygons that exceed a given area into equal parts"""
+        pass
+
+    def classify_pipes_gwsw(self, delete=True):
         """Assign pipe type based on GWSW pipe type. Optionally, delete pipes of type INTERNAL_PIPE_TYPE_IGNORE"""
         layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
         if layer is None:
@@ -815,6 +979,53 @@ class Database:
                         == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL
                     ):
                         internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
+                pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
+                layer.SetFeature(pipe_feat)
+
+        if delete:
+            for fid in delete_fids:
+                layer.DeleteFeature(fid)
+
+        layer = None
+
+    def classify_pipes_design(
+        self, pipe_type_field, pipe_code_field, pipe_map, delete=True
+    ):
+
+        """Classify pipes from a design input with a custom field mapping"""
+
+        # Rename the code field to INTERNAL_PIPE_CODE_FIELD
+        # Map fields for: gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, infiltratievoorziening
+        # pipe_map= {'gemengd': 'gemengd_riool', 'hemelwater':'hemelwaterriool', 'vgs':vgs_hemelwaterriool}
+
+        layer = self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
+        if layer is None:
+            raise DatabaseOperationError("Failed to open pipes layer")
+
+        # Rename the code field to the internal used code field
+        layer_dfn = layer.GetLayerDefn()
+        field_idx = layer.FindFieldIndex(pipe_code_field, 1)
+
+        if field_idx != -1:
+            field_dfn = layer_dfn.GetFieldDefn(field_idx)
+            field_dfn.SetName(INTERNAL_PIPE_CODE_FIELD)
+            field_dfn = None
+        else:
+            raise DatabaseOperationError("Pipe code field not in layer")
+
+        layer.CreateField(ogr.FieldDefn(INTERNAL_PIPE_TYPE_FIELD, ogr.OFTString))
+
+        delete_fids = []
+        for pipe_feat in layer:
+            if pipe_feat:
+                pipe_type = pipe_feat.GetField(pipe_type_field)
+                try:
+                    internal_pipe_type = pipe_map[pipe_type]
+                except KeyError:
+                    internal_pipe_type = INTERNAL_PIPE_TYPE_IGNORE
+                if internal_pipe_type == INTERNAL_PIPE_TYPE_IGNORE:
+                    delete_fids.append(pipe_feat.GetFID())
+
                 pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
                 layer.SetFeature(pipe_feat)
 
