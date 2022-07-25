@@ -383,28 +383,19 @@ if __name__ == "__main__":
         tool = BGTInloopToolArcGIS()
         params = tool.getParameterInfo()
 
+        main_path = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\Vlaardingen"
         # bgt_file
-        params[
-            0
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\BGT2.zip"
+        params[0].value = os.path.join(main_path, "bug1_bgt.zip")
         # pipe_file
-        params[
-            1
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\getGeoPackage_2318.gpkg"
+        params[1].value = os.path.join(main_path, "gwsw_vlaardingen.gpkg")
         # bag_file
-        params[
-            2
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\BAG pand.gpkg"
+        params[2].value = os.path.join(main_path, "bag_Vlaardingen.gpkg")
         # kolken_file
         params[3].value = None
         # area_file
-        params[
-            4
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\Gebied.shp"
+        params[4].value = os.path.join(main_path, r"vlaardingen_bug_siebrand.gpkg\main.gebiedsgrens")
         # output_location
-        params[
-            5
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\output_test_new.gpkg"
+        params[5].value = os.path.join(main_path, "output.gpkg")
 
         # maximale afstand vlak afwateringsvoorziening
         params[6].value = 40
