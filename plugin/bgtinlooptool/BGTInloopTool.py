@@ -79,11 +79,6 @@ class InloopToolTask(QgsTask):
         building_file,
         kolken_file,
         input_extent_mask_wkt,
-        design=False,
-        pipe_type_field=None,
-        pipe_code_field=None,
-        pipe_map=None,
-        pipe_layer_name=None,
     ):
         super().__init__(description, QgsTask.CanCancel)
 
@@ -100,14 +95,6 @@ class InloopToolTask(QgsTask):
         self.building_file = building_file
         self.kolken_file = kolken_file
         self.input_extent_mask_wkt = input_extent_mask_wkt
-
-        # Design settings
-        self.design = design
-        self.pipe_type_field = pipe_type_field
-        self.pipe_code_field = pipe_code_field
-        self.pipe_map = pipe_map
-        self.pipe_layer_name = pipe_layer_name
-
         self.exception = None
         self.setProgress(0)
         self.total_progress = 5
@@ -138,15 +125,7 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.import_pipes(
-                self.pipe_file,
-                design=self.design,
-                pipe_type_field=self.pipe_type_field,
-                pipe_code_field=self.pipe_code_field,
-                pipe_map=self.pipe_map,
-                pipe_layer_name=self.pipe_layer_name,
-            )
-
+            self.it.import_pipes(self.pipe_file)
             self.increase_progress()
 
             if self.parameters.gebruik_kolken:
@@ -200,7 +179,7 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.calculate_runoff_targets(parameters=self.parameters)
+            self.it.calculate_runoff_targets()
             self.increase_progress()
 
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
@@ -595,59 +574,17 @@ class BGTInloopTool:
             bouwjaar_gescheiden_binnenhuisriolering=self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(),
             verhardingsgraad_erf=self.dlg.verhardingsgraad_erf.value(),
             verhardingsgraad_half_verhard=self.dlg.verhardingsgraad_half_verhard.value(),
-            max_oppervlakte_bgt_vlak=self.dlg.max_oppervlak_bgt_vlak.value(),
         )
 
-        # Invoer voor ontwerpriool
-        if self.dlg.pipe_input_type_dropdown.currentText() == "Ontwerp":
-
-            ontwerp_gemengd_naam = self.dlg.ontwerp_gemengd_naam.text()
-            ontwerp_hemelwater_naam = self.dlg.ontwerp_hemelwater_naam.text()
-            ontwerp_infiltratie_naam = self.dlg.ontwerp_infiltratie_naam.text()
-            ontwerp_vgs_naam = self.dlg.ontwerp_vgs_naam.text()
-            ontwerp_leidingcode_kolom = self.dlg.ontwerp_leidingcode_kolom.currentText()
-            ontwerp_riooltype_kolom = self.dlg.ontwerp_riooltype_kolom.currentText()
-            ontwerp_riool_layer_name = self.dlg.ontwerp_laag_naam.currentText()
-
-            pipe_map = {
-                ontwerp_gemengd_naam: INTERNAL_PIPE_TYPE_GEMENGD_RIOOL,
-                ontwerp_hemelwater_naam: INTERNAL_PIPE_TYPE_HEMELWATERRIOOL,
-                ontwerp_vgs_naam: INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL,
-                ontwerp_infiltratie_naam: INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING,
-            }
-
-            print(pipe_map)
-            print(ontwerp_riooltype_kolom)
-            print(ontwerp_leidingcode_kolom)
-            print(ontwerp_riool_layer_name)
-            print(pipe_file)
-
-            inlooptooltask = InloopToolTask(
-                description="Inlooptool task",
-                parameters=parameters,
-                bgt_file=bgt_file,
-                pipe_file=pipe_file,
-                building_file=building_file,
-                kolken_file=kolken_file,
-                input_extent_mask_wkt=extent_geometry_wkt,
-                design=True,
-                pipe_type_field=ontwerp_riooltype_kolom,
-                pipe_code_field=ontwerp_leidingcode_kolom,
-                pipe_map=pipe_map,
-                pipe_layer_name=ontwerp_riool_layer_name,
-            )
-
-        else:
-            inlooptooltask = InloopToolTask(
-                description="Inlooptool task",
-                parameters=parameters,
-                bgt_file=bgt_file,
-                pipe_file=pipe_file,
-                building_file=building_file,
-                kolken_file=kolken_file,
-                input_extent_mask_wkt=extent_geometry_wkt,
-                pipe_layer_name=SOURCE_PIPES_TABLE_NAME,
-            )
+        inlooptooltask = InloopToolTask(
+            description="Inlooptool task",
+            parameters=parameters,
+            bgt_file=bgt_file,
+            pipe_file=pipe_file,
+            building_file=building_file,
+            kolken_file=kolken_file,
+            input_extent_mask_wkt=extent_geometry_wkt,
+        )
 
         self.tm.addTask(inlooptooltask)
 
