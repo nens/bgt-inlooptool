@@ -15,7 +15,7 @@ ROOT_DIR_FILES = [
     "resources.qrc",
 ]
 
-DIRECTORIES = ["core", "style", "info_html"]
+DIRECTORIES = ["core", "style"]
 
 IGNORE = ["core/__pycache__", "core/.gitignore"]
 
