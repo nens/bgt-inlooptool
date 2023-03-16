@@ -22,6 +22,7 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
+import sys
 
 
 # noinspection PyPep8Naming
@@ -32,7 +33,10 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
-
+    from .core.rtree_installer import unpack_rtree
+    rtree_path = unpack_rtree()
+    if not str(rtree_path) in sys.path:
+        sys.path.append(str(rtree_path))
     from .BGTInloopTool import BGTInloopTool
 
     return BGTInloopTool(iface)
