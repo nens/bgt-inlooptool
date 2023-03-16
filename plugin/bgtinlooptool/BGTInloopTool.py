@@ -57,7 +57,6 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from core.inlooptool import *
 from core.constants import *
 from .ogr2qgis import *
-import rtree
 
 MESSAGE_CATEGORY = "BGT Inlooptool"
 BGT_API_URL = "https://api.pdok.nl/lv/bgt/download/v1_0/full/custom"
@@ -226,6 +225,7 @@ class InloopToolTask(QgsTask):
                     level=Qgis.Critical,
                 )
             else:
+                print(str(self.exception))
                 message = "Bepalen afwateringskenmerken BGT mislukt"
                 if isinstance(self.exception, FileInputError):
                     message += ": " + str(self.exception)
