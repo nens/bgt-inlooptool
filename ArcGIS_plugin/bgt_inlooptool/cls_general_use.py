@@ -8,7 +8,7 @@ class GeneralUse:
         logPrint = False voor logging zonder print functie"""
         import time
 
-        self.startTime = time.clock()
+        self.startTime = time.perf_counter()
         self.logPrint = logPrint
         self.debug = debug
 
@@ -16,7 +16,7 @@ class GeneralUse:
         """Reinitialise internal clock"""
         import time
 
-        self.startTime = time.clock()
+        self.startTime = time.perf_counter()
 
     def Traceback(self):
         """ "Returns error messages in ArcPy object and prints them."""
@@ -52,7 +52,7 @@ class GeneralUse:
 
         strTime = (
             "Elapsed time from start "
-            + str(round(time.clock() - self.startTime))
+            + str(round(time.perf_counter()- self.startTime))
             + " seconds on "
             + time.strftime("%H:%M:%S")
             + "."
