@@ -9,7 +9,11 @@ from osgeo import ogr
 from datetime import datetime
 
 # Rtree should be installed by the plugin
-import rtree
+# import rtree
+from core.rtree_installer import unpack_rtree 
+rtree_path = unpack_rtree()
+if not str(rtree_path) in sys.path:
+    sys.path.append(str(rtree_path))
 
 # Local imports
 from core.table_schemas import *
