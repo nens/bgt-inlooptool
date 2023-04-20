@@ -39,7 +39,6 @@ except FileNotFoundError:
     pass
 copy_tree("../../core", "core")
 
-
 # create a ZipFile object
 try:
     os.remove("bgtinlooptool.zip")
@@ -62,3 +61,9 @@ for directory in DIRECTORIES:
 
 # close the Zip File
 tgt_zip.close()
+
+# clean up
+try:
+    remove_tree("core")
+except FileNotFoundError:
+    pass
