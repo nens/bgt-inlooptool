@@ -66,7 +66,6 @@ def get_wheel_filename(
 
 
 def unpack_whl(whl_file, package_name, extract_dir):
-
     package_dir = extract_dir / package_name
     if not package_dir.is_dir():
         with ZipFile(whl_file, "r") as zipObj:
@@ -74,7 +73,6 @@ def unpack_whl(whl_file, package_name, extract_dir):
 
 
 def unpack_rtree():
-
     plugin_path = Path(__file__).parent.parent
     search_path = Path(__file__).parent / "whls"
     wheel_fn = get_wheel_filename(
@@ -83,5 +81,5 @@ def unpack_rtree():
         python_tag_prefix="cp",
         abi_tag_suffix="m",
     )
-
     unpack_whl(wheel_fn, package_name="rtree", extract_dir=plugin_path)
+    return plugin_path

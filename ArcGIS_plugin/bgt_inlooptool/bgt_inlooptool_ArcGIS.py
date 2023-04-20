@@ -383,17 +383,17 @@ if __name__ == "__main__":
         tool = BGTInloopToolArcGIS()
         params = tool.getParameterInfo()
 
-        main_path = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\Vlaardingen"
+        main_path = r"C:\Users\vdi\OneDrive - TAUW Group bv\Werkzaamheden\BGT inlooptool\Testdata"
         # bgt_file
-        params[0].value = os.path.join(main_path, "bug1_bgt.zip")
+        params[0].value = os.path.join(main_path, "bgt.zip")
         # pipe_file
-        params[1].value = os.path.join(main_path, "gwsw_vlaardingen.gpkg")
+        params[1].value = os.path.join(main_path, "getGeoPackage_6376353cadf9d220ccd567eb.gpkg")
         # bag_file
-        params[2].value = os.path.join(main_path, "bag_Vlaardingen.gpkg")
+        params[2].value = None #os.path.join(main_path, "bag_Vlaardingen.gpkg")
         # kolken_file
         params[3].value = None
         # area_file
-        params[4].value = os.path.join(main_path, r"vlaardingen_bug_siebrand.gpkg\main.gebiedsgrens")
+        params[4].value = os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
         # output_location
         params[5].value = os.path.join(main_path, "output.gpkg")
 

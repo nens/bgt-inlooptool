@@ -275,39 +275,14 @@ class BGTInloopTool:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
-        locale = QSettings().value("locale/userLocale")[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir, "i18n", "BGTInloopTool_{}.qm".format(locale)
-        )
-
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr("&BGT Inlooptool")
+        self.menu = "&BGT Inlooptool"
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
-
-    # noinspection PyMethodMayBeStatic
-    def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-
-        We implement this ourselves since we do not inherit QObject.
-
-        :param message: String for translation.
-        :type message: str, QString
-
-        :returns: Translated version of message.
-        :rtype: QString
-        """
-        # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate("BGTInloopTool", message)
 
     def add_action(
         self,
@@ -388,7 +363,7 @@ class BGTInloopTool:
         icon_path = ":/plugins/BGTInloopTool/icon.png"
         self.add_action(
             icon_path,
-            text=self.tr("BGT Inlooptool"),
+            text="BGT Inlooptool",
             callback=self.run,
             parent=self.iface.mainWindow(),
         )
@@ -399,7 +374,7 @@ class BGTInloopTool:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr("&BGT Inlooptool"), action)
+            self.iface.removePluginMenu("&BGT Inlooptool", action)
             self.iface.removeToolBarIcon(action)
 
     def validate_extent_layer(self, extent_layer):
