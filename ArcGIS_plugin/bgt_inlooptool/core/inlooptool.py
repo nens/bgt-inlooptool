@@ -1,7 +1,6 @@
 # System imports
 import os
 import sys
-from pathlib import Path
 
 # Third-party imports
 from osgeo import osr
@@ -9,11 +8,15 @@ from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
 
-# Rtree installation
+# Rtree should be installed by the plugin for QGIS
+# For ArcGIS Pro the following is needed
+import sys
+from pathlib import Path
 from .rtree_installer import unpack_rtree
+if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
+    rtree_path = unpack_rtree()
+    sys.path.append(str(rtree_path))
 
-unpack_rtree()
-sys.path.append(str(Path(__file__).parent.parent))
 import rtree
 
 # Local imports
@@ -744,60 +747,44 @@ class Database:
         Multipolygons, multisurfaces, curved polygons are forced to polygon.
 
         """
-        for stype in ALL_USED_SURFACE_TYPES:
-            lyr = self.mem_database.GetLayerByName(stype)
-            if (
-                lyr is None
-            ):  # this happens if this particular layer in the bgt input has no features
+        for surface_type in ALL_USED_SURFACE_TYPES:
+            layer = self.mem_database.GetLayerByName(surface_type)
+            if layer is None:  # this happens if this particular layer in the bgt input has no features
                 continue
-            lyr.ResetReading()
+            layer.ResetReading()
             delete_fids = []
-            for f in lyr:
-                geom = f.GetGeometryRef()
+            for feature in layer:
+                geom = feature.GetGeometryRef()
                 geom_type = geom.GetGeometryType()
                 if geom_type == ogr.wkbPolygon:
                     pass
-                elif geom_type == ogr.wkbCurvePolygon:
+                elif geom_type in [ogr.wkbCurvePolygon, ogr.wkbMultiSurface]:
                     # print('Fixing Curve Polygon feature {}'.format(f.GetFID()))
                     geom_linear = geom.GetLinearGeometry()
-                    f.SetGeometry(geom_linear)
-                    lyr.SetFeature(f)
-                elif geom_type in [ogr.wkbMultiSurface, ogr.wkbMultiPolygon]:
-                    # print('Fixing MultiSurface or MultiPolygon feature {}'.format(f.GetFID()))
-                    geom_fixed = ogr.ForceToPolygon(geom)
-                    geom_fixed = geom_fixed.MakeValid()
-                    if geom_fixed.GetGeometryType() == ogr.wkbMultiPolygon:
-                        for subgeom in geom_fixed:
-                            if subgeom.GetGeometryType() == ogr.wkbPolygon:
-                                cf = f.Clone()
-                                cf.SetGeometry(subgeom)
-                                lyr.SetFeature(cf)
-                    else:
-                        f.SetGeometry(geom_fixed)
-                        lyr.SetFeature(f)
-
+                    feature.SetGeometry(geom_linear)
+                    layer.SetFeature(feature)
                 elif geom_type in (
                     ogr.wkbLineString,
                     ogr.wkbCompoundCurve,
                     ogr.wkbCircularString,
                 ):
                     # print('Deleting feature {} because it is a Linestring'.format(f.GetFID()))
-                    delete_fids.append(f.GetFID())
+                    delete_fids.append(feature.GetFID())
                 else:
                     print(
                         "Warning: Fixing feature {fid} in {stype} failed! No procedure defined to clean up geometry "
                         "type {geom_type}. Continuing anyway.".format(
-                            fid=f.GetFID(), stype=stype, geom_type=str(geom_type)
+                            fid=feature.GetFID(), stype=surface_type, geom_type=str(geom_type)
                         )
                     )
                     continue
             for fid in delete_fids:
-                lyr.DeleteFeature(fid)
+                layer.DeleteFeature(fid)
             print(
-                f"cleaned import of {stype} layer has {lyr.GetFeatureCount()} features"
+                f"cleaned import of {surface_type} layer has {layer.GetFeatureCount()} features"
             )
 
-            lyr = None
+            layer = None
 
     def classify_pipes(self, delete=True):
         """Assign pipe type based on GWSW pipe type. Optionally, delete pipes of type INTERNAL_PIPE_TYPE_IGNORE"""
