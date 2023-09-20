@@ -706,36 +706,34 @@ class Database:
     def remove_input_features_outside_clip_extent(self, extent_wkt):
 
         extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
-
+        
         pipes = self.pipes
         bgt_surfaces = self.bgt_surfaces
 
         intersecting_pipes = []
         intersecting_surfaces = []
 
-        for pipe_id in self.pipes_idx.intersection(extent_geometry.GetEnvelope()):
-            pipe = pipes.GetFeature(pipe_id)
-            pipe_geom = pipe.geometry()
-            if pipe_geom.Intersects(extent_geometry):
-                intersecting_pipes.append(pipe_id)
-
-        for surface_id in self.bgt_surfaces_idx.intersection(
-            extent_geometry.GetEnvelope()
-        ):
-            surface = bgt_surfaces.GetFeature(surface_id)
-            surface_geom = surface.geometry()
-            if surface_geom.Intersects(extent_geometry):
-                intersecting_surfaces.append(surface_id)
-
         for pipe in pipes:
             pipe_fid = pipe.GetFID()
-            if pipe_fid not in intersecting_pipes:
-                pipes.DeleteFeature(pipe_fid)
-
+            pipe_geom = pipe.geometry()
+            if pipe_geom.Intersects(extent_geometry):
+                intersecting_pipes.append(pipe_fid)
+      
         for surface in bgt_surfaces:
             surface_fid = surface.GetFID()
+            surface_geom = surface.geometry()
+            if surface_geom.Intersects(extent_geometry):
+                intersecting_surfaces.append(surface_fid)
+
+        for pipe in self.pipes:
+            pipe_fid = pipe.GetFID()
+            if pipe_fid not in intersecting_pipes:
+                self.pipes.DeleteFeature(pipe_fid)
+
+        for surface in self.bgt_surfaces:
+            surface_fid = surface.GetFID()
             if surface_fid not in intersecting_surfaces:
-                bgt_surfaces.DeleteFeature(surface_fid)
+                self.bgt_surfaces.DeleteFeature(surface_fid)
 
         pipes = None
         bgt_surfaces = None
