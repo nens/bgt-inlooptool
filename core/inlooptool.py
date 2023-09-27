@@ -287,6 +287,14 @@ class InloopTool:
             elif bij_gem_plus_hwa():
                 if self.parameters.afkoppelen_hellende_daken:
                     if nieuw_pand() and hellend_dak():
+                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
+                            result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                        else:
+                            if hwa_vgs_dichterbij_dan_infiltr():
+                                result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 100
+                            else:
+                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                    else:
                         if bij_drievoudig_stelsel_crit1():
                             if bij_drievoudig_stelsel_crit2():
                                 result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
@@ -305,12 +313,6 @@ class InloopTool:
                                 else:
                                     result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-
-                    else:
-                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
-                            result[TARGET_TYPE_HEMELWATERRIOOL] = 100
-                        else:
-                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                 else:
                     result[TARGET_TYPE_GEMENGD_RIOOL] = 100
             else:
