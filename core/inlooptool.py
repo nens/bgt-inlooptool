@@ -253,8 +253,6 @@ class InloopTool:
         def nieuw_pand():
             """Is het bouwjaar van het pand later dan de ondergrens voor gescheiden binnenhuis riolering?"""
             if parameters.gebruik_bag:
-                return False
-            else:
                 if surface.build_year is None:
                     return False
                 else:
@@ -262,6 +260,8 @@ class InloopTool:
                         surface.build_year
                         > parameters.bouwjaar_gescheiden_binnenhuisriolering
                     )
+            else:
+                return False
 
         def hellend_dak():
             return True
