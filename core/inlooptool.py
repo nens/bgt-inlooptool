@@ -8,17 +8,20 @@ from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
 
-# Rtree should be installed by the plugin for QGIS
-# For ArcGIS Pro the following is needed
-import sys
-from pathlib import Path
-from .rtree_installer import unpack_rtree
-if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
-    rtree_path = unpack_rtree()
-    sys.path.append(str(rtree_path))
-
-import rtree
-
+try: # Rtree should be installed by the plugin for QGIS
+    import rtree  
+except ImportError: # For ArcGIS Pro the following is needed
+    import sys
+    from pathlib import Path
+    
+    try:
+        from .rtree_installer import unpack_rtree
+        if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
+            rtree_path = unpack_rtree()
+            sys.path.append(str(rtree_path))
+    except ImportError:
+        print("The 'rtree' package installation failed.")
+    
 # Local imports
 from core.table_schemas import *
 from core.constants import *
