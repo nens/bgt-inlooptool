@@ -383,17 +383,17 @@ if __name__ == "__main__":
         tool = BGTInloopToolArcGIS()
         params = tool.getParameterInfo()
 
-        main_path = r"C:\Users\vdi\OneDrive - TAUW Group bv\Werkzaamheden\BGT inlooptool\Testdata"
+        main_path = r"C:\Users\vdi\OneDrive - TAUW Group bv\Werkzaamheden\1287914 - BGT inlooptool\testdata2"
         # bgt_file
-        params[0].value = os.path.join(main_path, "bgt.zip")
+        params[0].value = os.path.join(main_path, "BGT_Akersloot2.zip")
         # pipe_file
-        params[1].value = os.path.join(main_path, "getGeoPackage_6376353cadf9d220ccd567eb.gpkg")
+        params[1].value = os.path.join(main_path, "getGeoPackage_1934.gpkg")
         # bag_file
-        params[2].value = None #os.path.join(main_path, "bag_Vlaardingen.gpkg")
+        params[2].value = os.path.join(main_path, "BAG_Akersloot.gpkg")
         # kolken_file
-        params[3].value = None
+        params[3].value = os.path.join(main_path, "kolken_Castricum_Limmen_Akersloot.shp")
         # area_file
-        params[4].value = os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
+        params[4].value = os.path.join(main_path, "extent_Akersloot.shp")  #os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
         # output_location
         params[5].value = os.path.join(main_path, "output.gpkg")
 
