@@ -7,17 +7,20 @@ from osgeo import osr
 from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
-
-# Rtree should be installed by the plugin for QGIS
-# For ArcGIS Pro the following is needed
-import sys
 from pathlib import Path
-from .rtree_installer import unpack_rtree
-if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
-    rtree_path = unpack_rtree()
-    sys.path.append(str(rtree_path))
 
-import rtree
+try:
+    import rtree
+except ImportError:
+    from .rtree_installer import unpack_rtree
+    if not os.path.isdir(Path(__file__).parent / "rtree"):  # bgt_inlooptool\\rtree
+        rtree_path = unpack_rtree()
+        sys.path.append(str(rtree_path))
+    
+    try:
+        import rtree
+    except ImportError:
+        print("The 'rtree' package installation failed.")   
 
 # Local imports
 from core.table_schemas import *
@@ -253,8 +256,6 @@ class InloopTool:
         def nieuw_pand():
             """Is het bouwjaar van het pand later dan de ondergrens voor gescheiden binnenhuis riolering?"""
             if parameters.gebruik_bag:
-                return False
-            else:
                 if surface.build_year is None:
                     return False
                 else:
@@ -262,6 +263,8 @@ class InloopTool:
                         surface.build_year
                         > parameters.bouwjaar_gescheiden_binnenhuisriolering
                     )
+            else:
+                return False
 
         def hellend_dak():
             return True
@@ -287,6 +290,14 @@ class InloopTool:
             elif bij_gem_plus_hwa():
                 if self.parameters.afkoppelen_hellende_daken:
                     if nieuw_pand() and hellend_dak():
+                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
+                            result[TARGET_TYPE_HEMELWATERRIOOL] = 100
+                        else:
+                            if hwa_vgs_dichterbij_dan_infiltr():
+                                result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 100
+                            else:
+                                result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
+                    else:
                         if bij_drievoudig_stelsel_crit1():
                             if bij_drievoudig_stelsel_crit2():
                                 result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
@@ -305,12 +316,6 @@ class InloopTool:
                                 else:
                                     result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 50
                                     result[TARGET_TYPE_GEMENGD_RIOOL] = 50
-
-                    else:
-                        if hwa_dichterbij_dan_hwavgs_en_infiltr():
-                            result[TARGET_TYPE_HEMELWATERRIOOL] = 100
-                        else:
-                            result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                 else:
                     result[TARGET_TYPE_GEMENGD_RIOOL] = 100
             else:
@@ -706,36 +711,34 @@ class Database:
     def remove_input_features_outside_clip_extent(self, extent_wkt):
 
         extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
-
+        
         pipes = self.pipes
         bgt_surfaces = self.bgt_surfaces
 
         intersecting_pipes = []
         intersecting_surfaces = []
 
-        for pipe_id in self.pipes_idx.intersection(extent_geometry.GetEnvelope()):
-            pipe = pipes.GetFeature(pipe_id)
-            pipe_geom = pipe.geometry()
-            if pipe_geom.Intersects(extent_geometry):
-                intersecting_pipes.append(pipe_id)
-
-        for surface_id in self.bgt_surfaces_idx.intersection(
-            extent_geometry.GetEnvelope()
-        ):
-            surface = bgt_surfaces.GetFeature(surface_id)
-            surface_geom = surface.geometry()
-            if surface_geom.Intersects(extent_geometry):
-                intersecting_surfaces.append(surface_id)
-
         for pipe in pipes:
             pipe_fid = pipe.GetFID()
-            if pipe_fid not in intersecting_pipes:
-                pipes.DeleteFeature(pipe_fid)
-
+            pipe_geom = pipe.geometry()
+            if pipe_geom.Intersects(extent_geometry):
+                intersecting_pipes.append(pipe_fid)
+      
         for surface in bgt_surfaces:
             surface_fid = surface.GetFID()
+            surface_geom = surface.geometry()
+            if surface_geom.Intersects(extent_geometry):
+                intersecting_surfaces.append(surface_fid)
+
+        for pipe in self.pipes:
+            pipe_fid = pipe.GetFID()
+            if pipe_fid not in intersecting_pipes:
+                self.pipes.DeleteFeature(pipe_fid)
+
+        for surface in self.bgt_surfaces:
+            surface_fid = surface.GetFID()
             if surface_fid not in intersecting_surfaces:
-                bgt_surfaces.DeleteFeature(surface_fid)
+                self.bgt_surfaces.DeleteFeature(surface_fid)
 
         pipes = None
         bgt_surfaces = None
