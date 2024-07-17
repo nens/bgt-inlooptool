@@ -15,7 +15,8 @@ from qgis.core import (
     QgsProcessingAlgorithm,
     QgsProcessing,
     QgsProcessingParameterFile,
-    QgsProject
+    QgsProject,
+    QgsProcessingOutputVectorLayer,
 )
 
 from bgtinlooptool.core.inlooptool import InputParameters
@@ -91,6 +92,14 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
+        self.addOutput(
+            QgsProcessingOutputVectorLayer(
+                self.OUTPUT,
+                'BGT Oppervlakken',
+                type=QgsProcessing.TypeVectorPolygon
+            )
+        )
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
@@ -113,4 +122,4 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
         bgt_surfaces_qgis_vector_layer.loadNamedStyle(BGT_STYLE)
         QgsProject.instance().addMapLayer(bgt_surfaces_qgis_vector_layer)
 
-        return {self.OUTPUT: ""}
+        return {self.OUTPUT: bgt_surfaces_qgis_vector_layer}
