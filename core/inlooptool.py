@@ -111,7 +111,132 @@ class InloopTool:
         """Constructor."""
         self.parameters = parameters
         self._database = Database()
+        
+    def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
+        settings_table = self._database.settings_table
+        feature_defn = settings_table.GetLayerDefn()
+        feature = ogr.Feature(feature_defn)
+        
+        max_fid = -1
+        for feature in settings_table:
+            fid = feature.GetFID()
+            if fid > max_fid:
+                max_fid = fid
+        
+        if feature is None: 
+            new_fid = 1
+        else:
+            new_fid = max_fid + 1
+        """
+        feature.SetField(
+            "fid",
+            new_fid,
+        )#to do: kan het zonder fid?
+        """
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_ID,
+            new_fid,
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_TIJD_START,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, 0
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, 0
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_DOWNLOAD_BAG, 0
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_PAD_BGT, bgt_file
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_PAD_GWSW, pipe_file
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_PAD_BAG, building_file
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_PAD_KOLKEN, kolken_file
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFSTAND_AFWATERINGSVOORZIENING, self.parameters.max_afstand_vlak_afwateringsvoorziening
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_OPP_WATER, self.parameters.max_afstand_vlak_oppwater
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFSTAND_PAND_OPP_WATER, self.parameters.max_afstand_pand_oppwater
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_KOLK, self.parameters.max_afstand_vlak_kolk
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFSTAND_AFKOPPELD, self.parameters.max_afstand_afgekoppeld
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFSTAND_DRIEVOUDIG, self.parameters.max_afstand_drievoudig
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_ERF, self.parameters.verhardingsgraad_erf
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_HALF_VERHARD, self.parameters.verhardingsgraad_half_verhard
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_AFKOPPELEN_HELLEND, self.parameters.afkoppelen_hellende_daken
+        )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_BOUWJAAR_GESCHEIDEN_BINNENHUIS, self.parameters.bouwjaar_gescheiden_binnenhuisriolering
+        )
+        
+        settings_table.CreateFeature(feature)
+        feature = None
+        settings_table = None
+        
+    def set_settings_end(self):
+        # Find the feature with the highest FID
+        max_fid = -1
+        feature_to_update = None
+        
+        settings_table = self._database.settings_table
+        
+        for feature in settings_table:
+            fid = feature.GetFID()
+            if fid > max_fid:
+                max_fid = fid
+                feature_to_update = feature
+        
+        if feature_to_update is not None:
+            # Set the new value for the specified field
+            feature_to_update.SetField(
+                        SETTINGS_TABLE_FIELD_TIJD_EIND,
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    )
 
+            # Update the feature in the layer
+            settings_table.SetFeature(feature_to_update)
+            
+            print("Test_output")
+            # Print all field names and their values
+            feature_defn = feature_to_update.GetDefnRef()
+            print("Feature ID:", feature_to_update.GetFID())
+            for i in range(feature_defn.GetFieldCount()):
+                field_defn = feature_defn.GetFieldDefn(i)
+                field_name = field_defn.GetName()
+                field_value = feature_to_update.GetField(i)
+                print(f"{field_name}: {field_value}")
+            
+            # Clean up
+            feature_to_update = None
+            settings_table = None
+            print(f"Feature with FID {max_fid} updated successfully.")
+        else:
+            print("No features found in the layer.")
+        
     def import_surfaces(self, file_path):
         """
         Import BGT Surfaces to _database
@@ -529,6 +654,18 @@ class InloopTool:
             feature.SetField(
                 RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding
             )
+            feature.SetField(
+                "surface_type", surface.surface_type
+                )
+            feature.SetField(
+                "bgt_fysiek_voorkomen", surface.bgt_fysiek_voorkomen #Deze nog aanpassen
+                )
+            feature.SetField(
+                "build_year", surface.build_year
+                )
+            feature.SetField(
+                RESULT_TABLE_FIELD_WIJZIGING, 0
+            )
             # feature.SetField(RESULT_TABLE_FIELD_HELLINGSTYPE, val) # not yet implemented
             # feature.SetField(RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, val) # not yet implemented
             # feature.SetField(RESULT_TABLE_FIELD_BERGING_DAK, val) # not yet implemented
@@ -539,6 +676,148 @@ class InloopTool:
             result_table.CreateFeature(feature)
             feature = None
 
+    def calculate_statistics(self,stats_path):
+        dest_layer = self._database.statistics_table
+        stats_abspath = os.path.abspath(stats_path)
+        it_layer = self._database.result_table
+        
+        if not os.path.isfile(stats_abspath):
+            raise FileNotFoundError(
+                "Shapefile met gebieden voor statistieken niet gevonden: {}".format(stats_abspath)
+            )
+        stats_ds = ogr.Open(stats_path)
+        stats_layer = stats_ds.GetLayer()
+        
+        gebied_id = 0
+        #Write geometries of shapefile features to db and calculate the statistics
+        for feature in stats_layer:
+            gebied_id += 1
+            # Create a new feature with the same geometry
+            geom = feature.GetGeometryRef()
+            new_feature = ogr.Feature(dest_layer.GetLayerDefn())
+            new_feature.SetGeometry(geom.Clone())
+            
+            #Set gebied_ID
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_ID,gebied_id
+            )
+            
+            # Calculate statistics
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_TOTAAL,self.calculate_intersection_area(it_layer, new_feature, "total")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_GEMENGD,self.calculate_intersection_area(it_layer, new_feature, "gemengd")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_HWA,self.calculate_intersection_area(it_layer, new_feature, "hwa")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_VGS,self.calculate_intersection_area(it_layer, new_feature, "vgs")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_DWA,self.calculate_intersection_area(it_layer, new_feature, "dwa")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_INFIL,self.calculate_intersection_area(it_layer, new_feature, "infil")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_OPEN_WATER,self.calculate_intersection_area(it_layer, new_feature,"open_water")
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_OPP_MAAIVELD,self.calculate_intersection_area(it_layer, new_feature,"maaiveld")
+            )
+            
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_GEMENGD,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_GEMENGD]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_HWA,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_HWA]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_VGS,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_VGS]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_DWA,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_DWA]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_INFIL,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_INFIL]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_OPEN_WATER,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_OPEN_WATER]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+            new_feature.SetField(
+                STATISTICS_TABLE_FIELD_PERC_MAAIVELD,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_MAAIVELD]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
+            )
+
+            dest_layer.CreateFeature(new_feature)
+            new_feature = None  # Dereference the feature to avoid memory leaks
+        
+        stats_ds = None
+        it_layer = None
+
+    def calculate_intersection_area(self,layer, stats_feature, stat_type):
+        area_tot = 0
+        area_gemengd = 0
+        area_hwa = 0
+        area_vgs = 0
+        area_dwa = 0
+        area_infil = 0
+        area_open_water = 0
+        area_maaiveld = 0
+        
+        # Get the geometry of the new feature
+        stats_geom = stats_feature.GetGeometryRef()
+    
+        # Loop through all features in the layer
+        for it_feature in layer:
+            it_geom = it_feature.GetGeometryRef()
+            
+            # Validate the existing geometry
+            if not it_geom.IsValid():
+                it_geom = it_geom.MakeValid()
+            
+            if not it_geom or not stats_geom or not it_geom.IsValid() or not stats_geom.IsValid():
+                continue
+            
+            # Check if the geometries intersect
+            if stats_geom.Intersects(it_geom):
+                try:
+                    # Calculate the intersection
+                    intersection_geom = stats_geom.Intersection(it_geom)
+                    intersection_area = intersection_geom.GetArea()
+                    
+                    # Accumulate the total areas
+                    area_tot += intersection_area
+                    area_gemengd += intersection_area * it_feature[TARGET_TYPE_GEMENGD_RIOOL]/100
+                    area_hwa += intersection_area * it_feature[TARGET_TYPE_HEMELWATERRIOOL]/100
+                    area_vgs += intersection_area * it_feature[TARGET_TYPE_VGS_HEMELWATERRIOOL]/100
+                    area_dwa += intersection_area * it_feature[TARGET_TYPE_VUILWATERRIOOL]/100
+                    area_infil += intersection_area * it_feature[TARGET_TYPE_INFILTRATIEVOORZIENING]/100
+                    area_open_water += intersection_area * it_feature[TARGET_TYPE_OPEN_WATER]/100
+                    area_maaiveld += intersection_area * it_feature[TARGET_TYPE_MAAIVELD]/100
+                
+                except Exception as e:
+                    print(f"Error calculating intersection: {e}")
+                    continue
+    
+        # Return the calculated area based on the type
+        if stat_type == "total":
+            return round(area_tot/10000,2)
+        elif stat_type == "gemengd":
+            return round(area_gemengd/10000,2)
+        elif stat_type == "hwa":
+            return round(area_hwa/10000,2)
+        elif stat_type == "vgs":
+            return round(area_vgs/10000,2)
+        elif stat_type == "dwa":
+            return round(area_dwa/10000,2)
+        elif stat_type == "infil":
+            return round(area_infil/10000,2)
+        elif stat_type == "open_water":
+            return round(area_open_water/10000,2)
+        elif stat_type == "maaiveld":
+            return round(area_maaiveld/10000,2)
 
 class Database:
     def __init__(self, epsg=28992):
@@ -553,13 +832,33 @@ class Database:
         self.create_table(
             table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA
         )
-
+        self.create_table(
+            table_name=SETTINGS_TABLE_NAME, table_schema=SETTINGS_TABLE_SCHEMA
+        ) #TO DO: WANNEER SETTINGS AL BESTAAN --> overnemen uit bestaande gpkg (bij het vullen, dit is alleen om de structuur aan te maken)
+        self.create_table(
+            table_name=STATISTICS_TABLE_NAME, table_schema=STATISTICS_TABLE_SCHEMA
+        )
+        
     @property
     def result_table(self):
         """Get reference to result layer (BGT Inlooptabel)
         :rtype ogr.Layer
         """
         return self.mem_database.GetLayerByName(RESULT_TABLE_NAME)
+    
+    @property
+    def settings_table(self):
+        """Get reference to the Settings layer
+        :rtype ogr.Layer
+        """
+        return self.mem_database.GetLayerByName(SETTINGS_TABLE_NAME)
+    
+    @property
+    def statistics_table(self):
+        """Get reference to the Settings layer
+        :rtype ogr.Layer
+        """
+        return self.mem_database.GetLayerByName(STATISTICS_TABLE_NAME)
 
     @property
     def bgt_surfaces(self):
@@ -966,12 +1265,165 @@ class Database:
         surfaces = None
         print("... done")
         return
+    
+    def _save_to_gpkg_test(self, file_path): #TO DO: weghalen, is alleen voor testen
+        print("Preparing template gpkg")
+        output_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_testing_rekeninstellingen.gpkg"
 
-    def _write_to_disk(self, file_path):
-        """Copy self.mem_database to file_path"""
-        self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, file_path)
+        print("Testen van output wegschrijven!!")
+        self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, output_gpkg)
         self.out_db = None
+    
+    def _save_to_gpkg(self, file_path):
+        print("Preparing template gpkg")
+        template_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\template_output15.gpkg"
+        output_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+        self.copy_and_rename_file(template_gpkg, output_gpkg)
+        
+        print("Saving Pipes layer in gpkg")
+        db_layer = PIPES_TABLE_NAME #"pipes"
+        gpkg_layer = "3. GWSW leidingen" 
+        self._write_to_disk(file_path,db_layer, gpkg_layer)
 
+        print("Saving BGT_inlooptabel layer in gpkg")
+        db_layer =  "bgt_inlooptabel" #RESULT_TABLE_NAME
+        gpkg_layer = "4. BGT inlooptabel"
+        self._write_to_disk(file_path,db_layer, gpkg_layer)
+        self.track_changes(file_path)
+        
+        print("Saving BGT_oppervlak layer in gpkg")
+        db_layer = SURFACES_TABLE_NAME #"bgt_oppervlak"
+        gpkg_layer = "5. BGT oppervlakken"
+        self._write_to_disk(file_path,db_layer, gpkg_layer)
+
+        print("Saving statistics layer in gpkg")
+        db_layer = STATISTICS_TABLE_NAME 
+        gpkg_layer = "6. Statistieken"
+        self._write_to_disk(file_path,db_layer, gpkg_layer)
+        
+        print("Saving calculation settings in gpkg")
+        db_layer = SETTINGS_TABLE_NAME 
+        gpkg_layer = "7. Rekeninstellingen"
+        self._write_to_disk(file_path,db_layer, gpkg_layer)
+
+    
+    def copy_and_rename_file(self,original_file_path, new_file_path):
+        """
+        Copies a file and renames the copy using only sys and os modules.
+
+        :param original_file_path: Path to the original file.
+        :param new_file_path: Path where the new file will be saved.
+        """
+        try:
+            # Read the contents of the original file
+            with open(original_file_path, 'rb') as original_file:
+                content = original_file.read()
+
+            # Write the contents to the new file
+            with open(new_file_path, 'wb') as new_file:
+                new_file.write(content)
+
+            print(f"File copied from {original_file_path} to {new_file_path}")
+        except FileNotFoundError:
+            print(f"The file {original_file_path} does not exist.")
+        except PermissionError:
+            print(f"Permission denied. Unable to copy {original_file_path} to {new_file_path}.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            
+    def _write_to_disk(self, file_path, db_layer_name, dst_layer_name): 
+        """Copy self.mem_database to file_path"""
+        # Get the source layer from the memory database
+        self.db_layer = self.mem_database.GetLayerByName(db_layer_name)
+        if self.db_layer is None:
+            raise ValueError(f"Layer '{db_layer_name}' not found in memory database.")
+        
+        # Open the destination GeoPackage in write mode
+        self.dst_gpkg = GPKG_DRIVER.Open(file_path, 1)  # 1 means writable
+        if self.dst_gpkg is None:
+            raise ValueError(f"Could not open GeoPackage '{file_path}' for writing.")
+        
+        # Get the destination layer from the GeoPackage
+        self.dst_layer = self.dst_gpkg.GetLayerByName(dst_layer_name)
+        if self.dst_layer is None:
+            raise ValueError(f"Layer '{dst_layer_name}' not found in destination GeoPackage.")
+        
+        # Get the layer definitions for both the source and destination layers
+        layer_defn = self.db_layer.GetLayerDefn()
+        dst_layer_defn = self.dst_layer.GetLayerDefn()
+        
+        # Optional: Check if field counts are consistent
+        if layer_defn.GetFieldCount() != dst_layer_defn.GetFieldCount():
+            print(f"Warning: Source and destination layers have different field counts: {layer_defn.GetFieldCount()} vs {dst_layer_defn.GetFieldCount()}")
+        
+        # Create a mapping from destination field names to source field indices
+        field_mapping = {}
+        for i in range(dst_layer_defn.GetFieldCount()):
+            dst_field_name = dst_layer_defn.GetFieldDefn(i).GetName()
+            for j in range(layer_defn.GetFieldCount()):
+                src_field_name = layer_defn.GetFieldDefn(j).GetName()
+                if dst_field_name == src_field_name:
+                    field_mapping[dst_field_name] = j
+                    break
+        
+        # Copy features while maintaining the field order
+        for feature in self.db_layer:
+            dst_feature = ogr.Feature(dst_layer_defn)
+            for dst_field_name, src_field_index in field_mapping.items():
+                value = feature.GetField(src_field_index)
+                dst_feature.SetField(dst_field_name, value)
+        
+            # Copy geometry from source feature to destination feature
+            geom = feature.GetGeometryRef()
+            if geom:
+                dst_feature.SetGeometry(geom.Clone())
+            else:
+                print("No geometry found for feature.")
+        
+            # Create the feature in the destination layer
+            self.dst_layer.CreateFeature(dst_feature)
+            dst_feature = None  # Free resources
+        # Clean up
+        self.dst_gpkg = None
+        self.dst_layer = None
+        self.db_layer = None
+        print("Done with saving")
+
+    def track_changes(self, file_path):
+        # Add SQL triggers to track changes
+
+        # Open the GeoPackage
+        ds = ogr.Open(file_path, update=True)
+        
+        # SQL statements to create the triggers
+        sql_time_last_change = """
+        CREATE TRIGGER update_laaste_wijziging_on_update AFTER UPDATE
+        OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, code_voorziening, putcode, leidingcode, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
+        ON "4. BGT inlooptabel"
+        FOR EACH ROW
+        BEGIN
+        UPDATE "4. BGT inlooptabel" SET laatste_wijziging = CURRENT_TIMESTAMP WHERE id = old.id;
+        END 
+        """
+        
+        sql_changed_tf = """
+        CREATE TRIGGER update_wijziging_on_update AFTER UPDATE
+        OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, code_voorziening, putcode, leidingcode, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
+        ON "4. BGT inlooptabel"
+        FOR EACH ROW
+        BEGIN
+        UPDATE "4. BGT inlooptabel" SET wijziging = 1 WHERE id = old.id;
+        END
+        """
+        
+        # Execute the SQL statements
+        ds.ExecuteSQL(sql_time_last_change)
+        ds.ExecuteSQL(sql_changed_tf)
+
+        # Close the data source
+        ds = None
+
+        print("Triggers created successfully.")
 
 class Layer(object):
     def __init__(self, layer):

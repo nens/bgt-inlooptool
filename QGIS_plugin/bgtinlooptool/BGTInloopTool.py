@@ -25,6 +25,7 @@
 import os.path
 import sys
 import json
+import time #TO DO: aan het eind verwijderen
 
 
 from PyQt5.QtCore import QUrl, QByteArray
@@ -34,6 +35,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import (
     QgsProject,
+    QgsVectorLayer,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsBlockingNetworkRequest,
@@ -112,8 +114,19 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info
             )
+
             self.it = InloopTool(self.parameters)
             self.increase_progress()
+            
+            QgsMessageLog.logMessage(
+                "Saving the settings of the run", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.set_settings_start(self.bgt_file,self.pipe_file, self.building_file, self.kolken_file)
+            self.increase_progress()
+                       
+            #print("alleen nog opslaan")
+            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_stats_testing.gpkg"
+            #self.it._database._save_to_gpkg_test(output_path)
 
             QgsMessageLog.logMessage(
                 "Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info
@@ -168,7 +181,7 @@ class InloopToolTask(QgsTask):
                 self.it._database.add_index_to_inputs(
                     kolken=self.parameters.gebruik_kolken
                 )
-
+            
             QgsMessageLog.logMessage(
                 "Calculating distances", MESSAGE_CATEGORY, level=Qgis.Info
             )
@@ -180,9 +193,30 @@ class InloopToolTask(QgsTask):
             )
             self.it.calculate_runoff_targets()
             self.increase_progress()
+            
+            QgsMessageLog.logMessage(
+                "Calculating statistics", MESSAGE_CATEGORY, level=Qgis.Info
+            )    
+            stats_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\test_stats.shp"
+            self.it.calculate_statistics(stats_path)
+            self.increase_progress()
+            
+            QgsMessageLog.logMessage(
+                "Saving the end time of the analysis in the settings", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.set_settings_end()
+            
+            QgsMessageLog.logMessage(
+                "Saving as gpkg", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+            self.it._database._save_to_gpkg(output_path)
+            self.increase_progress()
 
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
+            
             return True
+        
         except Exception as e:
             self.exception = e
             return False
@@ -190,33 +224,16 @@ class InloopToolTask(QgsTask):
     def finished(self, result):
 
         if result:
-            root = QgsProject.instance().layerTreeRoot()
-            layer_group = root.insertGroup(0, MESSAGE_CATEGORY)
-
-            self.add_to_layer_group(
-                db_layer_name=SURFACES_TABLE_NAME,
-                layer_tree_layer_name="BGT Oppervlakken",
-                qml=BGT_STYLE,
-                layer_group=layer_group,
-            )
-            self.add_to_layer_group(
-                db_layer_name=RESULT_TABLE_NAME,
-                layer_tree_layer_name="BGT Inlooptabel",
-                qml=INLOOPTABEL_STYLE,
-                layer_group=layer_group,
-            )
-            self.add_to_layer_group(
-                db_layer_name=PIPES_TABLE_NAME,
-                layer_tree_layer_name="GWSW Leidingen",
-                qml=PIPES_STYLE,
-                layer_group=layer_group,
-            )
-            iface.messageBar().pushMessage(
-                MESSAGE_CATEGORY,
-                "Afwateringskenmerken BGT bepaald!",
-                level=Qgis.Success,
-            )
-
+            gpkg_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+            layer_group = QgsProject.instance().layerTreeRoot().addGroup("BGT inlooptool")
+            
+            self.gpkg_to_layer_group(gpkg_path, "7. Rekeninstellingen", layer_group)
+            self.gpkg_to_layer_group(gpkg_path, "6. Statistieken", layer_group)
+            self.gpkg_to_layer_group(gpkg_path, "5. BGT oppervlakken", layer_group)
+            self.gpkg_to_layer_group(gpkg_path, "4. BGT inlooptabel", layer_group)
+            self.gpkg_to_layer_group(gpkg_path, "3. GWSW leidingen", layer_group)
+            self.gpkg_to_layer_group(gpkg_path, "2. Controles", layer_group)
+            self.gpkg_to_layer_group(gpkg_path, "1. Waterpasserende verharding [optionele input]", layer_group)
         else:
             if self.exception is None:
                 iface.messageBar().pushMessage(
@@ -243,18 +260,20 @@ class InloopToolTask(QgsTask):
         )
         super().cancel()
 
-    def add_to_layer_group(
-        self, db_layer_name: str, layer_tree_layer_name: str, qml: str, layer_group
-    ):
-        ogr_lyr = self.it._database.mem_database.GetLayerByName(db_layer_name)
-        if ogr_lyr is not None:
-            if ogr_lyr.GetFeatureCount() > 0:
-                qgs_lyr = as_qgis_memory_layer(ogr_lyr, layer_tree_layer_name)
-                project = QgsProject.instance()
-                project.addMapLayer(qgs_lyr, addToLegend=False)
-                layer_group.insertLayer(0, qgs_lyr)
-                qgs_lyr.loadNamedStyle(qml)
-                qgs_lyr.triggerRepaint()
+ 
+    def gpkg_to_layer_group(self,gpkg_path: str, gpkg_layer_name: str, layer_group):
+        # Construct the data source URI for the GeoPackage
+        uri = f"{gpkg_path}|layername={gpkg_layer_name}"
+        
+        # Create a QgsVectorLayer object
+        qgs_lyr = QgsVectorLayer(uri, gpkg_layer_name, "ogr")
+        
+        if qgs_lyr.isValid():
+            project = QgsProject.instance()
+            project.addMapLayer(qgs_lyr, addToLegend=False)
+            layer_group.insertLayer(0, qgs_lyr)
+        else:
+            print(f"Failed to load layer '{gpkg_layer_name}' from '{gpkg_path}'.")
 
 
 class BGTInloopTool:
