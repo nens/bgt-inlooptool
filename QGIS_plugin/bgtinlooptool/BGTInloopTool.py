@@ -58,6 +58,7 @@ from .BGTInloopTool_dialog import BGTInloopToolDialog
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from core.inlooptool import *
 from core.constants import *
+from .core.defaults import *
 from .ogr2qgis import *
 
 MESSAGE_CATEGORY = "BGT Inlooptool"
@@ -395,7 +396,24 @@ class BGTInloopTool:
         for action in self.actions:
             self.iface.removePluginMenu("&BGT Inlooptool", action)
             self.iface.removeToolBarIcon(action)
-
+    
+    def reset_parameters(self):
+        # Resetting Setting to defaults
+        self.dlg.max_afstand_vlak_afwateringsvoorziening.setValue(
+            MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
+        )
+        self.dlg.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
+        self.dlg.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
+        self.dlg.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
+        self.dlg.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
+        self.dlg.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
+        self.dlg.bouwjaar_gescheiden_binnenhuisriolering.setValue(
+            BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
+        )
+        self.dlg.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
+        self.dlg.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
+        self.dlg.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
+    
     def validate_extent_layer(self, extent_layer):
 
         # Check feature count in the selected layer
@@ -591,7 +609,9 @@ class BGTInloopTool:
             self.first_start = False
 
             self.dlg = BGTInloopToolDialog()
-
+            
+            self.dlg.pushButtonReset.clicked.connect(self.reset_parameters)
+            
             # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)
             self.dlg.pushButtonDownloadBGT.clicked.connect(self.download_bgt_from_api)
