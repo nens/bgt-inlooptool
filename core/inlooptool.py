@@ -1,6 +1,7 @@
 # System imports
 import os
 import sys
+import contextlib
 
 # Third-party imports
 from osgeo import osr
@@ -1274,38 +1275,29 @@ class Database:
         self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, output_gpkg)
         self.out_db = None
     
-    def _save_to_gpkg(self, file_path):
+    def _save_to_gpkg(self,file_path):
         print("Preparing template gpkg")
         template_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\template_output15.gpkg"
-        output_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
-        self.copy_and_rename_file(template_gpkg, output_gpkg)
+        file_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+        self.copy_and_rename_file(template_gpkg, file_path)
         
-        print("Saving Pipes layer in gpkg")
-        db_layer = PIPES_TABLE_NAME #"pipes"
-        gpkg_layer = "3. GWSW leidingen" 
-        self._write_to_disk(file_path,db_layer, gpkg_layer)
-
-        print("Saving BGT_inlooptabel layer in gpkg")
-        db_layer =  "bgt_inlooptabel" #RESULT_TABLE_NAME
-        gpkg_layer = "4. BGT inlooptabel"
-        self._write_to_disk(file_path,db_layer, gpkg_layer)
-        self.track_changes(file_path)
+        print("Saving layers to gpkg")
+        layers = [
+            (PIPES_TABLE_NAME, "3. GWSW leidingen"),
+            (RESULT_TABLE_NAME, "4. BGT inlooptabel"),
+            (SURFACES_TABLE_NAME, "5. BGT oppervlakken"),
+            (STATISTICS_TABLE_NAME, "6. Statistieken"),
+            (SETTINGS_TABLE_NAME, "7. Rekeninstellingen")
+        ]
         
-        print("Saving BGT_oppervlak layer in gpkg")
-        db_layer = SURFACES_TABLE_NAME #"bgt_oppervlak"
-        gpkg_layer = "5. BGT oppervlakken"
-        self._write_to_disk(file_path,db_layer, gpkg_layer)
-
-        print("Saving statistics layer in gpkg")
-        db_layer = STATISTICS_TABLE_NAME 
-        gpkg_layer = "6. Statistieken"
-        self._write_to_disk(file_path,db_layer, gpkg_layer)
-        
-        print("Saving calculation settings in gpkg")
-        db_layer = SETTINGS_TABLE_NAME 
-        gpkg_layer = "7. Rekeninstellingen"
-        self._write_to_disk(file_path,db_layer, gpkg_layer)
-
+        with self.open_gpkg(file_path) as dst_gpkg:
+            for db_layer, gpkg_layer in layers:
+                print(f"Saving {gpkg_layer} layer in gpkg")
+                self._write_to_disk(dst_gpkg, db_layer, gpkg_layer)
+                if db_layer == RESULT_TABLE_NAME:
+                    self.track_changes(dst_gpkg)
+           
+        print("All layers saved successfully.")
     
     def copy_and_rename_file(self,original_file_path, new_file_path):
         """
@@ -1330,70 +1322,51 @@ class Database:
             print(f"Permission denied. Unable to copy {original_file_path} to {new_file_path}.")
         except Exception as e:
             print(f"An error occurred: {e}")
-            
-    def _write_to_disk(self, file_path, db_layer_name, dst_layer_name): 
+          
+    def _write_to_disk(self, dst_gpkg, db_layer_name, dst_layer_name):
         """Copy self.mem_database to file_path"""
         # Get the source layer from the memory database
-        self.db_layer = self.mem_database.GetLayerByName(db_layer_name)
-        if self.db_layer is None:
+        db_layer = self.mem_database.GetLayerByName(db_layer_name)
+        if db_layer is None:
             raise ValueError(f"Layer '{db_layer_name}' not found in memory database.")
         
-        # Open the destination GeoPackage in write mode
-        self.dst_gpkg = GPKG_DRIVER.Open(file_path, 1)  # 1 means writable
-        if self.dst_gpkg is None:
-            raise ValueError(f"Could not open GeoPackage '{file_path}' for writing.")
-        
-        # Get the destination layer from the GeoPackage
-        self.dst_layer = self.dst_gpkg.GetLayerByName(dst_layer_name)
-        if self.dst_layer is None:
+        dst_layer = dst_gpkg.GetLayerByName(dst_layer_name)
+        if dst_layer is None:
             raise ValueError(f"Layer '{dst_layer_name}' not found in destination GeoPackage.")
         
-        # Get the layer definitions for both the source and destination layers
-        layer_defn = self.db_layer.GetLayerDefn()
-        dst_layer_defn = self.dst_layer.GetLayerDefn()
+        layer_defn = db_layer.GetLayerDefn()
+        dst_layer_defn = dst_layer.GetLayerDefn()
         
-        # Optional: Check if field counts are consistent
         if layer_defn.GetFieldCount() != dst_layer_defn.GetFieldCount():
             print(f"Warning: Source and destination layers have different field counts: {layer_defn.GetFieldCount()} vs {dst_layer_defn.GetFieldCount()}")
         
-        # Create a mapping from destination field names to source field indices
-        field_mapping = {}
-        for i in range(dst_layer_defn.GetFieldCount()):
-            dst_field_name = dst_layer_defn.GetFieldDefn(i).GetName()
-            for j in range(layer_defn.GetFieldCount()):
-                src_field_name = layer_defn.GetFieldDefn(j).GetName()
-                if dst_field_name == src_field_name:
-                    field_mapping[dst_field_name] = j
-                    break
-        
-        # Copy features while maintaining the field order
-        for feature in self.db_layer:
+        field_mapping = {dst_layer_defn.GetFieldDefn(i).GetName(): layer_defn.GetFieldIndex(dst_layer_defn.GetFieldDefn(i).GetName())
+                 for i in range(dst_layer_defn.GetFieldCount())}
+
+        # Iterate over features in the source layer and copy them to the destination layer
+        for feature in db_layer:
             dst_feature = ogr.Feature(dst_layer_defn)
             for dst_field_name, src_field_index in field_mapping.items():
-                value = feature.GetField(src_field_index)
-                dst_feature.SetField(dst_field_name, value)
-        
-            # Copy geometry from source feature to destination feature
+                dst_feature.SetField(dst_field_name, feature.GetField(src_field_index))
             geom = feature.GetGeometryRef()
             if geom:
                 dst_feature.SetGeometry(geom.Clone())
-            else:
-                print("No geometry found for feature.")
-        
-            # Create the feature in the destination layer
-            self.dst_layer.CreateFeature(dst_feature)
-            dst_feature = None  # Free resources
-        # Clean up
-        self.dst_gpkg = None
-        self.dst_layer = None
-        self.db_layer = None
-        print("Done with saving")
+            dst_layer.CreateFeature(dst_feature)
+            dst_feature = None
+        print(f"Layer '{dst_layer_name}' saved successfully.")
 
-    def track_changes(self, file_path):
-        # Add SQL triggers to track changes
+    @contextlib.contextmanager
+    def open_gpkg(self, file_path):
+        dst_gpkg = GPKG_DRIVER.Open(file_path, 1)
+        if dst_gpkg is None:
+            raise ValueError(f"Could not open GeoPackage '{file_path}' for writing.")
+        try:
+            yield dst_gpkg
+        finally:
+            dst_gpkg = None
 
-        # Open the GeoPackage
-        ds = ogr.Open(file_path, update=True)
+    def track_changes(self, dst_gpkg):
+        """ Add SQL triggers to track changes """
         
         # SQL statements to create the triggers
         sql_time_last_change = """
@@ -1417,11 +1390,8 @@ class Database:
         """
         
         # Execute the SQL statements
-        ds.ExecuteSQL(sql_time_last_change)
-        ds.ExecuteSQL(sql_changed_tf)
-
-        # Close the data source
-        ds = None
+        dst_gpkg.ExecuteSQL(sql_time_last_change)
+        dst_gpkg.ExecuteSQL(sql_changed_tf)
 
         print("Triggers created successfully.")
 
