@@ -70,6 +70,10 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pipe_file.fileChanged.connect(self.validate)
         self.building_file.fileChanged.connect(self.validate)
         self.kolken_file.fileChanged.connect(self.validate)
+        self.results_file.fileChanged.connect(self.validate)
+        self.stats_file.fileChanged.connect(self.validate)
+        self.output_folder.fileChanged.connect(self.validate)
+        self.outputFileGroupBox.clicked.connect(self.validate)
 
         # Setting defaults
         self.max_afstand_vlak_afwateringsvoorziening.setValue(
@@ -87,13 +91,15 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
-
+        
         # Run button default disable
         self.pushButtonRun.setEnabled(False)
         self.validate()
 
-        # BGT Api extract settings
+        # Api's extract settings
         self.bgtApiOutput.setStorageMode(QgsFileWidget.SaveFile)
+        self.gwswApiOutput.setStorageMode(QgsFileWidget.SaveFile)
+        self.bagApiOutput.setStorageMode(QgsFileWidget.SaveFile)
 
         self.BGTExtentCombobox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
 
@@ -101,7 +107,9 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.inputExtentGroupBox.clicked.connect(self.inputExtentGroupBoxChanged)
         self.inputExtentComboBox.setEnabled(False)
         self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-
+        
+        # Saving results settings
+        self.output_folder.setStorageMode(QgsFileWidget.GetDirectory)
         # TESTING
         # self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/extract.zip')
         # self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/getGeoPackage_1134.gpkg')
@@ -110,7 +118,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     def inputExtentGroupBoxChanged(self):
         state = self.inputExtentGroupBox.isChecked()
         self.inputExtentComboBox.setEnabled(state)
-
+        
     def validate(self):
 
         valid = True
@@ -126,17 +134,45 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         pipe_file = self.pipe_file.filePath()
         if not is_valid_ogr_file(pipe_file, optional=False):
             valid = False
-        if os.path.splitext(pipe_file)[1] != ".gpkg":
+        elif os.path.splitext(pipe_file)[1] != ".gpkg":
             valid = False
 
         # Check building (BAG) file (optional)
         building_file = self.building_file.filePath()
         if not is_valid_ogr_file(building_file, optional=True):
             valid = False
+        elif building_file != "": 
+            if os.path.splitext(building_file)[1] not in [".gpkg", ".shp"]: #To do: kan BAG al gpkg en shp aan?
+                valid = False
 
         # Check kolken file (optional)
         kolken_file = self.kolken_file.filePath()
         if not is_valid_ogr_file(kolken_file, optional=True):
             valid = False
-
+        elif kolken_file != "": 
+            if os.path.splitext(kolken_file)[1] not in [".gpkg", ".shp"]: #To do: wat is het input formaat voor kolken?
+                valid = False
+            
+        # Check results file previous analysis (optional)
+        results_file = self.results_file.filePath()
+        if not is_valid_ogr_file(results_file, optional=True):
+            valid = False
+        elif results_file != "": 
+            if os.path.splitext(results_file)[1] != ".gpkg":
+                valid = False
+            
+        # Check stats file (optional)
+        stats_file = self.stats_file.filePath()
+        if not is_valid_ogr_file(stats_file, optional=True):
+            valid = False
+        elif stats_file != "": 
+            if os.path.splitext(stats_file)[1] not in [".gpkg", ".shp"]: #To do: zorgen dat het ook gpkg slikt als input
+                valid = False
+        
+        # Check output_folder (optional)
+        output_folder = self.output_folder.filePath()
+        if self.outputFileGroupBox.isChecked():
+            if output_folder == "":
+                valid = False
+        
         self.pushButtonRun.setEnabled(valid)

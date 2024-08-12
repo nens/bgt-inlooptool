@@ -79,6 +79,8 @@ class InputParameters:
         afkoppelen_hellende_daken=AFKOPPELEN_HELLENDE_DAKEN,
         gebruik_bag=GEBRUIK_BAG,
         gebruik_kolken=GEBRUIK_KOLKEN,
+        gebruik_resultaten=GEBRUIK_RESULTATEN,
+        gebruik_statistieken=GEBRUIK_STATISTIEKEN,
         bouwjaar_gescheiden_binnenhuisriolering=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
         verhardingsgraad_erf=VERHARDINGSGRAAD_ERF,
         verhardingsgraad_half_verhard=VERHARDINGSGRAAD_HALF_VERHARD,
@@ -94,6 +96,8 @@ class InputParameters:
         self.afkoppelen_hellende_daken = afkoppelen_hellende_daken
         self.gebruik_bag = gebruik_bag
         self.gebruik_kolken = gebruik_kolken
+        self.gebruik_resultaten = gebruik_resultaten
+        self.gebruik_statistieken = gebruik_statistieken
         self.bouwjaar_gescheiden_binnenhuisriolering = (
             bouwjaar_gescheiden_binnenhuisriolering
         )
@@ -221,7 +225,6 @@ class InloopTool:
             # Update the feature in the layer
             settings_table.SetFeature(feature_to_update)
             
-            print("Test_output")
             # Print all field names and their values
             feature_defn = feature_to_update.GetDefnRef()
             print("Feature ID:", feature_to_update.GetFID())
@@ -237,6 +240,16 @@ class InloopTool:
             print(f"Feature with FID {max_fid} updated successfully.")
         else:
             print("No features found in the layer.")
+    
+    def import_results(self,file_path):
+        """
+        Import results from previous run to _database
+        :param file_path: path to results gpkg of a previous run
+        :return: None
+        """
+        self._database.import_settings_results(file_path)
+        self._database.import_it_results(file_path)
+        self._database.clean_it_results()
         
     def import_surfaces(self, file_path):
         """
@@ -903,7 +916,64 @@ class Database:
             lyr.CreateField(field_defn)
 
         lyr = None
+    
+    def import_it_results(self, file_path):
+        prev_gpkg_abspath = os.path.abspath(file_path)
+        if not os.path.isfile(prev_gpkg_abspath):
+            raise FileNotFoundError(
+                "Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath)
+            )
+        it_ds = ogr.Open(file_path)
+        # TODO more thorough checks of validity of input geopackage
+        try:
+            self.mem_database.CopyLayer(
+                it_ds.GetLayerByName("4. BGT inlooptabel"), RESULT_TABLE_NAME_PREV
+            )
+        except Exception:
+            # TODO more specific exception
+            raise FileInputError(
+                "Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(
+                    prev_gpkg_abspath
+                )
+            )
+    def clean_it_results(self):
+        """
+        Update the results layer from the previous simulation such that only the manual changes are kept.
+        """
+        layer = self.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
+        if layer is None:
+            raise DatabaseOperationError
 
+        delete_fids = []
+        for it_feat in layer:
+            if not it_feat["wijziging"]:
+                delete_fids.append(it_feat.GetFID())
+
+        for fid in delete_fids:
+            layer.DeleteFeature(fid)
+
+        layer = None
+        
+    def import_settings_results(self, file_path):
+        prev_gpkg_abspath = os.path.abspath(file_path)
+        if not os.path.isfile(prev_gpkg_abspath):
+            raise FileNotFoundError(
+                "Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath)
+            )
+        it_ds = ogr.Open(file_path)
+        # TODO more thorough checks of validity of input geopackage
+        try:
+            self.mem_database.CopyLayer(
+                it_ds.GetLayerByName("7. Rekeninstellingen"), SETTINGS_TABLE_NAME_PREV
+            )
+        except Exception:
+            # TODO more specific exception
+            raise FileInputError(
+                "Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(
+                    prev_gpkg_abspath
+                )
+            )  
+    
     def import_pipes(self, file_path):
         """
         Copy the required contents of the GWSW GeoPackage file to self.mem_database

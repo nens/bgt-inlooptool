@@ -140,6 +140,7 @@ OPEN_WATER = "open_water"
 BUILDINGS_TABLE_NAME = "buildings"
 KOLKEN_TABLE_NAME = "kolken"
 RESULT_TABLE_NAME = "bgt_inlooptabel"
+RESULT_TABLE_NAME_PREV = "bgt_inlooptabel_oud"
 
 RESULT_TABLE_FIELD_ID = "id"
 RESULT_TABLE_FIELD_LAATSTE_WIJZIGING = "laatste_wijziging"
@@ -184,6 +185,7 @@ DISTANCE_TYPES = {
 }
 
 SETTINGS_TABLE_NAME = "rekeninstellingen"
+SETTINGS_TABLE_NAME_PREV = "rekeninstellingen_oud"
 
 SETTINGS_TABLE_FIELD_ID = "run_id"
 SETTINGS_TABLE_FIELD_TIJD_START = "tijd_start"
