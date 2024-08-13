@@ -186,6 +186,7 @@ DISTANCE_TYPES = {
 
 SETTINGS_TABLE_NAME = "rekeninstellingen"
 SETTINGS_TABLE_NAME_PREV = "rekeninstellingen_oud"
+INF_PAVEMENT_TABLE_NAME_PREV = "waterpasserende_verharding_oud"
 
 SETTINGS_TABLE_FIELD_ID = "run_id"
 SETTINGS_TABLE_FIELD_TIJD_START = "tijd_start"

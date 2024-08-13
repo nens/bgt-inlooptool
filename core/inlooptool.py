@@ -119,12 +119,15 @@ class InloopTool:
         
     def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
         settings_table = self._database.settings_table
-        feature_defn = settings_table.GetLayerDefn()
-        feature = ogr.Feature(feature_defn)
+
+        # Copy settings from previous runs to the new settings table:
+        prev_settings = self._database.mem_database.GetLayerByName(SETTINGS_TABLE_NAME_PREV)
         
+        self._database.copy_features_with_matching_fields(prev_settings,settings_table,"run_id")
+
         max_fid = -1
         for feature in settings_table:
-            fid = feature.GetFID()
+            fid = feature.GetFID()+1
             if fid > max_fid:
                 max_fid = fid
         
@@ -248,6 +251,7 @@ class InloopTool:
         :return: None
         """
         self._database.import_settings_results(file_path)
+        self._database.import_infiltrating_pavement(file_path)
         self._database.import_it_results(file_path)
         self._database.clean_it_results()
         
@@ -689,7 +693,42 @@ class InloopTool:
                 feature.SetField(tt, afwatering[tt])
             result_table.CreateFeature(feature)
             feature = None
+            
+    def overwrite_by_manual_edits(self):
+        result_table = self._database.result_table
+        manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
+        
+        records_to_delete = []
 
+        # Iterate over each feature in manual_results_prev
+        for prev_feat in manual_results_prev:
+            # Get the key value from manual_results_prev
+            key_field = "bgt_identificatie"
+            key_value = prev_feat.GetField(key_field)
+            # Build a query to find matching records in result_table
+            query = f"{key_field} = '{key_value}'"
+        
+            # Set a filter on result_table to find the matching record
+            result_table.SetAttributeFilter(query)
+        
+            # If a match is found, mark the current record for deletion
+            for result_feat in result_table:
+                records_to_delete.append(result_feat.GetFID())
+        
+            # Remove the filter
+            result_table.SetAttributeFilter(None)
+        
+            # Copy the feature from manual_results_prev to result_table
+            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
+        
+        # Delete the records in result_table that matched
+        for fid in records_to_delete:
+            print("deleting record")
+            result_table.DeleteFeature(fid)
+        
+        # Sync the data to disk
+        result_table.SyncToDisk()
+        
     def calculate_statistics(self,stats_path):
         dest_layer = self._database.statistics_table
         stats_abspath = os.path.abspath(stats_path)
@@ -815,7 +854,7 @@ class InloopTool:
                     print(f"Error calculating intersection: {e}")
                     continue
     
-        # Return the calculated area based on the type
+        # Return the calculated area based on the type (area in ha)
         if stat_type == "total":
             return round(area_tot/10000,2)
         elif stat_type == "gemengd":
@@ -965,6 +1004,26 @@ class Database:
         try:
             self.mem_database.CopyLayer(
                 it_ds.GetLayerByName("7. Rekeninstellingen"), SETTINGS_TABLE_NAME_PREV
+            )
+        except Exception:
+            # TODO more specific exception
+            raise FileInputError(
+                "Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(
+                    prev_gpkg_abspath
+                )
+            )  
+    
+    def import_infiltrating_pavement(self,file_path): #To do: wanneer intersect met vlak, dan type verharding wijzigigen naar waterpasserende verharding of Groen(blauw) dak, afhankelijk van type
+        prev_gpkg_abspath = os.path.abspath(file_path)
+        if not os.path.isfile(prev_gpkg_abspath):
+            raise FileNotFoundError(
+                "Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath)
+            )
+        it_ds = ogr.Open(file_path)
+        # TODO more thorough checks of validity of input geopackage
+        try:
+            self.mem_database.CopyLayer(
+                it_ds.GetLayerByName("1. Waterpasserende verharding en groene daken [optionele input]"), INF_PAVEMENT_TABLE_NAME_PREV
             )
         except Exception:
             # TODO more specific exception
@@ -1337,6 +1396,43 @@ class Database:
         print("... done")
         return
     
+    def copy_features_with_matching_fields(self,src_layer, dst_layer, primary_key_field):
+        # Get source layer definition
+        src_defn = src_layer.GetLayerDefn()
+        
+        # Get the names of the fields in the destination layer
+        dst_defn = dst_layer.GetLayerDefn()
+        dst_field_names = [dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())]
+        
+        # Iterate through the features in the source layer
+        for src_feat in src_layer:
+            # Create a new feature in the destination layer
+            dst_feat = ogr.Feature(dst_defn)
+            
+            # Copy the fields from the source to the destination if the field names match
+            for i in range(src_defn.GetFieldCount()):
+                field_name = src_defn.GetFieldDefn(i).GetName()
+                if field_name in dst_field_names:
+                    dst_feat.SetField(field_name, src_feat.GetField(i))
+            
+            # Set the primary key manually if needed
+            if primary_key_field:
+                dst_feat.SetField(primary_key_field, src_feat.GetFID())
+            
+            # Set the geometry
+            geom = src_feat.GetGeometryRef()
+            if geom:
+                dst_feat.SetGeometry(geom.Clone())
+            
+            # Add the feature to the destination layer
+            dst_layer.CreateFeature(dst_feat)
+            
+            # Destroy the feature to free resources
+            dst_feat = None
+        
+        # Sync the data to disk
+        dst_layer.SyncToDisk()
+    
     def _save_to_gpkg_test(self, file_path): #TO DO: weghalen, is alleen voor testen
         print("Preparing template gpkg")
         output_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_testing_rekeninstellingen.gpkg"
@@ -1345,10 +1441,12 @@ class Database:
         self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, output_gpkg)
         self.out_db = None
     
-    def _save_to_gpkg(self,file_path):
+    def _save_to_gpkg(self,file_folder,template_gpkg):
         print("Preparing template gpkg")
-        template_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\template_output15.gpkg"
-        file_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+        #template_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\template_output15.gpkg" #To do: weghalen
+        #file_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg" #To do: weghalen
+        file_name = self.set_output_name()
+        file_path = os.path.join(file_folder, file_name)
         self.copy_and_rename_file(template_gpkg, file_path)
         
         print("Saving layers to gpkg")
@@ -1368,6 +1466,18 @@ class Database:
                     self.track_changes(dst_gpkg)
            
         print("All layers saved successfully.")
+    
+    def set_output_name(self):
+        # Determine max. run_id
+        max_run_id = -1
+        for feature in self.settings_table: 
+            run_id = feature.GetField("run_id")
+            if run_id > max_run_id:
+                max_run_id = run_id
+                
+        #Set the output name
+        output_name = f"v{max_run_id}_BGT_inlooptabel.gpkg"
+        return output_name        
     
     def copy_and_rename_file(self,original_file_path, new_file_path):
         """

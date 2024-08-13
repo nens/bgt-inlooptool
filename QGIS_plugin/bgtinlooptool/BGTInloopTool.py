@@ -69,6 +69,7 @@ PIPES_STYLE = os.path.join(os.path.dirname(__file__), "style", "gwsw_lijn.qml")
 BGT_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_oppervlakken.qml")
 STATS_STYLE = os.path.join(os.path.dirname(__file__), "style", "stats.qml")
 CHECKS_STYLE = os.path.join(os.path.dirname(__file__), "style", "checks.qml")
+GPKG_TEMPLATE = os.path.join(os.path.dirname(__file__), "style", "template_output.gpkg")
 
 class InloopToolTask(QgsTask):
     def __init__(
@@ -132,11 +133,6 @@ class InloopToolTask(QgsTask):
             self.it = InloopTool(self.parameters)
             self.increase_progress()
             
-            QgsMessageLog.logMessage(
-                "Saving the settings of the run", MESSAGE_CATEGORY, level=Qgis.Info
-            )
-            self.it.set_settings_start(self.bgt_file,self.pipe_file, self.building_file, self.kolken_file)
-            
             if self.parameters.gebruik_resultaten:
                 QgsMessageLog.logMessage(
                     "Importing the results of the previous run", MESSAGE_CATEGORY, level=Qgis.Info
@@ -144,15 +140,16 @@ class InloopToolTask(QgsTask):
                 self.it.import_results(self.results_file)
             
             QgsMessageLog.logMessage(
-                "Creating the output directory", MESSAGE_CATEGORY, level=Qgis.Info
+                "Saving the settings of the run", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            # Functie voor creeëren output dir
+            self.it.set_settings_start(self.bgt_file,self.pipe_file, self.building_file, self.kolken_file)
+            
             self.increase_progress()
                        
-            print("alleen nog opslaan")
-            output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_import_testing.gpkg"
-            self.it._database._save_to_gpkg_test(output_path)
-            r"""
+            #print("alleen nog opslaan")
+            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_import_testing.gpkg"
+            #self.it._database._save_to_gpkg_test(output_path)
+            
             QgsMessageLog.logMessage(
                 "Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info
             )
@@ -217,6 +214,7 @@ class InloopToolTask(QgsTask):
                 "Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info
             )
             self.it.calculate_runoff_targets()
+            self.it.overwrite_by_manual_edits()
             self.increase_progress()
             
             QgsMessageLog.logMessage(
@@ -236,10 +234,10 @@ class InloopToolTask(QgsTask):
                 QgsMessageLog.logMessage(
                     "Saving as gpkg", MESSAGE_CATEGORY, level=Qgis.Info
                 )
-                output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
-                self.it._database._save_to_gpkg(output_path)
+                #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+                self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE)
                 self.increase_progress()
-            """
+            
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
             
             return True
@@ -250,7 +248,8 @@ class InloopToolTask(QgsTask):
 
     def finished(self, result):
         if result:
-            layer_group = QgsProject.instance().layerTreeRoot().addGroup("BGT inlooptool")
+            file_name = self.it._database.set_output_name()
+            layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name)
             if self.temporary: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
                 #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=STATISTICS_TABLE_NAME,layer_tree_layer_name="Statistieken", qml=STATS_STYLE,layer_group=layer_group)
@@ -260,14 +259,15 @@ class InloopToolTask(QgsTask):
                 #self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
 
             else: # Load from file
-                gpkg_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+                #gpkg_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+                gpkg_path = os.path.join(self.output_folder, file_name)
                 self.gpkg_to_layer_group(gpkg_path, "7. Rekeninstellingen", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "6. Statistieken", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "5. BGT oppervlakken", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "4. BGT inlooptabel", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "3. GWSW leidingen", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "2. Controles", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "1. Waterpasserende verharding [optionele input]", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "1. Waterpasserende verharding en groene daken [optionele input]", layer_group)
             
             iface.messageBar().pushMessage(
                 MESSAGE_CATEGORY,
