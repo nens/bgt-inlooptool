@@ -110,10 +110,6 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         # Saving results settings
         self.output_folder.setStorageMode(QgsFileWidget.GetDirectory)
-        # TESTING
-        # self.bgt_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/extract.zip')
-        # self.pipe_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/getGeoPackage_1134.gpkg')
-        # self.building_file.setFilePath('C:/Users/Emile.deBadts/Documents/Projecten/v0099_bgt_inlooptool/test-data/bag.gpkg')
 
     def inputExtentGroupBoxChanged(self):
         state = self.inputExtentGroupBox.isChecked()

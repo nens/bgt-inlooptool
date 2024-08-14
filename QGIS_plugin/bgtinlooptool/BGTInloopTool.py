@@ -214,13 +214,23 @@ class InloopToolTask(QgsTask):
                 "Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info
             )
             self.it.calculate_runoff_targets()
+            
+            QgsMessageLog.logMessage(
+                "Keeping manual edit on BGT ID", MESSAGE_CATEGORY, level=Qgis.Info
+            )
             self.it.overwrite_by_manual_edits()
+            
+            QgsMessageLog.logMessage(
+                "Updating type verharding for infiltrating pavement and green roofs if provided", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.intersect_inf_pavement_green_roofs()
+            
             self.increase_progress()
             
             QgsMessageLog.logMessage(
                 "Calculating statistics", MESSAGE_CATEGORY, level=Qgis.Info
             )    
-            #stats_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\test_stats.shp"
+
             if self.parameters.gebruik_statistieken:
                 self.it.calculate_statistics(self.stats_file)
                 self.increase_progress()
@@ -234,7 +244,7 @@ class InloopToolTask(QgsTask):
                 QgsMessageLog.logMessage(
                     "Saving as gpkg", MESSAGE_CATEGORY, level=Qgis.Info
                 )
-                #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+                
                 self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE)
                 self.increase_progress()
             
@@ -249,7 +259,7 @@ class InloopToolTask(QgsTask):
     def finished(self, result):
         if result:
             file_name = self.it._database.set_output_name()
-            layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name)
+            layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
             if self.temporary: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
                 #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=STATISTICS_TABLE_NAME,layer_tree_layer_name="Statistieken", qml=STATS_STYLE,layer_group=layer_group)
@@ -259,7 +269,7 @@ class InloopToolTask(QgsTask):
                 #self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
 
             else: # Load from file
-                #gpkg_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg"
+                
                 gpkg_path = os.path.join(self.output_folder, file_name)
                 self.gpkg_to_layer_group(gpkg_path, "7. Rekeninstellingen", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "6. Statistieken", layer_group)
@@ -607,16 +617,21 @@ class BGTInloopTool:
         self.dlg.inputExtentComboBox.setLayer(extent_layer)
         self.dlg.inputExtentComboBox.setEnabled(True)
         self.dlg.inputExtentGroupBox.setChecked(True)
+        
+        self.download_bgt = True
     
     def download_gwsw_from_api(self):
         print("functie nog vullen")
         output_file = self.dlg.gwswApiOutput.filePath()
         self.dlg.pipe_file.setFilePath(output_file)
+        self.download_gwsw = True
+        
     
     def download_bag_from_api(self):
         print("functie nog vullen")
         output_file = self.dlg.bagApiOutput.filePath()
         self.dlg.building_file.setFilePath(output_file)
+        self.download_bag = True
 
     def on_run(self):
 
@@ -656,6 +671,9 @@ class BGTInloopTool:
             gebruik_kolken=kolken_file != "",
             gebruik_resultaten=results_file != "",
             gebruik_statistieken=stats_file != "",
+            download_bgt=self.download_bgt,
+            download_gwsw=self.download_gwsw,
+            download_bag=self.download_bag,
             bouwjaar_gescheiden_binnenhuisriolering=self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(),
             verhardingsgraad_erf=self.dlg.verhardingsgraad_erf.value(),
             verhardingsgraad_half_verhard=self.dlg.verhardingsgraad_half_verhard.value(),
@@ -688,7 +706,9 @@ class BGTInloopTool:
 
             self.dlg = BGTInloopToolDialog()
             
-            
+            self.download_bgt = False
+            self.download_gwsw = False
+            self.download_bag = False
             # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)
             self.dlg.pushButtonDownloadBGT.clicked.connect(self.download_bgt_from_api)

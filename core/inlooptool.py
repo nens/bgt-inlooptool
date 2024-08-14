@@ -81,6 +81,9 @@ class InputParameters:
         gebruik_kolken=GEBRUIK_KOLKEN,
         gebruik_resultaten=GEBRUIK_RESULTATEN,
         gebruik_statistieken=GEBRUIK_STATISTIEKEN,
+        download_bgt=DOWNLOAD_BGT,
+        download_gwsw=DOWNLOAD_GWSW,
+        download_bag=DOWNLOAD_BAG,
         bouwjaar_gescheiden_binnenhuisriolering=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
         verhardingsgraad_erf=VERHARDINGSGRAAD_ERF,
         verhardingsgraad_half_verhard=VERHARDINGSGRAAD_HALF_VERHARD,
@@ -98,6 +101,9 @@ class InputParameters:
         self.gebruik_kolken = gebruik_kolken
         self.gebruik_resultaten = gebruik_resultaten
         self.gebruik_statistieken = gebruik_statistieken
+        self.download_bgt = download_bgt
+        self.download_gwsw = download_gwsw
+        self.download_bag = download_bag
         self.bouwjaar_gescheiden_binnenhuisriolering = (
             bouwjaar_gescheiden_binnenhuisriolering
         )
@@ -119,11 +125,14 @@ class InloopTool:
         
     def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
         settings_table = self._database.settings_table
+        feature_defn = settings_table.GetLayerDefn()
+        feature = ogr.Feature(feature_defn)
 
         # Copy settings from previous runs to the new settings table:
         prev_settings = self._database.mem_database.GetLayerByName(SETTINGS_TABLE_NAME_PREV)
         
-        self._database.copy_features_with_matching_fields(prev_settings,settings_table,"run_id")
+        if prev_settings is not None:
+            self._database.copy_features_with_matching_fields(prev_settings,settings_table,"run_id")
 
         max_fid = -1
         for feature in settings_table:
@@ -135,12 +144,7 @@ class InloopTool:
             new_fid = 1
         else:
             new_fid = max_fid + 1
-        """
-        feature.SetField(
-            "fid",
-            new_fid,
-        )#to do: kan het zonder fid?
-        """
+
         feature.SetField(
             SETTINGS_TABLE_FIELD_ID,
             new_fid,
@@ -150,13 +154,13 @@ class InloopTool:
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
         feature.SetField(
-            SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, 0
+            SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, self.parameters.download_bgt
         )
         feature.SetField(
-            SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, 0
+            SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, self.parameters.download_gwsw
         )
         feature.SetField(
-            SETTINGS_TABLE_FIELD_DOWNLOAD_BAG, 0
+            SETTINGS_TABLE_FIELD_DOWNLOAD_BAG, self.parameters.download_bag
         )
         feature.SetField(
             SETTINGS_TABLE_FIELD_PAD_BGT, bgt_file
@@ -251,7 +255,7 @@ class InloopTool:
         :return: None
         """
         self._database.import_settings_results(file_path)
-        self._database.import_infiltrating_pavement(file_path)
+        self._database.import_inf_pavement_green_roofs(file_path)
         self._database.import_it_results(file_path)
         self._database.clean_it_results()
         
@@ -701,35 +705,68 @@ class InloopTool:
         records_to_delete = []
 
         # Iterate over each feature in manual_results_prev
-        for prev_feat in manual_results_prev:
-            # Get the key value from manual_results_prev
-            key_field = "bgt_identificatie"
-            key_value = prev_feat.GetField(key_field)
-            # Build a query to find matching records in result_table
-            query = f"{key_field} = '{key_value}'"
+        if manual_results_prev is None:
+            print("No manual edits to keep.")
+        else:
+            for prev_feat in manual_results_prev:
+                # Get the key value from manual_results_prev
+                key_field = "bgt_identificatie"
+                key_value = prev_feat.GetField(key_field)
+                # Build a query to find matching records in result_table
+                query = f"{key_field} = '{key_value}'"
+            
+                # Set a filter on result_table to find the matching record
+                result_table.SetAttributeFilter(query)
+            
+                # If a match is found, mark the current record for deletion
+                for result_feat in result_table:
+                    records_to_delete.append(result_feat.GetFID())
+            
+                # Remove the filter
+                result_table.SetAttributeFilter(None)
+            
+                # Copy the feature from manual_results_prev to result_table
+                self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
+            
+            # Delete the records in result_table that matched
+            for fid in records_to_delete:
+                print("deleting record")
+                result_table.DeleteFeature(fid)
+            
+            # Sync the data to disk
+            result_table.SyncToDisk()
+    
+    def intersect_inf_pavement_green_roofs(self):
+        result_table = self._database.result_table
+        points_layer = self._database.mem_database.GetLayerByName(INF_PAVEMENT_TABLE_NAME_PREV)
         
-            # Set a filter on result_table to find the matching record
-            result_table.SetAttributeFilter(query)
+        # Iterate over features in the points_layer
+        if points_layer is None:
+            print("No infiltrating pavement or green roofs specified.")
+        else:
+            for point_feature in points_layer:
+                point_geom = point_feature.GetGeometryRef()  # Get the geometry of the current point feature
+                
+                # Get the value of the 'type' field for the current point feature
+                feature_type = point_feature.GetField("type")
+                
+                # Iterate over features in the result_table
+                for result_feature in result_table:
+                    result_geom = result_feature.GetGeometryRef()  # Get the geometry of the current result feature
+                    
+                    # Check if the geometries intersect
+                    if result_geom.Intersects(point_geom):
+                        # Update the 'surface_type' field based on the 'type' field from the point layer
+                        if feature_type == "Waterpasserende verharding":
+                            result_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, "waterpasserende verharding")
+                        elif feature_type == "Groen dak":
+                            result_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, "groen(blauw) dak")
+                        
+                        # Update the feature in the result table
+                        result_table.SetFeature(result_feature)
+
         
-            # If a match is found, mark the current record for deletion
-            for result_feat in result_table:
-                records_to_delete.append(result_feat.GetFID())
-        
-            # Remove the filter
-            result_table.SetAttributeFilter(None)
-        
-            # Copy the feature from manual_results_prev to result_table
-            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
-        
-        # Delete the records in result_table that matched
-        for fid in records_to_delete:
-            print("deleting record")
-            result_table.DeleteFeature(fid)
-        
-        # Sync the data to disk
-        result_table.SyncToDisk()
-        
-    def calculate_statistics(self,stats_path):
+    def calculate_statistics(self, stats_path): 
         dest_layer = self._database.statistics_table
         stats_abspath = os.path.abspath(stats_path)
         it_layer = self._database.result_table
@@ -738,139 +775,92 @@ class InloopTool:
             raise FileNotFoundError(
                 "Shapefile met gebieden voor statistieken niet gevonden: {}".format(stats_abspath)
             )
-        stats_ds = ogr.Open(stats_path)
+        
+        stats_ds = ogr.Open(stats_abspath)
         stats_layer = stats_ds.GetLayer()
         
         gebied_id = 0
-        #Write geometries of shapefile features to db and calculate the statistics
+        field_prefix = ["opp", "perc"]
+        field_middle = ["_totaal", "_gemengd", "_hwa", "_vgs", "_dwa", "_infiltratievoorziening", "_open_water", "_maaiveld"]
+        field_suffix = ["", "_dak", "_gesl_verh", "_open_verh", "_onverhard"]
+    
         for feature in stats_layer:
             gebied_id += 1
-            # Create a new feature with the same geometry
             geom = feature.GetGeometryRef()
             new_feature = ogr.Feature(dest_layer.GetLayerDefn())
             new_feature.SetGeometry(geom.Clone())
+            new_feature.SetField(STATISTICS_TABLE_FIELD_ID, gebied_id)
             
-            #Set gebied_ID
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_ID,gebied_id
-            )
+            intersection_areas = {}
+    
+            for prefix in field_prefix:
+                for middle in field_middle:
+                    middle_key = middle[1:]
+                    
+                    if prefix == "opp":
+                        for suffix in field_suffix:
+                            field_name = ("STATISTICS_TABLE_FIELD_" + prefix + middle + suffix).upper()
+                            if field_name not in intersection_areas:
+                                intersection_areas[field_name] = self.calculate_intersection_area(it_layer, new_feature, middle_key, suffix[1:])
+                            new_feature.SetField(globals()[field_name], intersection_areas[field_name])
+                    else:
+                        for suffix in field_suffix:
+                            if middle_key != "totaal":
+                                field_name = ("STATISTICS_TABLE_FIELD_" + prefix + middle + suffix).upper()
+                                field_name_opp = field_name.replace("PERC", "OPP")
+                                field_name_tot = field_name_opp.replace(middle_key.upper(), "TOTAAL")
+                                if new_feature[globals()[field_name_tot]] > 0:
+                                    perc_value = round((100 * new_feature[globals()[field_name_opp]] / new_feature[globals()[field_name_tot]]), 2)
+                                    new_feature.SetField(globals()[field_name], perc_value)
             
-            # Calculate statistics
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_TOTAAL,self.calculate_intersection_area(it_layer, new_feature, "total")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_GEMENGD,self.calculate_intersection_area(it_layer, new_feature, "gemengd")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_HWA,self.calculate_intersection_area(it_layer, new_feature, "hwa")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_VGS,self.calculate_intersection_area(it_layer, new_feature, "vgs")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_DWA,self.calculate_intersection_area(it_layer, new_feature, "dwa")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_INFIL,self.calculate_intersection_area(it_layer, new_feature, "infil")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_OPEN_WATER,self.calculate_intersection_area(it_layer, new_feature,"open_water")
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_OPP_MAAIVELD,self.calculate_intersection_area(it_layer, new_feature,"maaiveld")
-            )
-            
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_GEMENGD,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_GEMENGD]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_HWA,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_HWA]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_VGS,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_VGS]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_DWA,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_DWA]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_INFIL,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_INFIL]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_OPEN_WATER,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_OPEN_WATER]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-            new_feature.SetField(
-                STATISTICS_TABLE_FIELD_PERC_MAAIVELD,round((100*new_feature[STATISTICS_TABLE_FIELD_OPP_MAAIVELD]/new_feature[STATISTICS_TABLE_FIELD_OPP_TOTAAL]),2)
-            )
-
             dest_layer.CreateFeature(new_feature)
-            new_feature = None  # Dereference the feature to avoid memory leaks
+            new_feature = None
         
         stats_ds = None
         it_layer = None
-
-    def calculate_intersection_area(self,layer, stats_feature, stat_type):
-        area_tot = 0
-        area_gemengd = 0
-        area_hwa = 0
-        area_vgs = 0
-        area_dwa = 0
-        area_infil = 0
-        area_open_water = 0
-        area_maaiveld = 0
+    
+    def calculate_intersection_area(self, layer, stats_feature, stat_type, type_verharding):
+        area_totals = {
+            "totaal": 0,
+            "gemengd": 0,
+            "hwa": 0,
+            "vgs": 0,
+            "dwa": 0,
+            "infiltratievoorziening": 0,
+            "open_water": 0,
+            "maaiveld": 0
+        }
         
-        # Get the geometry of the new feature
         stats_geom = stats_feature.GetGeometryRef()
-    
-        # Loop through all features in the layer
+        verhardingstype_map = {
+            "gesl_verh": VERHARDINGSTYPE_GESLOTEN_VERHARD,
+            "open_verh": VERHARDINGSTYPE_OPEN_VERHARD,
+        }
+        verhardingstype = verhardingstype_map.get(type_verharding, type_verharding)
+        
         for it_feature in layer:
-            it_geom = it_feature.GetGeometryRef()
-            
-            # Validate the existing geometry
-            if not it_geom.IsValid():
-                it_geom = it_geom.MakeValid()
-            
-            if not it_geom or not stats_geom or not it_geom.IsValid() or not stats_geom.IsValid():
-                continue
-            
-            # Check if the geometries intersect
-            if stats_geom.Intersects(it_geom):
-                try:
-                    # Calculate the intersection
-                    intersection_geom = stats_geom.Intersection(it_geom)
-                    intersection_area = intersection_geom.GetArea()
-                    
-                    # Accumulate the total areas
-                    area_tot += intersection_area
-                    area_gemengd += intersection_area * it_feature[TARGET_TYPE_GEMENGD_RIOOL]/100
-                    area_hwa += intersection_area * it_feature[TARGET_TYPE_HEMELWATERRIOOL]/100
-                    area_vgs += intersection_area * it_feature[TARGET_TYPE_VGS_HEMELWATERRIOOL]/100
-                    area_dwa += intersection_area * it_feature[TARGET_TYPE_VUILWATERRIOOL]/100
-                    area_infil += intersection_area * it_feature[TARGET_TYPE_INFILTRATIEVOORZIENING]/100
-                    area_open_water += intersection_area * it_feature[TARGET_TYPE_OPEN_WATER]/100
-                    area_maaiveld += intersection_area * it_feature[TARGET_TYPE_MAAIVELD]/100
-                
-                except Exception as e:
-                    print(f"Error calculating intersection: {e}")
-                    continue
+            if it_feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] == verhardingstype or verhardingstype == "":
+                it_geom = it_feature.GetGeometryRef()
     
-        # Return the calculated area based on the type (area in ha)
-        if stat_type == "total":
-            return round(area_tot/10000,2)
-        elif stat_type == "gemengd":
-            return round(area_gemengd/10000,2)
-        elif stat_type == "hwa":
-            return round(area_hwa/10000,2)
-        elif stat_type == "vgs":
-            return round(area_vgs/10000,2)
-        elif stat_type == "dwa":
-            return round(area_dwa/10000,2)
-        elif stat_type == "infil":
-            return round(area_infil/10000,2)
-        elif stat_type == "open_water":
-            return round(area_open_water/10000,2)
-        elif stat_type == "maaiveld":
-            return round(area_maaiveld/10000,2)
+                if it_geom and stats_geom and it_geom.IsValid() and stats_geom.IsValid() and stats_geom.Intersects(it_geom):
+                    try:
+                        intersection_geom = stats_geom.Intersection(it_geom)
+                        intersection_area = intersection_geom.GetArea()
+                        
+                        area_totals["totaal"] += intersection_area
+                        area_totals["gemengd"] += intersection_area * it_feature[TARGET_TYPE_GEMENGD_RIOOL] / 100
+                        area_totals["hwa"] += intersection_area * it_feature[TARGET_TYPE_HEMELWATERRIOOL] / 100
+                        area_totals["vgs"] += intersection_area * it_feature[TARGET_TYPE_VGS_HEMELWATERRIOOL] / 100
+                        area_totals["dwa"] += intersection_area * it_feature[TARGET_TYPE_VUILWATERRIOOL] / 100
+                        area_totals["infiltratievoorziening"] += intersection_area * it_feature[TARGET_TYPE_INFILTRATIEVOORZIENING] / 100
+                        area_totals["open_water"] += intersection_area * it_feature[TARGET_TYPE_OPEN_WATER] / 100
+                        area_totals["maaiveld"] += intersection_area * it_feature[TARGET_TYPE_MAAIVELD] / 100
+                    
+                    except Exception as e:
+                        print(f"Error calculating intersection: {e}")
+                        continue
+        
+        return round(area_totals[stat_type] / 10000, 2)    
 
 class Database:
     def __init__(self, epsg=28992):
@@ -887,7 +877,7 @@ class Database:
         )
         self.create_table(
             table_name=SETTINGS_TABLE_NAME, table_schema=SETTINGS_TABLE_SCHEMA
-        ) #TO DO: WANNEER SETTINGS AL BESTAAN --> overnemen uit bestaande gpkg (bij het vullen, dit is alleen om de structuur aan te maken)
+        )
         self.create_table(
             table_name=STATISTICS_TABLE_NAME, table_schema=STATISTICS_TABLE_SCHEMA
         )
@@ -1013,14 +1003,14 @@ class Database:
                 )
             )  
     
-    def import_infiltrating_pavement(self,file_path): #To do: wanneer intersect met vlak, dan type verharding wijzigigen naar waterpasserende verharding of Groen(blauw) dak, afhankelijk van type
+    def import_inf_pavement_green_roofs(self,file_path):
         prev_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(prev_gpkg_abspath):
             raise FileNotFoundError(
                 "Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath)
             )
         it_ds = ogr.Open(file_path)
-        # TODO more thorough checks of validity of input geopackage
+        # TODO more thorough checks of validity of input geopackage/shapefile
         try:
             self.mem_database.CopyLayer(
                 it_ds.GetLayerByName("1. Waterpasserende verharding en groene daken [optionele input]"), INF_PAVEMENT_TABLE_NAME_PREV
@@ -1443,14 +1433,13 @@ class Database:
     
     def _save_to_gpkg(self,file_folder,template_gpkg):
         print("Preparing template gpkg")
-        #template_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\template_output15.gpkg" #To do: weghalen
-        #file_path = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool.gpkg" #To do: weghalen
         file_name = self.set_output_name()
         file_path = os.path.join(file_folder, file_name)
         self.copy_and_rename_file(template_gpkg, file_path)
         
         print("Saving layers to gpkg")
         layers = [
+            (INF_PAVEMENT_TABLE_NAME_PREV, "1. Waterpasserende verharding en groene daken [optionele input]"),
             (PIPES_TABLE_NAME, "3. GWSW leidingen"),
             (RESULT_TABLE_NAME, "4. BGT inlooptabel"),
             (SURFACES_TABLE_NAME, "5. BGT oppervlakken"),
@@ -1474,7 +1463,9 @@ class Database:
             run_id = feature.GetField("run_id")
             if run_id > max_run_id:
                 max_run_id = run_id
-                
+        
+        if max_run_id < 1:
+            max_run_id = 1
         #Set the output name
         output_name = f"v{max_run_id}_BGT_inlooptabel.gpkg"
         return output_name        
