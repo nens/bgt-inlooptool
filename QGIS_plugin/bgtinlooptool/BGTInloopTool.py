@@ -26,10 +26,11 @@ import os.path
 import sys
 import json
 import time #TO DO: aan het eind verwijderen
+import urllib.parse
 
 
-from PyQt5.QtCore import QUrl, QByteArray
-from PyQt5.QtNetwork import QNetworkRequest
+from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
+from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
@@ -40,13 +41,15 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsBlockingNetworkRequest,
 )
+
 from qgis.core import (
     QgsTask,
     Qgis,
     QgsApplication,
     QgsMessageLog,
 )
-from qgis.utils import iface
+
+from osgeo import ogr, osr
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -338,6 +341,126 @@ class InloopToolTask(QgsTask):
         else:
             print(f"Failed to load layer '{gpkg_layer_name}' from '{gpkg_path}'.")
 
+class NetworkTask(QgsTask):
+    def __init__(self, url, output_gpkg,extent_bbox,extent_geometry_wkt):
+        super().__init__("Download and Convert BAG Data")
+        self.url = url
+        self.output_gpkg = output_gpkg
+        self.nam = QNetworkAccessManager()  # Create a network access manager
+        self.extent_bbox = extent_bbox
+        self.extent_geometry_wkt = extent_geometry_wkt
+    
+    def wkt_to_bbox(self):
+        # Format the BBOX string
+        bbox = f"{self.extent_bbox.xMinimum()},{self.extent_bbox.yMinimum()},{self.extent_bbox.xMaximum()},{self.extent_bbox.yMaximum()}"
+        return bbox
+    
+    def clip_gpkg_to_extent(self):
+        # Open the GeoPackage
+        driver = ogr.GetDriverByName("GPKG")
+        datasource = driver.Open(self.output_gpkg, 1)  # Open in update mode
+    
+        # Get the layer to clip
+        layer = datasource.GetLayerByName("bag_pand")
+        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
+        
+        # Find features outside the extent to delete
+        ids_to_delete = []
+        for feature in layer:
+            geometry = feature.GetGeometryRef()
+            if not geometry.Intersects(extent_geometry):
+                ids_to_delete.append(feature.GetFID())
+        
+        # Delete features that do not intersect with extent
+        for fid in ids_to_delete:
+            layer.DeleteFeature(fid)
+        
+        # Clean up
+        layer = None
+        datasource = None
+        
+    def run(self):
+        not_all_features_found = True
+        index = 0
+        bbox = self.wkt_to_bbox()
+        
+        all_features = []
+    
+        while not_all_features_found:
+            request_url = self.url + f"&startIndex={index}" + f"&BBOX={bbox}"
+            request = QNetworkRequest(QUrl(request_url))
+            reply = self.nam.get(request)
+            
+            # Wait for the request to complete
+            loop = QEventLoop()
+            reply.finished.connect(loop.quit)
+            loop.exec_()
+            
+            response_text = reply.readAll().data().decode("utf-8")
+            data = json.loads(response_text)  # Load JSON data
+            
+            all_features.extend(data['features'])
+            
+            # Check if all features have been retrieved
+            if len(data['features']) < 1000:
+                not_all_features_found = False
+            else:
+                index += 1000
+        
+        # Set up the driver for the GeoPackage
+        driver = ogr.GetDriverByName("GPKG")
+        
+        # Create the GeoPackage
+        if os.path.exists(self.output_gpkg):
+            driver.DeleteDataSource(self.output_gpkg)
+        datasource = driver.CreateDataSource(self.output_gpkg)
+        
+        # Define the spatial reference for EPSG:28992
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(28992)
+        
+        # Create a new layer in the GeoPackage
+        layer_out = datasource.CreateLayer("bag_pand", geom_type=ogr.wkbPolygon, srs=srs)
+        
+        # Define the schema based on the first feature (if available)
+        if all_features:
+            feature_example = all_features[0]
+            feature_fields = list(feature_example['properties'].keys())
+            
+            # Create fields in the layer
+            for field_name in feature_fields:
+                field_defn = ogr.FieldDefn(field_name, ogr.OFTString)  # Adjust field type as needed
+                layer_out.CreateField(field_defn)
+        
+        # Get the output layer definition
+        layer_defn = layer_out.GetLayerDefn()
+        
+        # Loop through the features and add them to the GeoPackage layer
+        for feature_data in all_features:
+            out_feature = ogr.Feature(layer_defn)
+            geometry = ogr.CreateGeometryFromJson(json.dumps(feature_data['geometry']))
+            out_feature.SetGeometry(geometry)
+            
+            for field_name, field_value in feature_data['properties'].items():
+                field_index = layer_defn.GetFieldIndex(field_name)
+                if field_index != -1:
+                    out_feature.SetField(field_name, field_value)
+                else:
+                    print(f"Warning: Field '{field_name}' does not exist in the layer schema.")
+            
+            layer_out.CreateFeature(out_feature)
+            out_feature = None
+        
+        # Clean up
+        datasource = None
+        all_features = None
+        reply.deleteLater()
+    
+        # Clip the GeoPackage to the extent
+        self.clip_gpkg_to_extent()
+    
+        return True
+
 
 class BGTInloopTool:
     """QGIS Plugin Implementation."""
@@ -570,7 +693,7 @@ class BGTInloopTool:
 
         # Use the extent geometry to extract surfaces for the given extent
         nam = QgsBlockingNetworkRequest()
-
+        
         networkrequest = QNetworkRequest(QUrl.fromUserInput(BGT_API_URL))
         networkrequest.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
 
@@ -629,8 +752,20 @@ class BGTInloopTool:
     
     def download_bag_from_api(self):
         print("functie nog vullen")
+        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
+        extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+        extent_bbox = extent_layer.extent()
+        output_gpkg = self.dlg.bagApiOutput.filePath()
+        url = "https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json"
+        task = NetworkTask(url, output_gpkg,extent_bbox,extent_geometry_wkt)
+        QgsApplication.taskManager().addTask(task)
+
         output_file = self.dlg.bagApiOutput.filePath()
         self.dlg.building_file.setFilePath(output_file)
+        self.dlg.inputExtentComboBox.setLayer(extent_layer)
+        self.dlg.inputExtentComboBox.setEnabled(True)
+        self.dlg.inputExtentGroupBox.setChecked(True)
+
         self.download_bag = True
 
     def on_run(self):
