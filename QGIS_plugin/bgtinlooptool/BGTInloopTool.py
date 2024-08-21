@@ -48,7 +48,7 @@ from qgis.core import (
     QgsApplication,
     QgsMessageLog,
 )
-
+from qgis.utils import iface
 from osgeo import ogr, osr
 
 # Initialize Qt resources from file resources.py
@@ -66,6 +66,8 @@ from .ogr2qgis import *
 
 MESSAGE_CATEGORY = "BGT Inlooptool"
 BGT_API_URL = "https://api.pdok.nl/lv/bgt/download/v1_0/full/custom"
+BAG_API_URL = "https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json"
+GWSW_API_URL = "https://service.pdok.nl/rioned/beheerstedelijkwater/wfs/v1_0?service=WFS&version=2.0.0&request=GetFeature&typeName=beheerstedelijkwater:BeheerLeiding&outputFormat=application/json"
 
 INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_inlooptabel.qml")
 PIPES_STYLE = os.path.join(os.path.dirname(__file__), "style", "gwsw_lijn.qml")
@@ -342,13 +344,14 @@ class InloopToolTask(QgsTask):
             print(f"Failed to load layer '{gpkg_layer_name}' from '{gpkg_path}'.")
 
 class NetworkTask(QgsTask):
-    def __init__(self, url, output_gpkg,extent_bbox,extent_geometry_wkt):
-        super().__init__("Download and Convert BAG Data")
+    def __init__(self, url, output_gpkg,extent_bbox,extent_geometry_wkt,layer_name):
+        super().__init__("Download and Convert Data")
         self.url = url
         self.output_gpkg = output_gpkg
         self.nam = QNetworkAccessManager()  # Create a network access manager
         self.extent_bbox = extent_bbox
         self.extent_geometry_wkt = extent_geometry_wkt
+        self.layer_name = layer_name
     
     def wkt_to_bbox(self):
         # Format the BBOX string
@@ -361,7 +364,7 @@ class NetworkTask(QgsTask):
         datasource = driver.Open(self.output_gpkg, 1)  # Open in update mode
     
         # Get the layer to clip
-        layer = datasource.GetLayerByName("bag_pand")
+        layer = datasource.GetLayerByName(self.layer_name)
         extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
         
         # Find features outside the extent to delete
@@ -382,10 +385,13 @@ class NetworkTask(QgsTask):
     def run(self):
         not_all_features_found = True
         index = 0
+        
+        print("Making bounding box for downlaod")
         bbox = self.wkt_to_bbox()
         
         all_features = []
-    
+        
+        print("Saving json features within BBox to memory")
         while not_all_features_found:
             request_url = self.url + f"&startIndex={index}" + f"&BBOX={bbox}"
             request = QNetworkRequest(QUrl(request_url))
@@ -407,9 +413,9 @@ class NetworkTask(QgsTask):
             else:
                 index += 1000
         
+        print("Saving json features in memory to gpkg")
         # Set up the driver for the GeoPackage
         driver = ogr.GetDriverByName("GPKG")
-        
         # Create the GeoPackage
         if os.path.exists(self.output_gpkg):
             driver.DeleteDataSource(self.output_gpkg)
@@ -420,7 +426,10 @@ class NetworkTask(QgsTask):
         srs.ImportFromEPSG(28992)
         
         # Create a new layer in the GeoPackage
-        layer_out = datasource.CreateLayer("bag_pand", geom_type=ogr.wkbPolygon, srs=srs)
+        if self.layer_name == "bag_panden":
+            layer_out = datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbPolygon, srs=srs)
+        else: 
+            layer_out = datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbMultiLineString, srs=srs)
         
         # Define the schema based on the first feature (if available)
         if all_features:
@@ -445,8 +454,8 @@ class NetworkTask(QgsTask):
                 field_index = layer_defn.GetFieldIndex(field_name)
                 if field_index != -1:
                     out_feature.SetField(field_name, field_value)
-                else:
-                    print(f"Warning: Field '{field_name}' does not exist in the layer schema.")
+                #else:
+                    #print(f"Warning: Field '{field_name}' does not exist in the layer schema.")
             
             layer_out.CreateFeature(out_feature)
             out_feature = None
@@ -455,7 +464,8 @@ class NetworkTask(QgsTask):
         datasource = None
         all_features = None
         reply.deleteLater()
-    
+        
+        print("Clipping the features in gpkg layer to the original extent")
         # Clip the GeoPackage to the extent
         self.clip_gpkg_to_extent()
     
@@ -744,28 +754,75 @@ class BGTInloopTool:
         self.download_bgt = True
     
     def download_gwsw_from_api(self):
-        print("functie nog vullen")
+
+        # Input settings
+        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
+        extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+        extent_bbox = extent_layer.extent()
+        output_gpkg = self.dlg.gwswApiOutput.filePath()
+        
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f"Begonnen met downloaden van GWSW leidingen naar {output_gpkg}",
+            level=Qgis.Info,
+            duration=5,
+        )
+        
+        # Perform download
+        task = NetworkTask(GWSW_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"default_lijn")
+        QgsApplication.taskManager().addTask(task)
+        
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f'GWSW leidingen gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
+            level=Qgis.Info,
+            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
+        )
+        
+        # Change UI
         output_file = self.dlg.gwswApiOutput.filePath()
         self.dlg.pipe_file.setFilePath(output_file)
+        self.dlg.inputExtentComboBox.setLayer(extent_layer)
+        self.dlg.inputExtentComboBox.setEnabled(True)
+        self.dlg.inputExtentGroupBox.setChecked(True)
+        
+        # Save download in settings of run
         self.download_gwsw = True
         
     
     def download_bag_from_api(self):
-        print("functie nog vullen")
+        # Input settings
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
         extent_geometry_wkt = self.validate_extent_layer(extent_layer)
         extent_bbox = extent_layer.extent()
         output_gpkg = self.dlg.bagApiOutput.filePath()
-        url = "https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json"
-        task = NetworkTask(url, output_gpkg,extent_bbox,extent_geometry_wkt)
+        
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f"Begonnen met downloaden van BAG panden naar {output_gpkg}",
+            level=Qgis.Info,
+            duration=5,
+        )
+        
+        # Perform download
+        task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
         QgsApplication.taskManager().addTask(task)
-
+        
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f'BAG panden gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
+            level=Qgis.Info,
+            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
+        )
+        
+        # Change UI
         output_file = self.dlg.bagApiOutput.filePath()
         self.dlg.building_file.setFilePath(output_file)
         self.dlg.inputExtentComboBox.setLayer(extent_layer)
         self.dlg.inputExtentComboBox.setEnabled(True)
         self.dlg.inputExtentGroupBox.setChecked(True)
-
+        
+        # Save download in settings of run
         self.download_bag = True
 
     def on_run(self):
