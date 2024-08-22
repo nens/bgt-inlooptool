@@ -232,19 +232,10 @@ class InloopTool:
             # Update the feature in the layer
             settings_table.SetFeature(feature_to_update)
             
-            # Print all field names and their values
-            feature_defn = feature_to_update.GetDefnRef()
-            print("Feature ID:", feature_to_update.GetFID())
-            for i in range(feature_defn.GetFieldCount()):
-                field_defn = feature_defn.GetFieldDefn(i)
-                field_name = field_defn.GetName()
-                field_value = feature_to_update.GetField(i)
-                print(f"{field_name}: {field_value}")
-            
             # Clean up
             feature_to_update = None
             settings_table = None
-            print(f"Feature with FID {max_fid} updated successfully.")
+            print(f"Settings of run {max_fid} updated successfully.")
         else:
             print("No features found in the layer.")
     
@@ -545,12 +536,12 @@ class InloopTool:
         surface_water_buffer_dist = max(
             [parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater]
         )
-        print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
+        #print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
 
         # Distance to pipes
         for surface in self._database.bgt_surfaces:
             if not surface:
-                print("surface kapoet")
+                print("surface invalid")
                 continue
 
             surface_geom = surface.geometry().Clone()
@@ -680,7 +671,7 @@ class InloopTool:
                 "surface_type", surface.surface_type
                 )
             feature.SetField(
-                "bgt_fysiek_voorkomen", surface.bgt_fysiek_voorkomen #Deze nog aanpassen
+                "bgt_fysiek_voorkomen", surface.bgt_fysiek_voorkomen 
                 )
             feature.SetField(
                 "build_year", surface.build_year
@@ -758,9 +749,9 @@ class InloopTool:
                     if result_geom.Intersects(point_geom):
                         # Update the 'surface_type' field based on the 'type' field from the point layer
                         if feature_type == "Waterpasserende verharding":
-                            result_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, "waterpasserende verharding")
+                            result_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, VERHARDINGSTYPE_WATERPASSEREND_VERHARD)
                         elif feature_type == "Groen dak":
-                            result_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, "groen(blauw) dak")
+                            result_feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, VERHARDINGSTYPE_GROEN_DAK)
                         
                         # Update the feature in the result table
                         result_table.SetFeature(result_feature)
@@ -783,6 +774,7 @@ class InloopTool:
         field_prefix = ["opp", "perc"]
         field_middle = ["_totaal", "_gemengd", "_hwa", "_vgs", "_dwa", "_infiltratievoorziening", "_open_water", "_maaiveld"]
         field_suffix = ["", "_dak", "_gesl_verh", "_open_verh", "_onverhard"]
+        field_suffix_verharding = ["_dak","_gesl_verh","_open_verh","_onverhard","_groen_dak","_waterpas_verh","_water"]
     
         for feature in stats_layer:
             gebied_id += 1
@@ -796,7 +788,6 @@ class InloopTool:
             for prefix in field_prefix:
                 for middle in field_middle:
                     middle_key = middle[1:]
-                    
                     if prefix == "opp":
                         for suffix in field_suffix:
                             field_name = ("STATISTICS_TABLE_FIELD_" + prefix + middle + suffix).upper()
@@ -812,7 +803,21 @@ class InloopTool:
                                 if new_feature[globals()[field_name_tot]] > 0:
                                     perc_value = round((100 * new_feature[globals()[field_name_opp]] / new_feature[globals()[field_name_tot]]), 2)
                                     new_feature.SetField(globals()[field_name], perc_value)
-            
+
+            for prefix in field_prefix:
+                for suffix_verharding in field_suffix_verharding:
+                    field_name = ("STATISTICS_TABLE_FIELD_" + prefix + suffix_verharding).upper()
+                    if prefix == "opp":
+                        if field_name not in intersection_areas:
+                            intersection_areas[field_name] = self.calculate_intersection_area(it_layer, new_feature, "verharding", suffix_verharding[1:])
+                        new_feature.SetField(globals()[field_name], intersection_areas[field_name])
+                    else:
+                        field_name_opp = field_name.replace("PERC", "OPP")
+                        field_name_tot = field_name_opp.replace(suffix_verharding[1:].upper(), "TOTAAL")
+                        if new_feature[globals()[field_name_tot]] > 0:
+                            perc_value = round((100 * new_feature[globals()[field_name_opp]] / new_feature[globals()[field_name_tot]]), 2)
+                            new_feature.SetField(globals()[field_name], perc_value)
+
             dest_layer.CreateFeature(new_feature)
             new_feature = None
         
@@ -828,15 +833,18 @@ class InloopTool:
             "dwa": 0,
             "infiltratievoorziening": 0,
             "open_water": 0,
-            "maaiveld": 0
+            "maaiveld": 0,
+            "verharding":0
         }
         
         stats_geom = stats_feature.GetGeometryRef()
         verhardingstype_map = {
             "gesl_verh": VERHARDINGSTYPE_GESLOTEN_VERHARD,
             "open_verh": VERHARDINGSTYPE_OPEN_VERHARD,
+            "groen_dak": VERHARDINGSTYPE_GROEN_DAK,
+            "waterpas_verh": VERHARDINGSTYPE_WATERPASSEREND_VERHARD,
         }
-        verhardingstype = verhardingstype_map.get(type_verharding, type_verharding)
+        verhardingstype = verhardingstype_map.get(type_verharding, type_verharding) # look for type_verharding in mapping. If not found, take type_verharding as verhardingstype
         
         for it_feature in layer:
             if it_feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] == verhardingstype or verhardingstype == "":
@@ -848,6 +856,7 @@ class InloopTool:
                         intersection_area = intersection_geom.GetArea()
                         
                         area_totals["totaal"] += intersection_area
+                        area_totals["verharding"] += intersection_area
                         area_totals["gemengd"] += intersection_area * it_feature[TARGET_TYPE_GEMENGD_RIOOL] / 100
                         area_totals["hwa"] += intersection_area * it_feature[TARGET_TYPE_HEMELWATERRIOOL] / 100
                         area_totals["vgs"] += intersection_area * it_feature[TARGET_TYPE_VGS_HEMELWATERRIOOL] / 100
@@ -1193,12 +1202,12 @@ class Database:
                     # print('Deleting feature {} because it is a Linestring'.format(f.GetFID()))
                     delete_fids.append(feature.GetFID())
                 else:
-                    print(
-                        "Warning: Fixing feature {fid} in {stype} failed! No procedure defined to clean up geometry "
-                        "type {geom_type}. Continuing anyway.".format(
-                            fid=feature.GetFID(), stype=surface_type, geom_type=str(geom_type)
-                        )
-                    )
+                    #print(
+                    #    "Warning: Fixing feature {fid} in {stype} failed! No procedure defined to clean up geometry "
+                    #    "type {geom_type}. Continuing anyway.".format(
+                    #        fid=feature.GetFID(), stype=surface_type, geom_type=str(geom_type)
+                    #    )
+                    #)
                     continue
             for fid in delete_fids:
                 layer.DeleteFeature(fid)
@@ -1486,7 +1495,7 @@ class Database:
             with open(new_file_path, 'wb') as new_file:
                 new_file.write(content)
 
-            print(f"File copied from {original_file_path} to {new_file_path}")
+            print(f"Template gpkg copied to {new_file_path}")
         except FileNotFoundError:
             print(f"The file {original_file_path} does not exist.")
         except PermissionError:
@@ -1509,7 +1518,7 @@ class Database:
         dst_layer_defn = dst_layer.GetLayerDefn()
         
         if layer_defn.GetFieldCount() != dst_layer_defn.GetFieldCount():
-            print(f"Warning: Source and destination layers have different field counts: {layer_defn.GetFieldCount()} vs {dst_layer_defn.GetFieldCount()}")
+            print(f"Warning: Source and destination layers have different field counts: {layer_defn.GetFieldCount()} vs {dst_layer_defn.GetFieldCount()}. Continuing anyway.")
         
         field_mapping = {dst_layer_defn.GetFieldDefn(i).GetName(): layer_defn.GetFieldIndex(dst_layer_defn.GetFieldDefn(i).GetName())
                  for i in range(dst_layer_defn.GetFieldCount())}
