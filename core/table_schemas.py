@@ -191,3 +191,18 @@ STATISTICS_TABLE_SCHEMA = TableSchema(
     geometry_column="geom",
     geometry_type=ogr.wkbCurvePolygon,
 )
+
+CHECKS_TABLE_SCHEMA = TableSchema(
+    fields={
+	CHECKS_TABLE_FIELD_ID: ogr.OFTInteger,
+	CHECKS_TABLE_FIELD_LEVEL: ogr.OFTString,
+	CHECKS_TABLE_FIELD_CODE: ogr.OFTInteger,
+	CHECKS_TABLE_FIELD_TABLE: ogr.OFTString,
+	CHECKS_TABLE_FIELD_COLUMN: ogr.OFTString,
+	CHECKS_TABLE_FIELD_VALUE: ogr.OFTString,
+	CHECKS_TABLE_FIELD_DESCRIPTION: ogr.OFTString,
+    },
+    primary_key="fid",
+    geometry_column="geom",
+    geometry_type=ogr.wkbCurvePolygon,
+)

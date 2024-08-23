@@ -846,10 +846,17 @@ class InloopTool:
         }
         verhardingstype = verhardingstype_map.get(type_verharding, type_verharding) # look for type_verharding in mapping. If not found, take type_verharding as verhardingstype
         
+        # Ensure stats_geom is valid
+        if not stats_geom.IsValid():
+            stats_geom = stats_geom.MakeValid()
+        
         for it_feature in layer:
+            it_geom = it_feature.GetGeometryRef()
+            # Ensure it_geom is valid
+            if not it_geom.IsValid():
+                it_geom = it_geom.MakeValid()
+            
             if it_feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] == verhardingstype or verhardingstype == "":
-                it_geom = it_feature.GetGeometryRef()
-    
                 if it_geom and stats_geom and it_geom.IsValid() and stats_geom.IsValid() and stats_geom.Intersects(it_geom):
                     try:
                         intersection_geom = stats_geom.Intersection(it_geom)
@@ -870,6 +877,40 @@ class InloopTool:
                         continue
         
         return round(area_totals[stat_type] / 10000, 2)    
+    
+    def generate_warnings(self):
+        checks_table = self._database.checks_table
+        it_layer = self._database.result_table
+        feature_defn = checks_table.GetLayerDefn()
+        print(feature_defn)
+        fid = 0
+        
+        warning_large_area = f"Dit BGT vlak is groter dan {CHECKS_LARGE_AREA} m2. De kans is groot dat dit vlak aangesloten is op meerdere stelseltypen. Controleer en corrigeer dit wanneer nodig."
+        
+        for it_feature in it_layer:
+            # Get the geometry of the feature and calculate area
+            geom = it_feature.GetGeometryRef()
+            area = geom.GetArea()
+            if area > CHECKS_LARGE_AREA: # value in m2
+                fid += 1
+                #print("gevonden")
+                check_feature = ogr.Feature(feature_defn)
+                check_feature.SetGeometry(geom.Clone())
+                check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
+                check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
+                check_feature.SetField(CHECKS_TABLE_FIELD_CODE,1)
+                check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+                check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"")
+                check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,str(area))
+                check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_large_area)
+                #print("fields set")
+                checks_table.CreateFeature(check_feature)
+                #print("feature created")
+                check_feature = None  # Cleanup after creating the feature
+                
+        
+        checks_table = None
+        it_layer = None
 
 class Database:
     def __init__(self, epsg=28992):
@@ -889,6 +930,9 @@ class Database:
         )
         self.create_table(
             table_name=STATISTICS_TABLE_NAME, table_schema=STATISTICS_TABLE_SCHEMA
+        )
+        self.create_table(
+            table_name=CHECKS_TABLE_NAME, table_schema=CHECKS_TABLE_SCHEMA
         )
         
     @property
@@ -911,6 +955,13 @@ class Database:
         :rtype ogr.Layer
         """
         return self.mem_database.GetLayerByName(STATISTICS_TABLE_NAME)
+    
+    @property
+    def checks_table(self):
+        """Get reference to the Settings layer
+        :rtype ogr.Layer
+        """
+        return self.mem_database.GetLayerByName(CHECKS_TABLE_NAME)
 
     @property
     def bgt_surfaces(self):
@@ -1447,14 +1498,31 @@ class Database:
         self.copy_and_rename_file(template_gpkg, file_path)
         
         print("Saving layers to gpkg")
+        # Initialize layers with common elements
         layers = [
-            (INF_PAVEMENT_TABLE_NAME_PREV, "1. Waterpasserende verharding en groene daken [optionele input]"),
+            (CHECKS_TABLE_NAME, "2. Controles"),
             (PIPES_TABLE_NAME, "3. GWSW leidingen"),
             (RESULT_TABLE_NAME, "4. BGT inlooptabel"),
             (SURFACES_TABLE_NAME, "5. BGT oppervlakken"),
             (STATISTICS_TABLE_NAME, "6. Statistieken"),
             (SETTINGS_TABLE_NAME, "7. Rekeninstellingen")
         ]
+        
+        # Prepend the additional element if the layer exists
+        if mem_database.GetLayerByName(INF_PAVEMENT_TABLE_NAME_PREV) is not None:
+            layers.insert(0, (INF_PAVEMENT_TABLE_NAME_PREV, "1. Waterpasserende verharding en groene daken [optionele input]"))
+        
+        """ To do: verwijderen later!
+        layers = [
+                (INF_PAVEMENT_TABLE_NAME_PREV, "1. Waterpasserende verharding en groene daken [optionele input]"),
+                (CHECKS_TABLE_NAME, "2. Controles"),
+                (PIPES_TABLE_NAME, "3. GWSW leidingen"),
+                (RESULT_TABLE_NAME, "4. BGT inlooptabel"),
+                (SURFACES_TABLE_NAME, "5. BGT oppervlakken"),
+                (STATISTICS_TABLE_NAME, "6. Statistieken"),
+                (SETTINGS_TABLE_NAME, "7. Rekeninstellingen")
+            ]
+        """
         
         with self.open_gpkg(file_path) as dst_gpkg:
             for db_layer, gpkg_layer in layers:

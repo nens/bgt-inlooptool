@@ -232,11 +232,10 @@ class InloopToolTask(QgsTask):
             
             self.increase_progress()
             
-            QgsMessageLog.logMessage(
-                "Calculating statistics", MESSAGE_CATEGORY, level=Qgis.Info
-            )    
-
             if self.parameters.gebruik_statistieken:
+                QgsMessageLog.logMessage(
+                    "Calculating statistics", MESSAGE_CATEGORY, level=Qgis.Info
+                )   
                 self.it.calculate_statistics(self.stats_file)
                 self.increase_progress()
             
@@ -244,6 +243,11 @@ class InloopToolTask(QgsTask):
                 "Saving the end time of the analysis in the settings", MESSAGE_CATEGORY, level=Qgis.Info
             )
             self.it.set_settings_end()
+            
+            QgsMessageLog.logMessage(
+                "Generating warning messages", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.generate_warnings()
             
             if not self.temporary:
                 QgsMessageLog.logMessage(
@@ -271,7 +275,7 @@ class InloopToolTask(QgsTask):
                 self.temp_to_layer_group(db_layer_name=SURFACES_TABLE_NAME, layer_tree_layer_name="BGT Oppervlakken",qml=BGT_STYLE,layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=RESULT_TABLE_NAME, layer_tree_layer_name="BGT Inlooptabel",qml=INLOOPTABEL_STYLE,layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=PIPES_TABLE_NAME,layer_tree_layer_name="GWSW Leidingen", qml=PIPES_STYLE,layer_group=layer_group)
-                #self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
 
             else: # Load from file
                 
