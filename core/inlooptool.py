@@ -1509,7 +1509,7 @@ class Database:
         ]
         
         # Prepend the additional element if the layer exists
-        if mem_database.GetLayerByName(INF_PAVEMENT_TABLE_NAME_PREV) is not None:
+        if self.mem_database.GetLayerByName(INF_PAVEMENT_TABLE_NAME_PREV) is not None:
             layers.insert(0, (INF_PAVEMENT_TABLE_NAME_PREV, "1. Waterpasserende verharding en groene daken [optionele input]"))
         
         """ To do: verwijderen later!
