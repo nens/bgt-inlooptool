@@ -901,7 +901,7 @@ class InloopTool:
                 check_feature.SetField(CHECKS_TABLE_FIELD_CODE,1)
                 check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
                 check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"")
-                check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,str(area))
+                check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,str(round(area,2)))
                 check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_large_area)
                 #print("fields set")
                 checks_table.CreateFeature(check_feature)
@@ -1595,7 +1595,12 @@ class Database:
         for feature in db_layer:
             dst_feature = ogr.Feature(dst_layer_defn)
             for dst_field_name, src_field_index in field_mapping.items():
-                dst_feature.SetField(dst_field_name, feature.GetField(src_field_index))
+                if src_field_index != -1:  # Ensure the field exists in the source layer
+                    dst_feature.SetField(dst_field_name, feature.GetField(src_field_index))
+                else:
+                    print(f"Warning: Source field '{dst_field_name}' not found in the source layer. Skipping field.")
+            #for dst_field_name, src_field_index in field_mapping.items():
+                #dst_feature.SetField(dst_field_name, feature.GetField(src_field_index))
             geom = feature.GetGeometryRef()
             if geom:
                 dst_feature.SetGeometry(geom.Clone())

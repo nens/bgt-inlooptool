@@ -68,6 +68,7 @@ MESSAGE_CATEGORY = "BGT Inlooptool"
 BGT_API_URL = "https://api.pdok.nl/lv/bgt/download/v1_0/full/custom"
 BAG_API_URL = "https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json"
 GWSW_API_URL = "https://service.pdok.nl/rioned/beheerstedelijkwater/wfs/v1_0?service=WFS&version=2.0.0&request=GetFeature&typeName=beheerstedelijkwater:BeheerLeiding&outputFormat=application/json"
+CBS_GEMEENTES_API_URL = "https://service.pdok.nl/kadaster/bestuurlijkegebieden/wfs/v1_0?service=WFS&version=1.0.0&request=GetFeature&typeName=Gemeentegebied&outputFormat=application/json"
 
 INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_inlooptabel.qml")
 PIPES_STYLE = os.path.join(os.path.dirname(__file__), "style", "gwsw_lijn.qml")

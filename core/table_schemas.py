@@ -202,7 +202,7 @@ CHECKS_TABLE_SCHEMA = TableSchema(
 	CHECKS_TABLE_FIELD_VALUE: ogr.OFTString,
 	CHECKS_TABLE_FIELD_DESCRIPTION: ogr.OFTString,
     },
-    primary_key="fid",
+    primary_key="id",
     geometry_column="geom",
     geometry_type=ogr.wkbCurvePolygon,
 )
