@@ -369,33 +369,10 @@ class NetworkTask(QgsTask):
         geom = ogr.CreateGeometryFromJson(str(geojson))
         return geom.ExportToWkt()
     
-    def clip_gpkg_to_extent(self):
-        # Open the GeoPackage
-        driver = ogr.GetDriverByName("GPKG")
-        datasource = driver.Open(self.output_gpkg, 1)  # Open in update mode
-    
-        # Get the layer to clip
-        layer = datasource.GetLayerByName(self.layer_name)
-        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
-        
-        # Find features outside the extent to delete
-        ids_to_delete = []
-        for feature in layer:
-            geometry = feature.GetGeometryRef()
-            if not geometry.Intersects(extent_geometry):
-                ids_to_delete.append(feature.GetFID())
-        
-        # Delete features that do not intersect with extent
-        for fid in ids_to_delete:
-            layer.DeleteFeature(fid)
-        
-        # Clean up
-        layer = None
-        datasource = None
-    
     def run(self):
         not_all_features_found = True
         index = 0
+        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
         
         print("Making bounding box for downlaod")
         bbox = self.wkt_to_bbox()
@@ -444,8 +421,6 @@ class NetworkTask(QgsTask):
             all_features =[]
             
             # Find features outside the extent to delete
-            extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
-            
             for feature in all_gemeentes:
                 geometry_wkt = self.geojson_to_wkt(feature['geometry'])
                 geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
@@ -453,14 +428,17 @@ class NetworkTask(QgsTask):
                     selection_gemeentes.append(feature['properties']['naam'])
             
             for feature in selection_gemeentes:
-                #gemeente_names.append(feature['properties']['naam'])
                 gemeente_name = feature
-                #gemeente_name = feature['properties']['naam']
+                gemeente_name = gemeente_name.title()
+                gemeente_name = gemeente_name.replace(" ", "").replace("-", "") #To do: dit werkt nu nog niet goed, bijv. voor 's-Gravenhage (gemeentenaam), maar DenHaag in GWSW 
                 not_all_features_found = True
                 index = 0
                 print(f"Extract data: gemeente {gemeente_name}")
                 while not_all_features_found:
-                    request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"+ f"&startIndex={index}"
+                    if index == 0: 
+                        request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"
+                    else:
+                        request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"+ f"&startIndex={index}"
                     request = QNetworkRequest(QUrl(request_url))
                     reply = self.nam.get(request)
                     
@@ -520,18 +498,13 @@ class NetworkTask(QgsTask):
                         out_feature.SetField(field_name, field_value)
                     #else:
                         #print(f"Warning: Field '{field_name}' does not exist in the layer schema.")
-                
                 layer_out.CreateFeature(out_feature)
                 out_feature = None
 
         # Clean up
-        #datasource = None
+        datasource = None
         all_features = None
         reply.deleteLater()
-        
-        print("Clipping the features in gpkg layer to the original extent")
-        # Clip the GeoPackage to the extent
-        #self.clip_gpkg_to_extent()
     
         return True
 
@@ -823,31 +796,23 @@ class BGTInloopTool:
         extent_geometry_wkt = self.validate_extent_layer(extent_layer)
         extent_bbox = extent_layer.extent()
         output_gpkg = self.dlg.gwswApiOutput.filePath()
-        
+    
+        # Initial message for download start
         self.iface.messageBar().pushMessage(
             MESSAGE_CATEGORY,
             f"Begonnen met downloaden van GWSW leidingen naar {output_gpkg}",
             level=Qgis.Info,
             duration=5,
         )
-        
+    
         # Perform download
-        task = NetworkTask(CBS_GEMEENTES_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"default_lijn")
+        task = NetworkTask(CBS_GEMEENTES_API_URL, output_gpkg, extent_bbox, extent_geometry_wkt, "default_lijn")
+    
+        # Connect the task's finished signal to a custom slot to handle completion
+        task.taskCompleted.connect(self.on_task_finished)
+    
+        # Start the task via the QGIS Task Manager
         QgsApplication.taskManager().addTask(task)
-        
-        self.iface.messageBar().pushMessage(
-            MESSAGE_CATEGORY,
-            f'GWSW leidingen gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
-            level=Qgis.Info,
-            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
-        )
-        #To do: dit pas doen als de taak klaar is.
-        self.iface.messageBar().pushMessage(
-            MESSAGE_CATEGORY,
-            f'De gemeentes {NOT_FOUND_GEMEENTES} hebben geen GWSW dataset. Download de waterschapsdata via de GWSW website of neem contact op met de beheerder',
-            level=Qgis.Warning,
-            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
-        )
         
         # Change UI
         output_file = self.dlg.gwswApiOutput.filePath()
@@ -859,7 +824,39 @@ class BGTInloopTool:
         # Save download in settings of run
         self.download_gwsw = True
     
-    def download_gwsw_from_api_old(self):
+    def on_task_finished(self, exception=None):
+        """
+        This method is called when the task finishes.
+        It pushes a message to the message bar indicating the completion.
+        """
+        output_gpkg = self.dlg.gwswApiOutput.filePath()
+        if exception is None:
+            # Task finished successfully
+            self.iface.messageBar().pushMessage(
+                "Info",
+                f'GWSW leidingen gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
+                level=Qgis.Info,
+                duration=20,  # Longer so the user has time to click the link
+            )
+        else:
+            # Task failed
+            self.iface.messageBar().pushMessage(
+                "Error",
+                f"Er is een fout opgetreden tijdens het downloaden van GWSW leidingen: {exception}",
+                level=Qgis.Critical,
+                duration=10,
+            )
+    
+        # Display a warning if some municipalities don't have a GWSW dataset
+        if NOT_FOUND_GEMEENTES:
+            self.iface.messageBar().pushMessage(
+                "Warning",
+                f'De gemeente(s) {NOT_FOUND_GEMEENTES} heeft/hebben geen GWSW dataset. Download de waterschapsdata via de GWSW website of neem contact op met de beheerder',
+                level=Qgis.Warning,
+                duration=20,
+            )
+    
+    def download_gwsw_from_api_old(self): #TO DO: Verwijderen!
 
         # Input settings
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
