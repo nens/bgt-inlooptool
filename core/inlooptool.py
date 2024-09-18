@@ -77,6 +77,7 @@ class InputParameters:
         max_afstand_afgekoppeld=MAX_AFSTAND_AFGEKOPPELD,
         max_afstand_drievoudig=MAX_AFSTAND_DRIEVOUDIG,
         afkoppelen_hellende_daken=AFKOPPELEN_HELLENDE_DAKEN,
+        leidingcodes_koppelen=KOPPEL_LEIDINGCODES,
         gebruik_bag=GEBRUIK_BAG,
         gebruik_kolken=GEBRUIK_KOLKEN,
         gebruik_resultaten=GEBRUIK_RESULTATEN,
@@ -97,6 +98,7 @@ class InputParameters:
         self.max_afstand_afgekoppeld = max_afstand_afgekoppeld
         self.max_afstand_drievoudig = max_afstand_drievoudig
         self.afkoppelen_hellende_daken = afkoppelen_hellende_daken
+        self.leidingcodes_koppelen = leidingcodes_koppelen
         self.gebruik_bag = gebruik_bag
         self.gebruik_kolken = gebruik_kolken
         self.gebruik_resultaten = gebruik_resultaten
@@ -537,6 +539,126 @@ class InloopTool:
             [parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater]
         )
         #print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
+        
+        # Distance to pipes
+        for surface in self._database.bgt_surfaces:
+            if not surface:
+                print("surface invalid")
+                continue
+
+            surface_geom = surface.geometry().Clone()
+            surface_geom_buffer_afwateringsvoorziening = surface_geom.Buffer(
+                parameters.max_afstand_vlak_afwateringsvoorziening
+            )
+
+            distances = {}
+            for pipe_id in self._database.pipes_idx.intersection(
+                surface_geom_buffer_afwateringsvoorziening.GetEnvelope()
+            ):
+                pipe = self._database.pipes.GetFeature(pipe_id)
+                pipe_geom = pipe.geometry().Clone()
+                if pipe_geom.Intersects(surface_geom_buffer_afwateringsvoorziening):
+                    internal_pipe_type = pipe[INTERNAL_PIPE_TYPE_FIELD]
+                    if internal_pipe_type != INTERNAL_PIPE_TYPE_IGNORE:
+                        if (
+                            internal_pipe_type not in distances.keys()
+                        ):  # Leiding van dit type is nog niet langsgekomen
+                            distances[internal_pipe_type] = {"distance": pipe_geom.Distance(surface_geom),
+                                                             "leidingcode": pipe["naam"]
+                                                             }
+                        else:
+                            if distances[internal_pipe_type]["distance"] > pipe_geom.Distance(
+                                surface_geom
+                            ):
+                                distances[internal_pipe_type] = {"distance": pipe_geom.Distance(surface_geom),
+                                                                 "leidingcode": pipe["naam"]
+                                                                 }
+            # Distance to water surface
+            if surface.surface_type != SURFACE_TYPE_WATERDEEL:
+                surface_geom_buffer_surface_water = surface_geom.Buffer(
+                    surface_water_buffer_dist
+                )
+                min_water_distance = PSEUDO_INFINITE
+
+                for surface_id in self._database.bgt_surfaces_idx.intersection(
+                    surface_geom_buffer_surface_water.GetEnvelope()
+                ):
+                    neighbour_surface = self._database.bgt_surfaces.GetFeature(
+                        surface_id
+                    )
+                    if neighbour_surface.surface_type == SURFACE_TYPE_WATERDEEL:
+                        water_geom = neighbour_surface.geometry().Clone()
+                        if water_geom.Intersects(surface_geom_buffer_surface_water):
+                            dist_to_this_water_surface = water_geom.Distance(
+                                surface_geom
+                            )
+                            if dist_to_this_water_surface < min_water_distance:
+                                min_water_distance = dist_to_this_water_surface
+
+                # add to dict
+                distances[OPEN_WATER] = {"distance": min_water_distance,
+                                         "leidingcode": None
+                                         }
+            # Distance to kolk
+            if self.parameters.gebruik_kolken:
+                if surface.surface_type in KOLK_CONNECTABLE_SURFACE_TYPES:
+                    surface_geom_buffer_kolk = surface_geom.Buffer(
+                        parameters.max_afstand_vlak_kolk
+                    )
+                    min_kolk_distance = PSEUDO_INFINITE
+
+                    for kolk_id in self._database.kolken_idx.intersection(
+                        surface_geom_buffer_kolk.GetEnvelope()
+                    ):
+                        kolk = self._database.kolken.GetFeature(kolk_id)
+                        kolk_geom = kolk.geometry().Clone()
+                        if kolk_geom.Intersects(surface_geom_buffer_kolk):
+                            dist_to_this_kolk = kolk_geom.Distance(surface_geom)
+                            if dist_to_this_kolk < min_kolk_distance:
+                                min_kolk_distance = dist_to_this_kolk
+
+                    # add to dict
+                    distances[KOLK] = {"distance": min_kolk_distance,
+                                             "leidingcode": None
+                                             }
+            # Write distances to surfaces layer
+            for distance_type in DISTANCE_TYPES:
+
+                if distance_type in distances:
+                    if distances[distance_type]["distance"] == PSEUDO_INFINITE:
+                        distances[distance_type]["distance"] = None
+                    surface["distance_" + distance_type] = distances[distance_type]["distance"]
+                    surface["code_"+ distance_type] = distances[distance_type]["leidingcode"]
+
+            self._database.bgt_surfaces.SetFeature(surface)
+            surface = None
+        self._database.bgt_surfaces.ResetReading()
+        self._database.bgt_surfaces.SetSpatialFilter(None)
+
+    def calculate_distances_old(self, parameters):
+        """
+        For all BGT Surfaces, calculate the distance to:
+         * the nearest pipe of each type
+         * nearest water surface
+         * nearest kolk (sewer gully)
+
+        :param parameters: input parameters
+        :return: None
+        """
+        self.parameters = parameters
+        self._database.pipes.ResetReading()
+        self._database.pipes.SetSpatialFilter(None)
+        self._database.bgt_surfaces.ResetReading()
+        self._database.bgt_surfaces.SetSpatialFilter(None)
+
+        if self.parameters.gebruik_kolken:
+            self._database.kolken.ResetReading()
+            self._database.kolken.SetSpatialFilter(None)
+
+        surface_water_buffer_dist = max(
+            [parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater]
+        )
+        #print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
 
         # Distance to pipes
         for surface in self._database.bgt_surfaces:
@@ -686,6 +808,19 @@ class InloopTool:
             # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
             for tt in TARGET_TYPES:
                 feature.SetField(tt, afwatering[tt])
+            
+            if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
+                feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, surface["code_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL])
+            if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
+                if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) >feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
+                    feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, surface["code_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL])
+                else:
+                    feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, surface["code_" + INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL])
+            if feature.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
+                feature.SetField(RESULT_TABLE_FIELD_CODE_DWA, surface["code_" + INTERNAL_PIPE_TYPE_VUILWATERRIOOL])
+            if feature.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
+                feature.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, surface["code_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING])
+    
             result_table.CreateFeature(feature)
             feature = None
             
@@ -878,11 +1013,11 @@ class InloopTool:
         
         return round(area_totals[stat_type] / 10000, 2)    
     
-    def generate_warnings(self):
+    def generate_warnings(self): #TO DO: aanvullen met andere waarschuwing, evt. nog opdelen in verschillende functies, en prints weghalen. 
         checks_table = self._database.checks_table
         it_layer = self._database.result_table
         feature_defn = checks_table.GetLayerDefn()
-        print(feature_defn)
+        #print(feature_defn)
         fid = 0
         
         warning_large_area = f"Dit BGT vlak is groter dan {CHECKS_LARGE_AREA} m2. De kans is groot dat dit vlak aangesloten is op meerdere stelseltypen. Controleer en corrigeer dit wanneer nodig."
@@ -893,7 +1028,6 @@ class InloopTool:
             area = geom.GetArea()
             if area > CHECKS_LARGE_AREA: # value in m2
                 fid += 1
-                #print("gevonden")
                 check_feature = ogr.Feature(feature_defn)
                 check_feature.SetGeometry(geom.Clone())
                 check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
@@ -903,9 +1037,7 @@ class InloopTool:
                 check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"")
                 check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,str(round(area,2)))
                 check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_large_area)
-                #print("fields set")
                 checks_table.CreateFeature(check_feature)
-                #print("feature created")
                 check_feature = None  # Cleanup after creating the feature
                 
         

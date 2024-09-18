@@ -91,6 +91,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
+        self.leidingcodes_koppelen.setChecked(KOPPEL_LEIDINGCODES)
         
         # Run button default disable
         self.pushButtonRun.setEnabled(False)

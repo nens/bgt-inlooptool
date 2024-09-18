@@ -25,7 +25,6 @@
 import os.path
 import sys
 import json
-import time #TO DO: aan het eind verwijderen
 import urllib.parse
 
 
@@ -155,7 +154,7 @@ class InloopToolTask(QgsTask):
             self.increase_progress()
                        
             #print("alleen nog opslaan")
-            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_import_testing.gpkg"
+            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_connecting_codes_testing.gpkg"
             #self.it._database._save_to_gpkg_test(output_path)
             
             QgsMessageLog.logMessage(
@@ -359,131 +358,127 @@ class NetworkTask(QgsTask):
         self.extent_geometry_wkt = extent_geometry_wkt
         self.layer_name = layer_name
         self.nam = QNetworkAccessManager()  # Create a network access manager
-    
-    def wkt_to_bbox(self):
-        # Format the BBOX string
-        bbox = f"{self.extent_bbox.xMinimum()},{self.extent_bbox.yMinimum()},{self.extent_bbox.xMaximum()},{self.extent_bbox.yMaximum()}"
-        return bbox
-    
-    def geojson_to_wkt(self,geojson):
-        geom = ogr.CreateGeometryFromJson(str(geojson))
-        return geom.ExportToWkt()
-    
+        
     def run(self):
+        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
+        bbox = self.wkt_to_bbox()
+        all_features = self.fetch_all_features(bbox)
+        self.save_features_to_gpkg(all_features, extent_geometry)
+        return True
+    
+    def fetch_all_features(self, bbox):
         not_all_features_found = True
         index = 0
-        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
-        
-        print("Making bounding box for downlaod")
-        bbox = self.wkt_to_bbox()
-        
         all_features = []
-        
-        print("Saving json features within BBox to memory")
+    
+        print("Fetching features within BBox")
         while not_all_features_found:
             request_url = self.url + f"&startIndex={index}" + f"&BBOX={bbox}"
-            request = QNetworkRequest(QUrl(request_url))
-            reply = self.nam.get(request)
-            
-            # Wait for the request to complete
-            loop = QEventLoop()
-            reply.finished.connect(loop.quit)
-            loop.exec_()
-            
-            response_text = reply.readAll().data().decode("utf-8")
-            data = json.loads(response_text)  # Load JSON data
+            response_text = self.make_request(request_url, "")
+            data = json.loads(response_text)
             
             all_features.extend(data['features'])
             
-            # Check if all features have been retrieved
             if len(data['features']) < 1000:
                 not_all_features_found = False
             else:
                 index += 1000
         
+        return all_features
+    
+    def make_request(self, url,gemeente):
+        request = QNetworkRequest(QUrl(url))
+        reply = self.nam.get(request)
         
-        print("Saving json features in memory to gpkg")
-        # Set up the driver for the GeoPackage
+        loop = QEventLoop()
+        reply.finished.connect(loop.quit)
+        loop.exec_()
+        
+        response_text = reply.readAll().data().decode("utf-8")
+        if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 404:
+            print(f"Error 404: {gemeente} not found.")
+            return None
+        
+        return response_text
+    
+    def save_features_to_gpkg(self, all_features, extent_geometry):
+        print("Saving features to GeoPackage")
+        
         driver = ogr.GetDriverByName("GPKG")
-        # Create the GeoPackage
         if os.path.exists(self.output_gpkg):
             driver.DeleteDataSource(self.output_gpkg)
         datasource = driver.CreateDataSource(self.output_gpkg)
         
-        # Define the spatial reference for EPSG:28992
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(28992)
         
-        # Download GWSW data from the GWSW server using municipitality names
         if self.layer_name != "bag_panden":
-            all_gemeentes = all_features
-            selection_gemeentes =[]
-            all_features =[]
+            all_features = self.filter_features_by_extent(all_features, extent_geometry)
+            all_features = self.fetch_gwsw_data(all_features)
+    
+        layer_out = self.create_layer(datasource, srs)
+        self.add_features_to_layer(layer_out, all_features, extent_geometry)
+        
+        datasource = None
+    
+    def filter_features_by_extent(self, all_features, extent_geometry):
+        selection_gemeentes = []
+        
+        for feature in all_features:
+            geometry_wkt = self.geojson_to_wkt(feature['geometry'])
+            geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
+            if extent_geometry.Intersects(geojson_geom):
+                selection_gemeentes.append(feature['properties']['naam'])
+        
+        return selection_gemeentes
+    
+    def fetch_gwsw_data(self, selection_gemeentes):
+        all_features = []
+        
+        for gemeente_name in selection_gemeentes:
+            gemeente_name = gemeente_name.title().replace(" ", "").replace("-", "")
+            not_all_features_found = True
+            index = 0
+            print(f"Extracting data for gemeente {gemeente_name}")
             
-            # Find features outside the extent to delete
-            for feature in all_gemeentes:
-                geometry_wkt = self.geojson_to_wkt(feature['geometry'])
-                geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
-                if extent_geometry.Intersects(geojson_geom):
-                    selection_gemeentes.append(feature['properties']['naam'])
-            
-            for feature in selection_gemeentes:
-                gemeente_name = feature
-                gemeente_name = gemeente_name.title()
-                gemeente_name = gemeente_name.replace(" ", "").replace("-", "") #To do: dit werkt nu nog niet goed, bijv. voor 's-Gravenhage (gemeentenaam), maar DenHaag in GWSW 
-                not_all_features_found = True
-                index = 0
-                print(f"Extract data: gemeente {gemeente_name}")
-                while not_all_features_found:
-                    if index == 0: 
-                        request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"
-                    else:
-                        request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"+ f"&startIndex={index}"
-                    request = QNetworkRequest(QUrl(request_url))
-                    reply = self.nam.get(request)
-                    
-                    # Wait for the request to complete
-                    loop = QEventLoop()
-                    reply.finished.connect(loop.quit)
-                    loop.exec_()
-                    
-                    response_text = reply.readAll().data().decode("utf-8")
-                    if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 404:
-                        print(f"Error 404: {gemeente_name} not found in GWSW dataset. Skipping to next.")
-                        NOT_FOUND_GEMEENTES.append(gemeente_name)
-                        break
-                    
-                    data = json.loads(response_text)  # Load JSON data
-                    
-                    all_features.extend(data['features'])
-                    
-                    # Check if all features have been retrieved
-                    if len(data['features']) < 1000:
-                        not_all_features_found = False
-                    else:
-                        index += 1000
-
-        # Create a new layer in the GeoPackage
+            while not_all_features_found:
+                request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
+                response_text = self.make_request(request_url,gemeente_name)
+                
+                if response_text is None:
+                    NOT_FOUND_GEMEENTES.append(gemeente_name)
+                    break
+                
+                data = json.loads(response_text)
+                all_features.extend(data['features'])
+                
+                if len(data['features']) < 1000:
+                    not_all_features_found = False
+                else:
+                    index += 1000
+        
+        return all_features
+    
+    def create_layer(self, datasource, srs):
         if self.layer_name == "bag_panden":
-            layer_out = datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbPolygon, srs=srs)
-        else: 
-            layer_out = datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbMultiLineString, srs=srs)
+            return datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbPolygon, srs=srs)
+        else:
+            return datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbMultiLineString, srs=srs)
+    
+    def add_features_to_layer(self, layer_out, all_features, extent_geometry):
+        if not all_features:
+            return
         
-        # Define the schema based on the first feature (if available)
-        if all_features:
-            feature_example = all_features[0]
-            feature_fields = list(feature_example['properties'].keys())
-            
-            # Create fields in the layer
-            for field_name in feature_fields:
-                field_defn = ogr.FieldDefn(field_name, ogr.OFTString)  # Adjust field type as needed
-                layer_out.CreateField(field_defn)
+        feature_example = all_features[0]
+        feature_fields = list(feature_example['properties'].keys())
         
-        # Get the output layer definition
+        for field_name in feature_fields:
+            field_defn = ogr.FieldDefn(field_name, ogr.OFTString)  # Adjust field type as needed
+            layer_out.CreateField(field_defn)
+        
         layer_defn = layer_out.GetLayerDefn()
         
-        print("Writing to geopackage")
-        # Loop through the features and add them to the GeoPackage layer
+        print("Writing features to GeoPackage")
         for feature_data in all_features:
             geometry_wkt = self.geojson_to_wkt(feature_data['geometry'])
             geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
@@ -496,18 +491,17 @@ class NetworkTask(QgsTask):
                     field_index = layer_defn.GetFieldIndex(field_name)
                     if field_index != -1:
                         out_feature.SetField(field_name, field_value)
-                    #else:
-                        #print(f"Warning: Field '{field_name}' does not exist in the layer schema.")
                 layer_out.CreateFeature(out_feature)
                 out_feature = None
-
-        # Clean up
-        datasource = None
-        all_features = None
-        reply.deleteLater()
     
-        return True
-
+    def wkt_to_bbox(self):
+        # Format the BBOX string
+        bbox = f"{self.extent_bbox.xMinimum()},{self.extent_bbox.yMinimum()},{self.extent_bbox.xMaximum()},{self.extent_bbox.yMaximum()}"
+        return bbox
+    
+    def geojson_to_wkt(self,geojson):
+        geom = ogr.CreateGeometryFromJson(str(geojson))
+        return geom.ExportToWkt()
 
 class BGTInloopTool:
     """QGIS Plugin Implementation."""
@@ -645,6 +639,7 @@ class BGTInloopTool:
         self.dlg.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.dlg.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         self.dlg.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
+        self.dlg.leidingcodes_koppelen.setChecked(KOPPEL_LEIDINGCODES)
     
     def validate_extent_layer(self, extent_layer):
 
@@ -855,42 +850,6 @@ class BGTInloopTool:
                 level=Qgis.Warning,
                 duration=20,
             )
-    
-    def download_gwsw_from_api_old(self): #TO DO: Verwijderen!
-
-        # Input settings
-        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
-        extent_geometry_wkt = self.validate_extent_layer(extent_layer)
-        extent_bbox = extent_layer.extent()
-        output_gpkg = self.dlg.gwswApiOutput.filePath()
-        
-        self.iface.messageBar().pushMessage(
-            MESSAGE_CATEGORY,
-            f"Begonnen met downloaden van GWSW leidingen naar {output_gpkg}",
-            level=Qgis.Info,
-            duration=5,
-        )
-        
-        # Perform download
-        task = NetworkTask(GWSW_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"default_lijn")
-        QgsApplication.taskManager().addTask(task)
-        
-        self.iface.messageBar().pushMessage(
-            MESSAGE_CATEGORY,
-            f'GWSW leidingen gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
-            level=Qgis.Info,
-            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
-        )
-        
-        # Change UI
-        output_file = self.dlg.gwswApiOutput.filePath()
-        self.dlg.pipe_file.setFilePath(output_file)
-        self.dlg.inputExtentComboBox.setLayer(extent_layer)
-        self.dlg.inputExtentComboBox.setEnabled(True)
-        self.dlg.inputExtentGroupBox.setChecked(True)
-        
-        # Save download in settings of run
-        self.download_gwsw = True
         
     
     def download_bag_from_api(self):
@@ -962,6 +921,7 @@ class BGTInloopTool:
             max_afstand_afgekoppeld=self.dlg.max_afstand_afgekoppeld.value(),
             max_afstand_drievoudig=self.dlg.max_afstand_drievoudig.value(),
             afkoppelen_hellende_daken=self.dlg.afkoppelen_hellende_daken.isChecked(),
+            leidingcodes_koppelen=self.dlg.leidingcodes_koppelen.isChecked(),
             gebruik_bag=building_file != "",
             gebruik_kolken=kolken_file != "",
             gebruik_resultaten=results_file != "",

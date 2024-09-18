@@ -22,6 +22,7 @@ surfaces_table_fields = {
 }
 for dist_type in DISTANCE_TYPES:
     surfaces_table_fields["distance_" + dist_type] = ogr.OFTReal
+    surfaces_table_fields["code_" + dist_type] = ogr.OFTString 
 del dist_type
 
 SURFACES_TABLE_SCHEMA = TableSchema(
@@ -43,10 +44,11 @@ RESULT_TABLE_SCHEMA = TableSchema(
         # RESULT_TABLE_FIELD_BERGING_DAK: ogr.OFTReal,
         RESULT_TABLE_FIELD_TYPE_PRIVATE_VOORZIENING: ogr.OFTString,
         RESULT_TABLE_FIELD_BERGING_PRIVATE_VOORZIENING: ogr.OFTReal,
-        RESULT_TABLE_FIELD_CODE_VOORZIENING: ogr.OFTString,
-        RESULT_TABLE_FIELD_PUTCODE: ogr.OFTString,
-        RESULT_TABLE_FIELD_LEIDINGCODE: ogr.OFTString,
-        TARGET_TYPE_GEMENGD_RIOOL: ogr.OFTReal,
+	RESULT_TABLE_FIELD_CODE_GEMENGD: ogr.OFTString,
+	RESULT_TABLE_FIELD_CODE_HWA: ogr.OFTString,
+	RESULT_TABLE_FIELD_CODE_DWA: ogr.OFTString,
+	RESULT_TABLE_FIELD_CODE_INFILTRATIE: ogr.OFTString,
+	TARGET_TYPE_GEMENGD_RIOOL: ogr.OFTReal,
         TARGET_TYPE_HEMELWATERRIOOL: ogr.OFTReal,
         TARGET_TYPE_VGS_HEMELWATERRIOOL: ogr.OFTReal,
         TARGET_TYPE_VUILWATERRIOOL: ogr.OFTReal,
