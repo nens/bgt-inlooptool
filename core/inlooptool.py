@@ -635,125 +635,6 @@ class InloopTool:
         self._database.bgt_surfaces.ResetReading()
         self._database.bgt_surfaces.SetSpatialFilter(None)
 
-    def calculate_distances_old(self, parameters):
-        """
-        For all BGT Surfaces, calculate the distance to:
-         * the nearest pipe of each type
-         * nearest water surface
-         * nearest kolk (sewer gully)
-
-        :param parameters: input parameters
-        :return: None
-        """
-        self.parameters = parameters
-        self._database.pipes.ResetReading()
-        self._database.pipes.SetSpatialFilter(None)
-        self._database.bgt_surfaces.ResetReading()
-        self._database.bgt_surfaces.SetSpatialFilter(None)
-
-        if self.parameters.gebruik_kolken:
-            self._database.kolken.ResetReading()
-            self._database.kolken.SetSpatialFilter(None)
-
-        surface_water_buffer_dist = max(
-            [parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater]
-        )
-        #print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
-
-        # Distance to pipes
-        for surface in self._database.bgt_surfaces:
-            if not surface:
-                print("surface invalid")
-                continue
-
-            surface_geom = surface.geometry().Clone()
-            surface_geom_buffer_afwateringsvoorziening = surface_geom.Buffer(
-                parameters.max_afstand_vlak_afwateringsvoorziening
-            )
-
-            distances = {}
-            for pipe_id in self._database.pipes_idx.intersection(
-                surface_geom_buffer_afwateringsvoorziening.GetEnvelope()
-            ):
-                pipe = self._database.pipes.GetFeature(pipe_id)
-                pipe_geom = pipe.geometry().Clone()
-                if pipe_geom.Intersects(surface_geom_buffer_afwateringsvoorziening):
-                    internal_pipe_type = pipe[INTERNAL_PIPE_TYPE_FIELD]
-                    if internal_pipe_type != INTERNAL_PIPE_TYPE_IGNORE:
-                        if (
-                            internal_pipe_type not in distances.keys()
-                        ):  # Leiding van dit type is nog niet langsgekomen
-                            distances[internal_pipe_type] = pipe_geom.Distance(
-                                surface_geom
-                            )
-                        else:
-                            if distances[internal_pipe_type] > pipe_geom.Distance(
-                                surface_geom
-                            ):
-                                distances[internal_pipe_type] = pipe_geom.Distance(
-                                    surface_geom
-                                )
-
-            # Distance to water surface
-            if surface.surface_type != SURFACE_TYPE_WATERDEEL:
-                surface_geom_buffer_surface_water = surface_geom.Buffer(
-                    surface_water_buffer_dist
-                )
-                min_water_distance = PSEUDO_INFINITE
-
-                for surface_id in self._database.bgt_surfaces_idx.intersection(
-                    surface_geom_buffer_surface_water.GetEnvelope()
-                ):
-                    neighbour_surface = self._database.bgt_surfaces.GetFeature(
-                        surface_id
-                    )
-                    if neighbour_surface.surface_type == SURFACE_TYPE_WATERDEEL:
-                        water_geom = neighbour_surface.geometry().Clone()
-                        if water_geom.Intersects(surface_geom_buffer_surface_water):
-                            dist_to_this_water_surface = water_geom.Distance(
-                                surface_geom
-                            )
-                            if dist_to_this_water_surface < min_water_distance:
-                                min_water_distance = dist_to_this_water_surface
-
-                # add to dict
-                distances[OPEN_WATER] = min_water_distance
-
-            # Distance to kolk
-            if self.parameters.gebruik_kolken:
-                if surface.surface_type in KOLK_CONNECTABLE_SURFACE_TYPES:
-                    surface_geom_buffer_kolk = surface_geom.Buffer(
-                        parameters.max_afstand_vlak_kolk
-                    )
-                    min_kolk_distance = PSEUDO_INFINITE
-
-                    for kolk_id in self._database.kolken_idx.intersection(
-                        surface_geom_buffer_kolk.GetEnvelope()
-                    ):
-                        kolk = self._database.kolken.GetFeature(kolk_id)
-                        kolk_geom = kolk.geometry().Clone()
-                        if kolk_geom.Intersects(surface_geom_buffer_kolk):
-                            dist_to_this_kolk = kolk_geom.Distance(surface_geom)
-                            if dist_to_this_kolk < min_kolk_distance:
-                                min_kolk_distance = dist_to_this_kolk
-
-                    # add to dict
-                    distances[KOLK] = min_kolk_distance
-
-            # Write distances to surfaces layer
-            for distance_type in DISTANCE_TYPES:
-
-                if distance_type in distances:
-                    if distances[distance_type] == PSEUDO_INFINITE:
-                        distances[distance_type] = None
-                    surface["distance_" + distance_type] = distances[distance_type]
-
-            self._database.bgt_surfaces.SetFeature(surface)
-            surface = None
-
-        self._database.bgt_surfaces.ResetReading()
-        self._database.bgt_surfaces.SetSpatialFilter(None)
-
     def calculate_runoff_targets(self):
         """
         Fill the 'target type' columns of the result table
@@ -823,18 +704,112 @@ class InloopTool:
     
             result_table.CreateFeature(feature)
             feature = None
-            
+    """ TO DO: verwijderen!
+    def get_nearest_pipe_code(self,feature, pipe_type_field): #To do: spatial indexing beter? Pipe type field --> ??
+        nearest_pipe_code = None
+        nearest_pipe_distance = float('inf')
+        
+        # Get the geometry of the feature to compare with pipes
+        feature_geom = feature.GetGeometryRef()
+        
+        # Iterate over all pipes
+        for pipe in pipes_table:
+            # Check if this pipe matches the required type
+            if pipe.GetField(pipe_type_field) > 0:
+                pipe_geom = pipe.GetGeometryRef()
+                
+                # Calculate the distance between the feature and the pipe
+                distance = feature_geom.Distance(pipe_geom)
+                
+                # Update if this pipe is the closest
+                if distance < nearest_pipe_distance:
+                    nearest_pipe_distance = distance
+                    nearest_pipe_code = pipe.GetField('naam')  # Replace with the actual pipe code field name
+        
+        return nearest_pipe_code
+    """
+    def get_nearest_pipe_code(self,feature):
+        surface_geom = feature.geometry().Clone()
+        surface_geom_buffer_afwateringsvoorziening = surface_geom.Buffer(
+            self.parameters.max_afstand_vlak_afwateringsvoorziening
+        )
+    
+        distances = {}
+        for pipe_id in self._database.pipes_idx.intersection(
+            surface_geom_buffer_afwateringsvoorziening.GetEnvelope()
+        ):
+            pipe = self._database.pipes.GetFeature(pipe_id)
+            pipe_geom = pipe.geometry().Clone()
+            if pipe_geom.Intersects(surface_geom_buffer_afwateringsvoorziening):
+                internal_pipe_type = pipe[INTERNAL_PIPE_TYPE_FIELD]
+                if internal_pipe_type != INTERNAL_PIPE_TYPE_IGNORE:
+                    if (
+                        internal_pipe_type not in distances.keys()
+                    ):  # Leiding van dit type is nog niet langsgekomen
+                        distances[internal_pipe_type] = {"distance": pipe_geom.Distance(surface_geom),
+                                                         "leidingcode": pipe["naam"]
+                                                         }
+                    else:
+                        if distances[internal_pipe_type]["distance"] > pipe_geom.Distance(
+                            surface_geom
+                        ):
+                            distances[internal_pipe_type] = {"distance": pipe_geom.Distance(surface_geom),
+                                                             "leidingcode": pipe["naam"]
+                                                             }
+        pipe = None
+        return distances                    
+    
     def overwrite_by_manual_edits(self):
         result_table = self._database.result_table
         manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
-        
         records_to_delete = []
 
         # Iterate over each feature in manual_results_prev
         if manual_results_prev is None:
             print("No manual edits to keep.")
         else:
+            pipes_table = self._database.pipes   
             for prev_feat in manual_results_prev:
+                #Assign pipe codes to manual edits
+                feature_id = prev_feat.GetFID()
+                feature = manual_results_prev.GetFeature(feature_id)
+                distances = self.get_nearest_pipe_code(prev_feat)
+                
+                # Assign the correct code based on the type of the pipe
+                if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
+                    if INTERNAL_PIPE_TYPE_GEMENGD_RIOOL in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"]
+                        feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, nearest_code)
+                    else:
+                        print(f"No mixed sewerage pipe found within max. search distance for feature {feature.GetFID()}")
+                
+                if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
+                    if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL): 
+                        if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
+                            nearest_code = distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"]
+                            feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, nearest_code)
+                        else: 
+                            print(f"No rainwater pipe found within max. search distance for feature {feature.GetFID()}")
+                    elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"]
+                        feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, nearest_code)
+                    else:
+                        print(f"No VGS rainwater pipe found within max. search distance for feature {feature.GetFID()}")
+                    
+                if feature.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0: 
+                    if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"]
+                        feature.SetField(RESULT_TABLE_FIELD_CODE_DWA, nearest_code)
+                    else: 
+                        print(f"No waste water pipe found within max. search distance for feature {feature.GetFID()}")
+
+                if feature.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
+                    if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"]
+                        feature.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, nearest_code)
+                    else: 
+                        print(f"No infiltration pipe found within max. search distance for feature {feature.GetFID()}")    
+                
                 # Get the key value from manual_results_prev
                 key_field = "bgt_identificatie"
                 key_value = prev_feat.GetField(key_field)
@@ -850,9 +825,10 @@ class InloopTool:
             
                 # Remove the filter
                 result_table.SetAttributeFilter(None)
+                prev_feat = None
             
-                # Copy the feature from manual_results_prev to result_table
-                self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
+            # Copy the feature from manual_results_prev to result_table
+            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
             
             # Delete the records in result_table that matched
             for fid in records_to_delete:
