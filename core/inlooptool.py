@@ -762,6 +762,170 @@ class InloopTool:
     def overwrite_by_manual_edits(self):
         result_table = self._database.result_table
         manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
+    
+        if manual_results_prev is None:
+            print("No manual edits to keep.")
+            return
+    
+        records_to_delete = []
+        features_to_update = []
+    
+        # Iterate over each feature in manual_results_prev
+        for count, prev_feat in enumerate(manual_results_prev, 1):
+            print(count)  # Optional logging, can be removed
+    
+            distances = self.get_nearest_pipe_code(prev_feat)
+    
+            # Assign the correct code based on the type of the pipe
+            if prev_feat.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
+                if INTERNAL_PIPE_TYPE_GEMENGD_RIOOL in distances:
+                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"])
+                else:
+                    print(f"No mixed sewerage pipe found for prev_feat {prev_feat.GetFID()}")
+    
+            elif (prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0):
+                if prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
+                    if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"])
+                    else:
+                        print(f"No rainwater pipe found for prev_feat {prev_feat.GetFID()}")
+                elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
+                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"])
+                else:
+                    print(f"No VGS rainwater pipe found for prev_feat {prev_feat.GetFID()}")
+    
+            elif prev_feat.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
+                if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
+                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_DWA, distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"])
+                else:
+                    print(f"No waste water pipe found for prev_feat {prev_feat.GetFID()}")
+    
+            elif prev_feat.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
+                if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
+                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"])
+                else:
+                    print(f"No infiltration pipe found for prev_feat {prev_feat.GetFID()}")
+    
+            # Collect the features for batch processing
+            features_to_update.append(prev_feat)
+    
+            # Mark records in result_table for deletion based on matching key field
+            key_value = prev_feat.GetField("bgt_identificatie")
+            result_table.SetAttributeFilter(f"bgt_identificatie = '{key_value}'")
+            for result_feat in result_table:
+                records_to_delete.append(result_feat.GetFID())
+            result_table.SetAttributeFilter(None)  # Clear the filter for next iteration
+    
+        # Batch delete records
+        if records_to_delete:
+            for fid in records_to_delete:
+                result_table.DeleteFeature(fid)
+    
+        # Batch update manual_results_prev in result_table
+        if features_to_update:
+            for feat in features_to_update:
+                manual_results_prev.SetFeature(feat)
+    
+            # Copy features from manual_results_prev to result_table
+            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
+    
+        # Sync the changes to disk
+        result_table.SyncToDisk()
+    
+    
+    def overwrite_by_manual_edits_old2(self): #toDo verwijderen
+        result_table = self._database.result_table
+        manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
+        
+        records_to_delete = []
+        count = 0
+
+        # Iterate over each feature in manual_results_prev
+        if manual_results_prev is None:
+            print("No manual edits to keep.")
+        else:
+            for prev_feat in manual_results_prev:
+                count+= 1
+                print(count)
+                distances = self.get_nearest_pipe_code(prev_feat)
+                
+                # Assign the correct code based on the type of the pipe
+                if prev_feat.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
+                    if INTERNAL_PIPE_TYPE_GEMENGD_RIOOL in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"]
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, nearest_code)
+                    else:
+                        print(f"No mixed sewerage pipe found within max. search distance for prev_feat {prev_feat.GetFID()}")
+                
+                if prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
+                    if prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL): 
+                        if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
+                            nearest_code = distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"]
+                            prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, nearest_code)
+                        else: 
+                            print(f"No rainwater pipe found within max. search distance for prev_feat {prev_feat.GetFID()}")
+                    elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"]
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, nearest_code)
+                    else:
+                        print(f"No VGS rainwater pipe found within max. search distance for prev_feat {prev_feat.GetFID()}")
+                    
+                if prev_feat.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0: 
+                    if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"]
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_DWA, nearest_code)
+                    else: 
+                        print(f"No waste water pipe found within max. search distance for prev_feat {prev_feat.GetFID()}")
+                
+                if prev_feat.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
+                    if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
+                        nearest_code = distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"]
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, nearest_code)
+                    else: 
+                        print(f"No infiltration pipe found within max. search distance for prev_feat {prev_feat.GetFID()}")      
+                
+                # Update the feature in the prev results_table
+                manual_results_prev.SetFeature(prev_feat)
+                #for feature in manual_results_prev:
+                #    print(feature)  # Assuming the table's records are feature-like objects
+        if manual_results_prev is None:
+            print("No manual edits to keep.")
+        else:
+            for prev_feat in manual_results_prev:
+                # Get the key value from manual_results_prev
+                key_field = "bgt_identificatie"
+                key_value = prev_feat.GetField(key_field)
+                # Build a query to find matching records in result_table
+                query = f"{key_field} = '{key_value}'"
+            
+                # Set a filter on result_table to find the matching record
+                result_table.SetAttributeFilter(query)
+            
+                # If a match is found, mark the current record for deletion
+                for result_feat in result_table:
+                    records_to_delete.append(result_feat.GetFID())
+            
+                # Remove the filter
+                result_table.SetAttributeFilter(None)
+             
+            # Iterate through the features/records in the table and print them
+            #for feature in manual_results_prev:
+            #    print(feature)  # Assuming the table's records are feature-like objects
+            
+            # Delete the records in result_table that matched
+            for fid in records_to_delete:
+                print(f"deleting record with fid {fid}")
+                result_table.DeleteFeature(fid)
+            
+            # Copy the feature from manual_results_prev to result_table
+            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
+            
+            # Sync the data to disk
+            result_table.SyncToDisk()
+    
+    def overwrite_by_manual_edits_old(self): #To do: later verwijderen!
+        result_table = self._database.result_table
+        manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
         records_to_delete = []
 
         # Iterate over each feature in manual_results_prev
@@ -771,45 +935,13 @@ class InloopTool:
             pipes_table = self._database.pipes   
             for prev_feat in manual_results_prev:
                 #Assign pipe codes to manual edits
-                feature_id = prev_feat.GetFID()
-                feature = manual_results_prev.GetFeature(feature_id)
-                distances = self.get_nearest_pipe_code(prev_feat)
+                #feature_id = prev_feat.GetFID()
+                #feature = manual_results_prev.GetFeature(feature_id)
+                feature = prev_feat
+            
                 
-                # Assign the correct code based on the type of the pipe
-                if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
-                    if INTERNAL_PIPE_TYPE_GEMENGD_RIOOL in distances:
-                        nearest_code = distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"]
-                        feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, nearest_code)
-                    else:
-                        print(f"No mixed sewerage pipe found within max. search distance for feature {feature.GetFID()}")
-                
-                if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
-                    if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL): 
-                        if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
-                            nearest_code = distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"]
-                            feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, nearest_code)
-                        else: 
-                            print(f"No rainwater pipe found within max. search distance for feature {feature.GetFID()}")
-                    elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
-                        nearest_code = distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"]
-                        feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, nearest_code)
-                    else:
-                        print(f"No VGS rainwater pipe found within max. search distance for feature {feature.GetFID()}")
-                    
-                if feature.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0: 
-                    if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
-                        nearest_code = distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"]
-                        feature.SetField(RESULT_TABLE_FIELD_CODE_DWA, nearest_code)
-                    else: 
-                        print(f"No waste water pipe found within max. search distance for feature {feature.GetFID()}")
-
-                if feature.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
-                    if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
-                        nearest_code = distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"]
-                        feature.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, nearest_code)
-                    else: 
-                        print(f"No infiltration pipe found within max. search distance for feature {feature.GetFID()}")    
-                
+                print(feature)
+                feature = None 
                 # Get the key value from manual_results_prev
                 key_field = "bgt_identificatie"
                 key_value = prev_feat.GetField(key_field)
@@ -827,8 +959,9 @@ class InloopTool:
                 result_table.SetAttributeFilter(None)
                 prev_feat = None
             
-            # Copy the feature from manual_results_prev to result_table
-            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
+            
+                # Copy the feature from manual_results_prev to result_table
+                self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
             
             # Delete the records in result_table that matched
             for fid in records_to_delete:
@@ -1679,6 +1812,7 @@ class Database:
         except Exception as e:
             print(f"An error occurred: {e}")
           
+    
     def _write_to_disk(self, dst_gpkg, db_layer_name, dst_layer_name):
         """Copy self.mem_database to file_path"""
         # Get the source layer from the memory database
@@ -1732,7 +1866,7 @@ class Database:
         # SQL statements to create the triggers
         sql_time_last_change = """
         CREATE TRIGGER update_laaste_wijziging_on_update AFTER UPDATE
-        OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, code_voorziening, putcode, leidingcode, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
+        OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, leidingcode_gemengd, leidingcode_hwa, leidingcode_dwa, leidingcode_infiltratie, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
         ON "4. BGT inlooptabel"
         FOR EACH ROW
         BEGIN
@@ -1742,7 +1876,7 @@ class Database:
         
         sql_changed_tf = """
         CREATE TRIGGER update_wijziging_on_update AFTER UPDATE
-        OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, code_voorziening, putcode, leidingcode, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
+        OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, leidingcode_gemengd, leidingcode_hwa, leidingcode_dwa, leidingcode_infiltratie, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
         ON "4. BGT inlooptabel"
         FOR EACH ROW
         BEGIN
