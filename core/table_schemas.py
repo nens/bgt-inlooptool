@@ -89,6 +89,7 @@ SETTINGS_TABLE_SCHEMA = TableSchema(
         SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_HALF_VERHARD: ogr.OFTReal,
         SETTINGS_TABLE_FIELD_AFKOPPELEN_HELLEND: ogr.OFTReal,
         SETTINGS_TABLE_FIELD_BOUWJAAR_GESCHEIDEN_BINNENHUIS: ogr.OFTInteger,
+	SETTINGS_TABLE_FIELD_LEIDINGCODES_KOPPELEN: ogr.OFTReal,
     },
     primary_key="run_id",
     geometry_column="", #settings table has no geometry

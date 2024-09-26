@@ -206,6 +206,9 @@ class InloopTool:
         feature.SetField(
             SETTINGS_TABLE_FIELD_BOUWJAAR_GESCHEIDEN_BINNENHUIS, self.parameters.bouwjaar_gescheiden_binnenhuisriolering
         )
+        feature.SetField(
+            SETTINGS_TABLE_FIELD_LEIDINGCODES_KOPPELEN, self.parameters.leidingcodes_koppelen
+        )
         
         settings_table.CreateFeature(feature)
         feature = None
@@ -635,7 +638,7 @@ class InloopTool:
         self._database.bgt_surfaces.ResetReading()
         self._database.bgt_surfaces.SetSpatialFilter(None)
 
-    def calculate_runoff_targets(self):
+    def calculate_runoff_targets(self,leidingcode_koppelen):
         """
         Fill the 'target type' columns of the result table
         Import BGT Surfaces and Pipes to _database first
@@ -689,19 +692,19 @@ class InloopTool:
             # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
             for tt in TARGET_TYPES:
                 feature.SetField(tt, afwatering[tt])
-            
-            if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
-                feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, surface["code_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL])
-            if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
-                if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) >feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
-                    feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, surface["code_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL])
-                else:
-                    feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, surface["code_" + INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL])
-            if feature.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
-                feature.SetField(RESULT_TABLE_FIELD_CODE_DWA, surface["code_" + INTERNAL_PIPE_TYPE_VUILWATERRIOOL])
-            if feature.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
-                feature.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, surface["code_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING])
-    
+            if leidingcode_koppelen:
+                if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
+                    feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, surface["code_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL])
+                if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
+                    if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) >feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
+                        feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, surface["code_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL])
+                    else:
+                        feature.SetField(RESULT_TABLE_FIELD_CODE_HWA, surface["code_" + INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL])
+                if feature.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
+                    feature.SetField(RESULT_TABLE_FIELD_CODE_DWA, surface["code_" + INTERNAL_PIPE_TYPE_VUILWATERRIOOL])
+                if feature.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
+                    feature.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, surface["code_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING])
+        
             result_table.CreateFeature(feature)
             feature = None
     """ TO DO: verwijderen!
@@ -759,52 +762,51 @@ class InloopTool:
         pipe = None
         return distances                    
     
-    def overwrite_by_manual_edits(self):
+    def overwrite_by_manual_edits(self,leidingcode_koppelen):
         result_table = self._database.result_table
         manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
     
         if manual_results_prev is None:
             print("No manual edits to keep.")
             return
-    
+        
         records_to_delete = []
         features_to_update = []
     
         # Iterate over each feature in manual_results_prev
         for count, prev_feat in enumerate(manual_results_prev, 1):
-            print(count)  # Optional logging, can be removed
-    
-            distances = self.get_nearest_pipe_code(prev_feat)
-    
-            # Assign the correct code based on the type of the pipe
-            if prev_feat.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
-                if INTERNAL_PIPE_TYPE_GEMENGD_RIOOL in distances:
-                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"])
-                else:
-                    print(f"No mixed sewerage pipe found for prev_feat {prev_feat.GetFID()}")
-    
-            elif (prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0):
-                if prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
-                    if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
-                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"])
+            if leidingcodes_koppelen:
+                distances = self.get_nearest_pipe_code(prev_feat)
+        
+                # Assign the correct code based on the type of the pipe
+                if prev_feat.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
+                    if INTERNAL_PIPE_TYPE_GEMENGD_RIOOL in distances:
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"])
                     else:
-                        print(f"No rainwater pipe found for prev_feat {prev_feat.GetFID()}")
-                elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
-                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"])
-                else:
-                    print(f"No VGS rainwater pipe found for prev_feat {prev_feat.GetFID()}")
-    
-            elif prev_feat.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
-                if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
-                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_DWA, distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"])
-                else:
-                    print(f"No waste water pipe found for prev_feat {prev_feat.GetFID()}")
-    
-            elif prev_feat.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
-                if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
-                    prev_feat.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"])
-                else:
-                    print(f"No infiltration pipe found for prev_feat {prev_feat.GetFID()}")
+                        print(f"No mixed sewerage pipe found for prev_feat {prev_feat.GetFID()}")
+        
+                elif (prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0):
+                    if prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
+                        if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
+                            prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"])
+                        else:
+                            print(f"No rainwater pipe found for prev_feat {prev_feat.GetFID()}")
+                    elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_HWA, distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"])
+                    else:
+                        print(f"No VGS rainwater pipe found for prev_feat {prev_feat.GetFID()}")
+        
+                elif prev_feat.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
+                    if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_DWA, distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"])
+                    else:
+                        print(f"No waste water pipe found for prev_feat {prev_feat.GetFID()}")
+        
+                elif prev_feat.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
+                    if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
+                        prev_feat.SetField(RESULT_TABLE_FIELD_CODE_INFILTRATIE, distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"])
+                    else:
+                        print(f"No infiltration pipe found for prev_feat {prev_feat.GetFID()}")
     
             # Collect the features for batch processing
             features_to_update.append(prev_feat)
@@ -820,7 +822,7 @@ class InloopTool:
         if records_to_delete:
             for fid in records_to_delete:
                 result_table.DeleteFeature(fid)
-    
+
         # Batch update manual_results_prev in result_table
         if features_to_update:
             for feat in features_to_update:
@@ -1769,7 +1771,7 @@ class Database:
             for db_layer, gpkg_layer in layers:
                 print(f"Saving {gpkg_layer} layer in gpkg")
                 self._write_to_disk(dst_gpkg, db_layer, gpkg_layer)
-                if db_layer == RESULT_TABLE_NAME:
+                if db_layer == RESULT_TABLE_NAME: #to do: hide leidingcode kolommen als niet leidingcodes_koppelen #to do: ook in temp laag!
                     self.track_changes(dst_gpkg)
            
         print("All layers saved successfully.")

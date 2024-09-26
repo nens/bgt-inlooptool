@@ -74,6 +74,15 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.stats_file.fileChanged.connect(self.validate)
         self.output_folder.fileChanged.connect(self.validate)
         self.outputFileGroupBox.clicked.connect(self.validate)
+        
+        self.bgtApiOutput.fileChanged.connect(self.validate_bgt)
+        self.BGTExtentCombobox.layerChanged.connect(self.validate_bgt)
+        
+        self.bagApiOutput.fileChanged.connect(self.validate_bag)
+        self.BGTExtentCombobox.layerChanged.connect(self.validate_bag)
+        
+        self.gwswApiOutput.fileChanged.connect(self.validate_gwsw)
+        self.BGTExtentCombobox.layerChanged.connect(self.validate_gwsw)
 
         # Setting defaults
         self.max_afstand_vlak_afwateringsvoorziening.setValue(
@@ -95,7 +104,13 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         
         # Run button default disable
         self.pushButtonRun.setEnabled(False)
+        self.pushButtonDownloadBGT.setEnabled(False)
+        self.pushButtonDownloadGWSW.setEnabled(False)
+        self.pushButtonDownloadBAG.setEnabled(False)
         self.validate()
+        self.validate_bgt()
+        self.validate_bag()
+        self.validate_gwsw()
 
         # Api's extract settings
         self.bgtApiOutput.setStorageMode(QgsFileWidget.SaveFile)
@@ -173,3 +188,48 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
                 valid = False
         
         self.pushButtonRun.setEnabled(valid)
+    
+    def validate_bgt(self):
+        valid = True
+        
+        extent_file = self.BGTExtentCombobox.currentText()
+        if extent_file == "":
+            valid = False
+        
+        bgt_file = self.bgtApiOutput.filePath()
+        if bgt_file == "":
+            valid = False
+        elif os.path.splitext(bgt_file)[1] != ".zip":
+            valid = False
+        
+        self.pushButtonDownloadBGT.setEnabled(valid)
+        
+    def validate_bag(self):
+        valid = True
+        
+        extent_file = self.BGTExtentCombobox.currentText()
+        if extent_file == "":
+            valid = False
+        
+        bag_file = self.bagApiOutput.filePath()
+        if bag_file == "":
+            valid = False
+        elif os.path.splitext(bag_file)[1] != ".gpkg":
+            valid = False
+        
+        self.pushButtonDownloadBAG.setEnabled(valid)
+        
+    def validate_gwsw(self):
+        valid = True
+        
+        extent_file = self.BGTExtentCombobox.currentText()
+        if extent_file == "":
+            valid = False
+        
+        gwsw_file = self.gwswApiOutput.filePath()
+        if gwsw_file == "":
+            valid = False
+        elif os.path.splitext(gwsw_file)[1] != ".gpkg":
+            valid = False
+        
+        self.pushButtonDownloadGWSW.setEnabled(valid)

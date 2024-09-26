@@ -77,6 +77,7 @@ BGT_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_oppervlakken.q
 STATS_STYLE = os.path.join(os.path.dirname(__file__), "style", "stats.qml")
 CHECKS_STYLE = os.path.join(os.path.dirname(__file__), "style", "checks.qml")
 GPKG_TEMPLATE = os.path.join(os.path.dirname(__file__), "style", "template_output.gpkg")
+GPKG_TEMPLATE_HIDDEN = os.path.join(os.path.dirname(__file__), "style", "template_output_hidden_fields.gpkg")
 
 class InloopToolTask(QgsTask):
     def __init__(
@@ -220,12 +221,12 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.calculate_runoff_targets()
+            self.it.calculate_runoff_targets(self.parameters.leidingcodes_koppelen)
             
             QgsMessageLog.logMessage(
                 "Keeping manual edit on BGT ID", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.overwrite_by_manual_edits()
+            self.it.overwrite_by_manual_edits(self.parameters.leidingcodes_koppelen)
             
             QgsMessageLog.logMessage(
                 "Updating type verharding for infiltrating pavement and green roofs if provided", MESSAGE_CATEGORY, level=Qgis.Info
@@ -255,8 +256,10 @@ class InloopToolTask(QgsTask):
                 QgsMessageLog.logMessage(
                     "Saving as gpkg", MESSAGE_CATEGORY, level=Qgis.Info
                 )
-                
-                self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE)
+                if self.parameters.leidingcodes_koppelen:
+                    self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE)
+                else: 
+                    self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE_HIDDEN)
                 self.increase_progress()
             
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
