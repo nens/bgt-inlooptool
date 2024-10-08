@@ -677,14 +677,20 @@ class BGTInloopTool:
             selected_feature = extent_layer.selectedFeatures()[0]
             extent_geometry = selected_feature.geometry()
         elif extent_feature_count > 1:
-            self.iface.messageBar().pushMessage(
-                MESSAGE_CATEGORY,
-                "Laag voor gebiedsselectie bevat meer dan één polygoon / feature. "
-                "Selecteer er maximaal één en probeer opnieuw.",
-                level=Qgis.Warning,
-                duration=10,
-            )
-            return False
+            geometries = []
+            for feat in extent_layer.getFeatures():
+                geometries.append(feat.geometry())
+            
+            # Use QgsGeometry.unaryUnion to dissolve the geometries
+            if geometries:
+                dissolved_geometry = QgsGeometry.unaryUnion(geometries)
+                extent_geometry = dissolved_geometry
+                QgsMessageLog.logMessage(
+                    f"Dissolved {extent_feature_count} features into one multipolygon.",
+                    MESSAGE_CATEGORY,
+                    level=Qgis.Info,
+                )
+
         elif extent_feature_count == 0:
             self.iface.messageBar().pushMessage(
                 MESSAGE_CATEGORY,
@@ -727,7 +733,6 @@ class BGTInloopTool:
         output_zip = self.dlg.bgtApiOutput.filePath()
 
         extent_geometry_wkt = self.validate_extent_layer(extent_layer)
-        print(f"extent_geometry_wkt: {extent_geometry_wkt}")
         if not extent_geometry_wkt:
             return
 
@@ -758,7 +763,6 @@ class BGTInloopTool:
 
         response_bytes = bytes(nam.reply().content())
         response_json = json.loads(response_bytes.decode("ascii"))
-        print(f"response_json: {response_json}")
         download_id = response_json["downloadRequestId"]
         status_link = BGT_API_URL + "/" + download_id + "/status"
 
@@ -778,23 +782,6 @@ class BGTInloopTool:
         download_response = nam.get(download_request)
         with open(output_zip, "wb") as f:
             f.write(nam.reply().content())
-        
-        # #self.filter_gmls_by_extent(output_zip,extent_geometry_wkt)
-        
-        # # Initialize GMLProcessor object
-        # gml_processor = GMLProcessor()
-
-        # #zip_file_path = r"C:\Users\ruben.vanderzaag\Documents\Z0141_BGT_inlooptool\Test data MultiPolygon Amersfoort\download_full.zip" # Replace with your zip file
-        # # Define the polygon from WKT (Extent_wkt)
-        # #extent_wkt = "POLYGON ((154755.42963208077708259 462262.61931491072755307, 154723.45373265049420297 462192.45973025367129594, 154481.53649257798679173 462278.58532122441101819, 154519.91429127522860654 462398.70333832351025194, 154572.13930301897926256 462461.41598981485003605, 154755.42963208077708259 462262.61931491072755307))"
-
-
-        # # Call the main function to process GML files in the zip
-        # output_zip_file = gml_processor.filter_gmls_by_extent(output_zip, extent_geometry_wkt)
-
-        # # Print the path to the new zip file with modified GMLs
-        # print(f"New zip file created: {output_zip_file}")
-        
         
         self.iface.messageBar().pushMessage(
             MESSAGE_CATEGORY,
