@@ -25,7 +25,7 @@
 import os.path
 import sys
 import json
-import urllib.parse
+#import urllib.parse #To do: wordt niet gebruikt, dus kan weg vgm
 
 
 from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
@@ -161,7 +161,7 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.import_surfaces(self.bgt_file)
+            self.it.import_surfaces(self.bgt_file,self.input_extent_mask_wkt)
             self.increase_progress()
 
             QgsMessageLog.logMessage(
@@ -506,6 +506,8 @@ class NetworkTask(QgsTask):
         geom = ogr.CreateGeometryFromJson(str(geojson))
         return geom.ExportToWkt()
 
+
+
 class BGTInloopTool:
     """QGIS Plugin Implementation."""
 
@@ -718,13 +720,14 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
 
         return extent_geometry_wkt
-
+        
     def download_bgt_from_api(self):
 
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
         output_zip = self.dlg.bgtApiOutput.filePath()
 
         extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+        print(f"extent_geometry_wkt: {extent_geometry_wkt}")
         if not extent_geometry_wkt:
             return
 
@@ -755,7 +758,7 @@ class BGTInloopTool:
 
         response_bytes = bytes(nam.reply().content())
         response_json = json.loads(response_bytes.decode("ascii"))
-
+        print(f"response_json: {response_json}")
         download_id = response_json["downloadRequestId"]
         status_link = BGT_API_URL + "/" + download_id + "/status"
 
@@ -775,6 +778,24 @@ class BGTInloopTool:
         download_response = nam.get(download_request)
         with open(output_zip, "wb") as f:
             f.write(nam.reply().content())
+        
+        # #self.filter_gmls_by_extent(output_zip,extent_geometry_wkt)
+        
+        # # Initialize GMLProcessor object
+        # gml_processor = GMLProcessor()
+
+        # #zip_file_path = r"C:\Users\ruben.vanderzaag\Documents\Z0141_BGT_inlooptool\Test data MultiPolygon Amersfoort\download_full.zip" # Replace with your zip file
+        # # Define the polygon from WKT (Extent_wkt)
+        # #extent_wkt = "POLYGON ((154755.42963208077708259 462262.61931491072755307, 154723.45373265049420297 462192.45973025367129594, 154481.53649257798679173 462278.58532122441101819, 154519.91429127522860654 462398.70333832351025194, 154572.13930301897926256 462461.41598981485003605, 154755.42963208077708259 462262.61931491072755307))"
+
+
+        # # Call the main function to process GML files in the zip
+        # output_zip_file = gml_processor.filter_gmls_by_extent(output_zip, extent_geometry_wkt)
+
+        # # Print the path to the new zip file with modified GMLs
+        # print(f"New zip file created: {output_zip_file}")
+        
+        
         self.iface.messageBar().pushMessage(
             MESSAGE_CATEGORY,
             f'BGT lagen gedownload naar <a href="{output_zip}">{output_zip}</a>',
@@ -854,7 +875,6 @@ class BGTInloopTool:
                 duration=20,
             )
         
-    
     def download_bag_from_api(self):
         # Input settings
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()

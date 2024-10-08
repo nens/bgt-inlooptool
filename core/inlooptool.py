@@ -255,13 +255,14 @@ class InloopTool:
         self._database.import_it_results(file_path)
         self._database.clean_it_results()
         
-    def import_surfaces(self, file_path):
+    def import_surfaces(self, file_path,extent_wkt):
         """
         Import BGT Surfaces to _database
         :param file_path: path to bgt zip file
         :return: None
         """
-        self._database.import_surfaces_raw(file_path)
+        self._database.import_surfaces_raw(file_path,extent_wkt)
+        print("Beginnen met cleanen")
         self._database.clean_surfaces()
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
@@ -707,30 +708,7 @@ class InloopTool:
         
             result_table.CreateFeature(feature)
             feature = None
-    """ TO DO: verwijderen!
-    def get_nearest_pipe_code(self,feature, pipe_type_field): #To do: spatial indexing beter? Pipe type field --> ??
-        nearest_pipe_code = None
-        nearest_pipe_distance = float('inf')
-        
-        # Get the geometry of the feature to compare with pipes
-        feature_geom = feature.GetGeometryRef()
-        
-        # Iterate over all pipes
-        for pipe in pipes_table:
-            # Check if this pipe matches the required type
-            if pipe.GetField(pipe_type_field) > 0:
-                pipe_geom = pipe.GetGeometryRef()
-                
-                # Calculate the distance between the feature and the pipe
-                distance = feature_geom.Distance(pipe_geom)
-                
-                # Update if this pipe is the closest
-                if distance < nearest_pipe_distance:
-                    nearest_pipe_distance = distance
-                    nearest_pipe_code = pipe.GetField('naam')  # Replace with the actual pipe code field name
-        
-        return nearest_pipe_code
-    """
+
     def get_nearest_pipe_code(self,feature):
         surface_geom = feature.geometry().Clone()
         surface_geom_buffer_afwateringsvoorziening = surface_geom.Buffer(
@@ -1351,7 +1329,7 @@ class Database:
                 )
             )
 
-    def import_surfaces_raw(self, file_path):
+    def import_surfaces_raw(self, file_path,extent_wkt):
         """
         Copy the required contents of the BGT zip file 'as is' to self.mem_database
         :param file_path:
@@ -1389,6 +1367,10 @@ class Database:
                         continue  # TODO Warning
                     else:
                         nr_layers_with_features += 1
+                        # Set spatial filter on src_layer to only include features that intersect with the extent
+                        if extent_wkt is not None: 
+                            extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
+                            src_layer.SetSpatialFilter(extent_geometry)
                         self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
                         print(
                             f"raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features"
@@ -1400,6 +1382,7 @@ class Database:
         except FileInputError:
             raise
         except Exception:
+            #self.import_surfaces_raw_alternative(file_path)
             raise FileInputError(f"Probleem met laag {stype}.gml in BGT zip file")
 
     def import_kolken(self, file_path):
@@ -1480,6 +1463,10 @@ class Database:
             delete_fids = []
             for feature in layer:
                 geom = feature.GetGeometryRef()
+                if geom is None:
+                    # If no geometry is found, skip this feature
+                    print(f"Warning: Feature {feature.GetFID()} in layer {surface_type} has no geometry. Skipping.")
+                    continue
                 geom_type = geom.GetGeometryType()
                 if geom_type == ogr.wkbPolygon:
                     pass
