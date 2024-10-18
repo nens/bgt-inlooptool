@@ -154,15 +154,16 @@ class InloopToolTask(QgsTask):
             
             self.increase_progress()
                        
-            #print("alleen nog opslaan")
-            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_connecting_codes_testing.gpkg"
-            #self.it._database._save_to_gpkg_test(output_path)
-            
             QgsMessageLog.logMessage(
                 "Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info
             )
             self.it.import_surfaces(self.bgt_file,self.input_extent_mask_wkt)
             self.increase_progress()
+
+            #print("alleen nog opslaan")
+            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Z0141_BGT_inlooptool\Test data Soest warnings (klein)\test_bgt_inputs_relatieve_hoogteligging.gpkg"
+            #self.it._database._save_to_gpkg_test(output_path)
+
 
             QgsMessageLog.logMessage(
                 "Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info
@@ -261,7 +262,7 @@ class InloopToolTask(QgsTask):
                 else: 
                     self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE_HIDDEN)
                 self.increase_progress()
-            
+
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
             
             return True

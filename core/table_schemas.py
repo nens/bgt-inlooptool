@@ -19,6 +19,7 @@ surfaces_table_fields = {
     RESULT_TABLE_FIELD_GRAAD_VERHARDING: ogr.OFTReal,
     "build_year": ogr.OFTInteger,
     "identificatiebagpnd": ogr.OFTString,
+    "relatieve_hoogteligging": ogr.OFTInteger,
 }
 for dist_type in DISTANCE_TYPES:
     surfaces_table_fields["distance_" + dist_type] = ogr.OFTReal

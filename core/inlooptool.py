@@ -124,6 +124,7 @@ class InloopTool:
         """Constructor."""
         self.parameters = parameters
         self._database = Database()
+        self.inf_pavements_green_roof_surfaces = []
         
     def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
         settings_table = self._database.settings_table
@@ -841,6 +842,7 @@ class InloopTool:
                         
                         # Update the feature in the result table
                         result_table.SetFeature(result_feature)
+                        self.inf_pavements_green_roof_surfaces.append(result_feature)
 
         
     def calculate_statistics(self, stats_path): 
@@ -971,6 +973,7 @@ class InloopTool:
         #print(feature_defn)
         fid = 0
         
+        #Check 1: large areas
         warning_large_area = f"Dit BGT vlak is groter dan {CHECKS_LARGE_AREA} m2. De kans is groot dat dit vlak aangesloten is op meerdere stelseltypen. Controleer en corrigeer dit wanneer nodig."
         
         for it_feature in it_layer:
@@ -991,7 +994,47 @@ class InloopTool:
                 checks_table.CreateFeature(check_feature)
                 check_feature = None  # Cleanup after creating the feature
                 
+        #Check 2: buildings that are in the BGT but not in the BAG
+        warning_bgt_bag_mismatch = "Dit pand komt wel voor in de BGT, maar niet in de BAG. Er is daarom geen bouwjaar toegewezen aan het pand."
+        non_matching = self._database.non_matching_buildings
         
+        for building in non_matching:
+            fid += 1
+            geom = building.GetGeometryRef()
+            check_feature = ogr.Feature(feature_defn)
+            check_feature.SetGeometry(geom.Clone())
+            check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
+            check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Info")
+            check_feature.SetField(CHECKS_TABLE_FIELD_CODE,2)
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT Identificatie")
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,building["identificatie_lokaalid"])   #identificatiebagpnd
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_bgt_bag_mismatch
+                                   )
+            checks_table.CreateFeature(check_feature)
+            check_feature = None  # Cleanup after creating the feature
+        
+        #Check 3: surface which intersect with green roofs or infiltrating pavement
+        warning_infiltrating_surfaces = "Dit oppervlak is waterpasserende verharding of een groen dak. Het type verharding is daarop aangepast, maar de percentuele afwatering nog niet."
+        infiltrating_surfaces = self.inf_pavements_green_roof_surfaces
+        
+        for surface in infiltrating_surfaces:
+            fid += 1
+            geom = surface.GetGeometryRef()
+            check_feature = ogr.Feature(feature_defn)
+            check_feature.SetGeometry(geom.Clone())
+            check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
+            check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Info")
+            check_feature.SetField(CHECKS_TABLE_FIELD_CODE,3)
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"Type verharding")
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,surface["type_verharding"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_infiltrating_surfaces
+                                   )
+            checks_table.CreateFeature(check_feature)
+            check_feature = None  # Cleanup after creating the feature
+        
+        #Check 4: 
         checks_table = None
         it_layer = None
 
@@ -1017,6 +1060,7 @@ class Database:
         self.create_table(
             table_name=CHECKS_TABLE_NAME, table_schema=CHECKS_TABLE_SCHEMA
         )
+        self.non_matching_buildings = []
         
     @property
     def result_table(self):
@@ -1494,7 +1538,9 @@ class Database:
 
                 if stype == SURFACE_TYPE_PAND:
                     new_feature["identificatiebagpnd"] = feature["identificatieBAGPND"]
-
+                print("Tot hier")
+                new_feature.SetField("relatieve_hoogteligging", feature["relatieveHoogteligging"])
+                
                 target_geometry = ogr.ForceToPolygon(feature.geometry())
                 target_geometry.AssignSpatialReference(self.srs)
                 new_feature.SetGeometry(target_geometry)
@@ -1523,7 +1569,8 @@ class Database:
         for building in buildings:
             building_dict[building["identificatie"][1:]] = building[field_name]
             building = None
-
+        
+        # List to track bui;ding-surfaces that are in the BGT but not in the BAG
         for surface in surfaces:
             if surface["surface_type"] == SURFACE_TYPE_PAND:
                 if surface["identificatiebagpnd"] in building_dict.keys():
@@ -1531,6 +1578,8 @@ class Database:
                         surface["identificatiebagpnd"]
                     ]
                     surfaces.SetFeature(surface)
+                else:
+                    self.non_matching_buildings.append(surface)
             surface = None
 
         buildings = None
@@ -1576,11 +1625,8 @@ class Database:
         dst_layer.SyncToDisk()
     
     def _save_to_gpkg_test(self, file_path): #TO DO: weghalen, is alleen voor testen
-        print("Preparing template gpkg")
-        output_gpkg = r"C:\Users\ruben.vanderzaag\Documents\Github\bgt-inlooptool\QGIS_plugin\bgtinlooptool\style\output_bgtinlooptool_testing_rekeninstellingen.gpkg"
-
         print("Testen van output wegschrijven!!")
-        self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, output_gpkg)
+        self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, file_path)
         self.out_db = None
     
     def _save_to_gpkg(self,file_folder,template_gpkg):
