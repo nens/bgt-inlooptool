@@ -125,6 +125,7 @@ class InloopTool:
         self.parameters = parameters
         self._database = Database()
         self.inf_pavements_green_roof_surfaces = []
+        self.relative_hoogteligging_surfaces = []
         
     def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
         settings_table = self._database.settings_table
@@ -263,10 +264,10 @@ class InloopTool:
         :return: None
         """
         self._database.import_surfaces_raw(file_path,extent_wkt)
-        print("Beginnen met cleanen")
         self._database.clean_surfaces()
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
+        self.relative_hoogteligging_surfaces = self._database.identify_overlapping_surfaces()
 
     def import_pipes(self, file_path, relevant_only=True):
         """
@@ -996,9 +997,8 @@ class InloopTool:
                 
         #Check 2: buildings that are in the BGT but not in the BAG
         warning_bgt_bag_mismatch = "Dit pand komt wel voor in de BGT, maar niet in de BAG. Er is daarom geen bouwjaar toegewezen aan het pand."
-        non_matching = self._database.non_matching_buildings
         
-        for building in non_matching:
+        for building in self._database.non_matching_buildings:
             fid += 1
             geom = building.GetGeometryRef()
             check_feature = ogr.Feature(feature_defn)
@@ -1016,9 +1016,8 @@ class InloopTool:
         
         #Check 3: surface which intersect with green roofs or infiltrating pavement
         warning_infiltrating_surfaces = "Dit oppervlak is waterpasserende verharding of een groen dak. Het type verharding is daarop aangepast, maar de percentuele afwatering nog niet."
-        infiltrating_surfaces = self.inf_pavements_green_roof_surfaces
         
-        for surface in infiltrating_surfaces:
+        for surface in self.inf_pavements_green_roof_surfaces:
             fid += 1
             geom = surface.GetGeometryRef()
             check_feature = ogr.Feature(feature_defn)
@@ -1034,7 +1033,24 @@ class InloopTool:
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
         
-        #Check 4: 
+        #Check 4: # relatieve hoogteligging (to do: waarschuwing beter verwoorden)
+        warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Neerslag valt op het vlak met de hoogste relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
+        for surface in self.relative_hoogteligging_surfaces:
+            fid += 1
+            geom = surface.GetGeometryRef()
+            check_feature = ogr.Feature(feature_defn)
+            check_feature.SetGeometry(geom.Clone())
+            check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
+            check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
+            check_feature.SetField(CHECKS_TABLE_FIELD_CODE,4)
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"5. BGT oppervlakken")
+            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT ID")
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,surface["identificatie_lokaalid"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_relatieve_hoogteligging
+                                   )
+            checks_table.CreateFeature(check_feature)
+            check_feature = None  # Cleanup after creating the feature
+        
         checks_table = None
         it_layer = None
 
@@ -1538,7 +1554,6 @@ class Database:
 
                 if stype == SURFACE_TYPE_PAND:
                     new_feature["identificatiebagpnd"] = feature["identificatieBAGPND"]
-                print("Tot hier")
                 new_feature.SetField("relatieve_hoogteligging", feature["relatieveHoogteligging"])
                 
                 target_geometry = ogr.ForceToPolygon(feature.geometry())
@@ -1552,7 +1567,46 @@ class Database:
             )
             previous_fcount = dest_layer.GetFeatureCount()
         dest_layer = None
+    
+    def identify_overlapping_surfaces(self):
+        """Finds all overlapping surfaces and saves the surfaces with the highest relatieve hoogteligging"""
+        layer = self.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
+        if layer is None:
+            raise DatabaseOperationError
+        
+        # Check if the layer has any features
+        if layer.GetFeatureCount() == 0:
+            return
+        
+        # Create a list to store the features with the highest hoogteligging
+        highest_surfaces = []
+    
+        # Loop through all surfaces in the layer
+        for feature in layer:
+            geom1 = feature.GetGeometryRef()  # Get the geometry of the current feature (surface)
+            hoogteligging1 = feature.GetField("relatieve_hoogteligging")  # Get the "hoogteligging" field
+            
+            # Loop through all other surfaces in the layer to check for overlaps
+            layer.ResetReading()  # Reset the reading to iterate over all features again
+            for other_feature in layer:
+                if other_feature.GetFID() == feature.GetFID():
+                    # Skip comparing the surface with itself
+                    continue
+                
+                geom2 = other_feature.GetGeometryRef()  # Get the geometry of the other feature
+                if geom1.Intersects(geom2):  # Check if the geometries intersect (overlap)
+                    hoogteligging2 = other_feature.GetField("relatieve_hoogteligging")  # Get the hoogteligging of the other feature
+                    # Compare the two overlapping features and keep the one with the higher hoogteligging
+                    if hoogteligging1 > hoogteligging2:
+                        if feature not in highest_surfaces:
+                            highest_surfaces.append(feature)  # Add the feature if it's not already in the list
+                    elif hoogteligging1 < hoogteligging2:
+                        if other_feature not in highest_surfaces:
+                            highest_surfaces.append(other_feature)  # Add the other feature if it's not already in the list
+    
+        return highest_surfaces
 
+    
     def add_build_year_to_surface(self, file_path, field_name="bouwjaar"):
 
         print("Started add_build_year_to_surface...")
