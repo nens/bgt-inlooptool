@@ -91,7 +91,7 @@ class InloopToolTask(QgsTask):
         input_extent_mask_wkt,
         stats_file,
         results_file,
-        temporary,
+        temp_QGIS_layers,
         output_folder,
     ):
         super().__init__(description, QgsTask.CanCancel)
@@ -111,7 +111,7 @@ class InloopToolTask(QgsTask):
         self.results_file = results_file
         self.stats_file = stats_file
         self.output_folder = output_folder
-        self.temporary = temporary
+        self.temp_QGIS_layers = temp_QGIS_layers
         self.input_extent_mask_wkt = input_extent_mask_wkt
         self.exception = None
         self.setProgress(0)
@@ -122,7 +122,7 @@ class InloopToolTask(QgsTask):
             self.total_progress += 1
         if self.input_extent_mask_wkt is not None:
             self.total_progress += 1
-        if not self.temporary:
+        if not self.temp_QGIS_layers:
             self.total_progress += 1
         if self.parameters.gebruik_resultaten:
             self.total_progress += 1
@@ -253,7 +253,7 @@ class InloopToolTask(QgsTask):
             )
             self.it.generate_warnings()
             
-            if not self.temporary:
+            if not self.temp_QGIS_layers:
                 QgsMessageLog.logMessage(
                     "Saving as gpkg", MESSAGE_CATEGORY, level=Qgis.Info
                 )
@@ -275,7 +275,7 @@ class InloopToolTask(QgsTask):
         if result:
             file_name = self.it._database.set_output_name()
             layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
-            if self.temporary: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
+            if self.temp_QGIS_layers: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
                 #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=STATISTICS_TABLE_NAME,layer_tree_layer_name="Statistieken", qml=STATS_STYLE,layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=SURFACES_TABLE_NAME, layer_tree_layer_name="BGT Oppervlakken",qml=BGT_STYLE,layer_group=layer_group)
@@ -378,7 +378,7 @@ class NetworkTask(QgsTask):
         print("Fetching features within BBox")
         while not_all_features_found:
             request_url = self.url + f"&startIndex={index}" + f"&BBOX={bbox}"
-            response_text = self.make_request(request_url, "")
+            response_text = self.load_api_data(request_url, "")
             data = json.loads(response_text)
             
             all_features.extend(data['features'])
@@ -390,7 +390,7 @@ class NetworkTask(QgsTask):
         
         return all_features
     
-    def make_request(self, url,gemeente):
+    def load_api_data(self, url,gemeente):
         request = QNetworkRequest(QUrl(url))
         reply = self.nam.get(request)
         
@@ -447,7 +447,7 @@ class NetworkTask(QgsTask):
             
             while not_all_features_found:
                 request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
-                response_text = self.make_request(request_url,gemeente_name)
+                response_text = self.load_api_data(request_url,gemeente_name)
                 
                 if response_text is None:
                     NOT_FOUND_GEMEENTES.append(gemeente_name)
@@ -918,9 +918,9 @@ class BGTInloopTool:
 
         if self.dlg.outputFileGroupBox.isChecked():
             output_folder = self.dlg.output_folder.filePath()
-            temporary = False
+            temp_QGIS_layers = False
         else:
-            temporary = True
+            temp_QGIS_layers = True
             output_folder = None
 
         # Iniate bgt inlooptool class with parameters
@@ -955,7 +955,7 @@ class BGTInloopTool:
             input_extent_mask_wkt=extent_geometry_wkt,
             stats_file = stats_file,
             results_file = results_file,
-            temporary = temporary,
+            temp_QGIS_layers = temp_QGIS_layers,
             output_folder = output_folder,
         )
 
