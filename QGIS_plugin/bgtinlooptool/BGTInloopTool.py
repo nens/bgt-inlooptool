@@ -25,19 +25,22 @@
 import os.path
 import sys
 import json
+#import urllib.parse #To do: wordt niet gebruikt, dus kan weg vgm
 
 
-from PyQt5.QtCore import QUrl, QByteArray
-from PyQt5.QtNetwork import QNetworkRequest
+from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
+from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import (
     QgsProject,
+    QgsVectorLayer,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsBlockingNetworkRequest,
 )
+
 from qgis.core import (
     QgsTask,
     Qgis,
@@ -45,6 +48,7 @@ from qgis.core import (
     QgsMessageLog,
 )
 from qgis.utils import iface
+from osgeo import ogr, osr
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -56,17 +60,24 @@ from .BGTInloopTool_dialog import BGTInloopToolDialog
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from core.inlooptool import *
 from core.constants import *
+from .core.defaults import *
 from .ogr2qgis import *
 
 MESSAGE_CATEGORY = "BGT Inlooptool"
 BGT_API_URL = "https://api.pdok.nl/lv/bgt/download/v1_0/full/custom"
+BAG_API_URL = "https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json"
+GWSW_API_URL = "https://service.pdok.nl/rioned/beheerstedelijkwater/wfs/v1_0?service=WFS&version=2.0.0&request=GetFeature&typeName=beheerstedelijkwater:BeheerLeiding&outputFormat=application/json"
+CBS_GEMEENTES_API_URL = "https://service.pdok.nl/kadaster/bestuurlijkegebieden/wfs/v1_0?service=WFS&version=1.0.0&request=GetFeature&typeName=Gemeentegebied&outputFormat=application/json"
 
-INLOOPTABEL_STYLE = os.path.join(
-    os.path.dirname(__file__), "style", "bgt_inlooptabel.qml"
-)
+NOT_FOUND_GEMEENTES = []  # Initialize the list for not found gemeentes (GWSW server)
+
+INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_inlooptabel.qml")
 PIPES_STYLE = os.path.join(os.path.dirname(__file__), "style", "gwsw_lijn.qml")
 BGT_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_oppervlakken.qml")
-
+STATS_STYLE = os.path.join(os.path.dirname(__file__), "style", "stats.qml")
+CHECKS_STYLE = os.path.join(os.path.dirname(__file__), "style", "checks.qml")
+GPKG_TEMPLATE = os.path.join(os.path.dirname(__file__), "style", "template_output.gpkg")
+GPKG_TEMPLATE_HIDDEN = os.path.join(os.path.dirname(__file__), "style", "template_output_hidden_fields.gpkg")
 
 class InloopToolTask(QgsTask):
     def __init__(
@@ -78,6 +89,10 @@ class InloopToolTask(QgsTask):
         building_file,
         kolken_file,
         input_extent_mask_wkt,
+        stats_file,
+        results_file,
+        temporary,
+        output_folder,
     ):
         super().__init__(description, QgsTask.CanCancel)
 
@@ -93,17 +108,27 @@ class InloopToolTask(QgsTask):
         self.pipe_file = pipe_file
         self.building_file = building_file
         self.kolken_file = kolken_file
+        self.results_file = results_file
+        self.stats_file = stats_file
+        self.output_folder = output_folder
+        self.temporary = temporary
         self.input_extent_mask_wkt = input_extent_mask_wkt
         self.exception = None
         self.setProgress(0)
-        self.total_progress = 5
+        self.total_progress = 7
         if self.parameters.gebruik_kolken:
             self.total_progress += 1
         if self.parameters.gebruik_bag:
             self.total_progress += 1
         if self.input_extent_mask_wkt is not None:
             self.total_progress += 1
-
+        if not self.temporary:
+            self.total_progress += 1
+        if self.parameters.gebruik_resultaten:
+            self.total_progress += 1
+        if self.parameters.gebruik_statistieken:
+            self.total_progress += 1
+        
     def increase_progress(self):
         self.setProgress(self.progress() + 100 / self.total_progress)
 
@@ -112,14 +137,33 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Started inlooptool task", MESSAGE_CATEGORY, level=Qgis.Info
             )
+
             self.it = InloopTool(self.parameters)
             self.increase_progress()
-
+            
+            if self.parameters.gebruik_resultaten:
+                QgsMessageLog.logMessage(
+                    "Importing the results of the previous run", MESSAGE_CATEGORY, level=Qgis.Info
+                )
+                self.it.import_results(self.results_file)
+            
+            QgsMessageLog.logMessage(
+                "Saving the settings of the run", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.set_settings_start(self.bgt_file,self.pipe_file, self.building_file, self.kolken_file)
+            
+            self.increase_progress()
+                       
             QgsMessageLog.logMessage(
                 "Importing surfaces", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.import_surfaces(self.bgt_file)
+            self.it.import_surfaces(self.bgt_file,self.input_extent_mask_wkt)
             self.increase_progress()
+
+            #print("alleen nog opslaan")
+            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Z0141_BGT_inlooptool\Test data Soest warnings (klein)\test_bgt_inputs_relatieve_hoogteligging.gpkg"
+            #self.it._database._save_to_gpkg_test(output_path)
+
 
             QgsMessageLog.logMessage(
                 "Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info
@@ -168,7 +212,7 @@ class InloopToolTask(QgsTask):
                 self.it._database.add_index_to_inputs(
                     kolken=self.parameters.gebruik_kolken
                 )
-
+            
             QgsMessageLog.logMessage(
                 "Calculating distances", MESSAGE_CATEGORY, level=Qgis.Info
             )
@@ -178,39 +222,78 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.calculate_runoff_targets()
+            self.it.calculate_runoff_targets(self.parameters.leidingcodes_koppelen)
+            
+            QgsMessageLog.logMessage(
+                "Keeping manual edit on BGT ID", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.overwrite_by_manual_edits(self.parameters.leidingcodes_koppelen)
+            
+            QgsMessageLog.logMessage(
+                "Updating type verharding for infiltrating pavement and green roofs if provided", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.intersect_inf_pavement_green_roofs()
+            
             self.increase_progress()
+            
+            if self.parameters.gebruik_statistieken:
+                QgsMessageLog.logMessage(
+                    "Calculating statistics", MESSAGE_CATEGORY, level=Qgis.Info
+                )   
+                self.it.calculate_statistics(self.stats_file)
+                self.increase_progress()
+            
+            QgsMessageLog.logMessage(
+                "Saving the end time of the analysis in the settings", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.set_settings_end()
+            
+            QgsMessageLog.logMessage(
+                "Generating warning messages", MESSAGE_CATEGORY, level=Qgis.Info
+            )
+            self.it.generate_warnings()
+            
+            if not self.temporary:
+                QgsMessageLog.logMessage(
+                    "Saving as gpkg", MESSAGE_CATEGORY, level=Qgis.Info
+                )
+                if self.parameters.leidingcodes_koppelen:
+                    self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE)
+                else: 
+                    self.it._database._save_to_gpkg(self.output_folder,GPKG_TEMPLATE_HIDDEN)
+                self.increase_progress()
 
             QgsMessageLog.logMessage("Finished", MESSAGE_CATEGORY, level=Qgis.Success)
+            
             return True
+        
         except Exception as e:
             self.exception = e
             return False
 
     def finished(self, result):
-
         if result:
-            root = QgsProject.instance().layerTreeRoot()
-            layer_group = root.insertGroup(0, MESSAGE_CATEGORY)
+            file_name = self.it._database.set_output_name()
+            layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
+            if self.temporary: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
+                #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=STATISTICS_TABLE_NAME,layer_tree_layer_name="Statistieken", qml=STATS_STYLE,layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=SURFACES_TABLE_NAME, layer_tree_layer_name="BGT Oppervlakken",qml=BGT_STYLE,layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=RESULT_TABLE_NAME, layer_tree_layer_name="BGT Inlooptabel",qml=INLOOPTABEL_STYLE,layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=PIPES_TABLE_NAME,layer_tree_layer_name="GWSW Leidingen", qml=PIPES_STYLE,layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
 
-            self.add_to_layer_group(
-                db_layer_name=SURFACES_TABLE_NAME,
-                layer_tree_layer_name="BGT Oppervlakken",
-                qml=BGT_STYLE,
-                layer_group=layer_group,
-            )
-            self.add_to_layer_group(
-                db_layer_name=RESULT_TABLE_NAME,
-                layer_tree_layer_name="BGT Inlooptabel",
-                qml=INLOOPTABEL_STYLE,
-                layer_group=layer_group,
-            )
-            self.add_to_layer_group(
-                db_layer_name=PIPES_TABLE_NAME,
-                layer_tree_layer_name="GWSW Leidingen",
-                qml=PIPES_STYLE,
-                layer_group=layer_group,
-            )
+            else: # Load from file
+                
+                gpkg_path = os.path.join(self.output_folder, file_name)
+                self.gpkg_to_layer_group(gpkg_path, "7. Rekeninstellingen", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "6. Statistieken", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "5. BGT oppervlakken", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "4. BGT inlooptabel", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "3. GWSW leidingen", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "2. Controles", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "1. Waterpasserende verharding en groene daken [optionele input]", layer_group)
+            
             iface.messageBar().pushMessage(
                 MESSAGE_CATEGORY,
                 "Afwateringskenmerken BGT bepaald!",
@@ -243,7 +326,7 @@ class InloopToolTask(QgsTask):
         )
         super().cancel()
 
-    def add_to_layer_group(
+    def temp_to_layer_group(
         self, db_layer_name: str, layer_tree_layer_name: str, qml: str, layer_group
     ):
         ogr_lyr = self.it._database.mem_database.GetLayerByName(db_layer_name)
@@ -254,7 +337,176 @@ class InloopToolTask(QgsTask):
                 project.addMapLayer(qgs_lyr, addToLegend=False)
                 layer_group.insertLayer(0, qgs_lyr)
                 qgs_lyr.loadNamedStyle(qml)
-                qgs_lyr.triggerRepaint()
+                qgs_lyr.triggerRepaint()    
+ 
+    def gpkg_to_layer_group(self,gpkg_path: str, gpkg_layer_name: str, layer_group):
+        # Construct the data source URI for the GeoPackage
+        uri = f"{gpkg_path}|layername={gpkg_layer_name}"
+        
+        # Create a QgsVectorLayer object
+        qgs_lyr = QgsVectorLayer(uri, gpkg_layer_name, "ogr")
+        
+        if qgs_lyr.isValid():
+            project = QgsProject.instance()
+            project.addMapLayer(qgs_lyr, addToLegend=False)
+            layer_group.insertLayer(0, qgs_lyr)
+        else:
+            print(f"Failed to load layer '{gpkg_layer_name}' from '{gpkg_path}'.")
+
+class NetworkTask(QgsTask):
+    def __init__(self, url, output_gpkg,extent_bbox,extent_geometry_wkt,layer_name):
+        super().__init__("Download and Convert Data")
+        self.url = url
+        self.output_gpkg = output_gpkg
+        self.extent_bbox = extent_bbox
+        self.extent_geometry_wkt = extent_geometry_wkt
+        self.layer_name = layer_name
+        self.nam = QNetworkAccessManager()  # Create a network access manager
+        
+    def run(self):
+        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
+        bbox = self.wkt_to_bbox()
+        all_features = self.fetch_all_features(bbox)
+        self.save_features_to_gpkg(all_features, extent_geometry)
+        return True
+    
+    def fetch_all_features(self, bbox):
+        not_all_features_found = True
+        index = 0
+        all_features = []
+    
+        print("Fetching features within BBox")
+        while not_all_features_found:
+            request_url = self.url + f"&startIndex={index}" + f"&BBOX={bbox}"
+            response_text = self.make_request(request_url, "")
+            data = json.loads(response_text)
+            
+            all_features.extend(data['features'])
+            
+            if len(data['features']) < 1000:
+                not_all_features_found = False
+            else:
+                index += 1000
+        
+        return all_features
+    
+    def make_request(self, url,gemeente):
+        request = QNetworkRequest(QUrl(url))
+        reply = self.nam.get(request)
+        
+        loop = QEventLoop()
+        reply.finished.connect(loop.quit)
+        loop.exec_()
+        
+        response_text = reply.readAll().data().decode("utf-8")
+        if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 404:
+            print(f"Error 404: {gemeente} not found.")
+            return None
+        
+        return response_text
+    
+    def save_features_to_gpkg(self, all_features, extent_geometry):
+        print("Saving features to GeoPackage")
+        
+        driver = ogr.GetDriverByName("GPKG")
+        if os.path.exists(self.output_gpkg):
+            driver.DeleteDataSource(self.output_gpkg)
+        datasource = driver.CreateDataSource(self.output_gpkg)
+        
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(28992)
+        
+        if self.layer_name != "bag_panden":
+            all_features = self.filter_features_by_extent(all_features, extent_geometry)
+            all_features = self.fetch_gwsw_data(all_features)
+    
+        layer_out = self.create_layer(datasource, srs)
+        self.add_features_to_layer(layer_out, all_features, extent_geometry)
+        
+        datasource = None
+    
+    def filter_features_by_extent(self, all_features, extent_geometry):
+        selection_gemeentes = []
+        
+        for feature in all_features:
+            geometry_wkt = self.geojson_to_wkt(feature['geometry'])
+            geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
+            if extent_geometry.Intersects(geojson_geom):
+                selection_gemeentes.append(feature['properties']['naam'])
+        
+        return selection_gemeentes
+    
+    def fetch_gwsw_data(self, selection_gemeentes):
+        all_features = []
+        
+        for gemeente_name in selection_gemeentes:
+            gemeente_name = gemeente_name.title().replace(" ", "").replace("-", "")
+            not_all_features_found = True
+            index = 0
+            print(f"Extracting data for gemeente {gemeente_name}")
+            
+            while not_all_features_found:
+                request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
+                response_text = self.make_request(request_url,gemeente_name)
+                
+                if response_text is None:
+                    NOT_FOUND_GEMEENTES.append(gemeente_name)
+                    break
+                
+                data = json.loads(response_text)
+                all_features.extend(data['features'])
+                
+                if len(data['features']) < 1000:
+                    not_all_features_found = False
+                else:
+                    index += 1000
+        
+        return all_features
+    
+    def create_layer(self, datasource, srs):
+        if self.layer_name == "bag_panden":
+            return datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbPolygon, srs=srs)
+        else:
+            return datasource.CreateLayer(self.layer_name, geom_type=ogr.wkbMultiLineString, srs=srs)
+    
+    def add_features_to_layer(self, layer_out, all_features, extent_geometry):
+        if not all_features:
+            return
+        
+        feature_example = all_features[0]
+        feature_fields = list(feature_example['properties'].keys())
+        
+        for field_name in feature_fields:
+            field_defn = ogr.FieldDefn(field_name, ogr.OFTString)  # Adjust field type as needed
+            layer_out.CreateField(field_defn)
+        
+        layer_defn = layer_out.GetLayerDefn()
+        
+        print("Writing features to GeoPackage")
+        for feature_data in all_features:
+            geometry_wkt = self.geojson_to_wkt(feature_data['geometry'])
+            geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
+            if extent_geometry.Intersects(geojson_geom):
+                out_feature = ogr.Feature(layer_defn)
+                geometry = ogr.CreateGeometryFromJson(json.dumps(feature_data['geometry']))
+                out_feature.SetGeometry(geometry)
+                
+                for field_name, field_value in feature_data['properties'].items():
+                    field_index = layer_defn.GetFieldIndex(field_name)
+                    if field_index != -1:
+                        out_feature.SetField(field_name, field_value)
+                layer_out.CreateFeature(out_feature)
+                out_feature = None
+    
+    def wkt_to_bbox(self):
+        # Format the BBOX string
+        bbox = f"{self.extent_bbox.xMinimum()},{self.extent_bbox.yMinimum()},{self.extent_bbox.xMaximum()},{self.extent_bbox.yMaximum()}"
+        return bbox
+    
+    def geojson_to_wkt(self,geojson):
+        geom = ogr.CreateGeometryFromJson(str(geojson))
+        return geom.ExportToWkt()
+
 
 
 class BGTInloopTool:
@@ -376,7 +628,25 @@ class BGTInloopTool:
         for action in self.actions:
             self.iface.removePluginMenu("&BGT Inlooptool", action)
             self.iface.removeToolBarIcon(action)
-
+    
+    def reset_parameters(self):
+        """ Resetting Setting to defaults"""
+        self.dlg.max_afstand_vlak_afwateringsvoorziening.setValue(
+            MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
+        )
+        self.dlg.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
+        self.dlg.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
+        self.dlg.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
+        self.dlg.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
+        self.dlg.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
+        self.dlg.bouwjaar_gescheiden_binnenhuisriolering.setValue(
+            BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
+        )
+        self.dlg.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
+        self.dlg.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
+        self.dlg.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
+        self.dlg.leidingcodes_koppelen.setChecked(KOPPEL_LEIDINGCODES)
+    
     def validate_extent_layer(self, extent_layer):
 
         # Check feature count in the selected layer
@@ -408,14 +678,20 @@ class BGTInloopTool:
             selected_feature = extent_layer.selectedFeatures()[0]
             extent_geometry = selected_feature.geometry()
         elif extent_feature_count > 1:
-            self.iface.messageBar().pushMessage(
-                MESSAGE_CATEGORY,
-                "Laag voor gebiedsselectie bevat meer dan één polygoon / feature. "
-                "Selecteer er maximaal één en probeer opnieuw.",
-                level=Qgis.Warning,
-                duration=10,
-            )
-            return False
+            geometries = []
+            for feat in extent_layer.getFeatures():
+                geometries.append(feat.geometry())
+            
+            # Use QgsGeometry.unaryUnion to dissolve the geometries
+            if geometries:
+                dissolved_geometry = QgsGeometry.unaryUnion(geometries)
+                extent_geometry = dissolved_geometry
+                QgsMessageLog.logMessage(
+                    f"Dissolved {extent_feature_count} features into one multipolygon.",
+                    MESSAGE_CATEGORY,
+                    level=Qgis.Info,
+                )
+
         elif extent_feature_count == 0:
             self.iface.messageBar().pushMessage(
                 MESSAGE_CATEGORY,
@@ -451,7 +727,7 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
 
         return extent_geometry_wkt
-
+        
     def download_bgt_from_api(self):
 
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
@@ -471,7 +747,7 @@ class BGTInloopTool:
 
         # Use the extent geometry to extract surfaces for the given extent
         nam = QgsBlockingNetworkRequest()
-
+        
         networkrequest = QNetworkRequest(QUrl.fromUserInput(BGT_API_URL))
         networkrequest.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
 
@@ -488,7 +764,6 @@ class BGTInloopTool:
 
         response_bytes = bytes(nam.reply().content())
         response_json = json.loads(response_bytes.decode("ascii"))
-
         download_id = response_json["downloadRequestId"]
         status_link = BGT_API_URL + "/" + download_id + "/status"
 
@@ -508,6 +783,7 @@ class BGTInloopTool:
         download_response = nam.get(download_request)
         with open(output_zip, "wb") as f:
             f.write(nam.reply().content())
+        
         self.iface.messageBar().pushMessage(
             MESSAGE_CATEGORY,
             f'BGT lagen gedownload naar <a href="{output_zip}">{output_zip}</a>',
@@ -518,14 +794,119 @@ class BGTInloopTool:
         self.dlg.inputExtentComboBox.setLayer(extent_layer)
         self.dlg.inputExtentComboBox.setEnabled(True)
         self.dlg.inputExtentGroupBox.setChecked(True)
+        
+        self.download_bgt = True
+    
+    def download_gwsw_from_api(self):
+        # Input settings
+        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
+        extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+        extent_bbox = extent_layer.extent()
+        output_gpkg = self.dlg.gwswApiOutput.filePath()
+    
+        # Initial message for download start
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f"Begonnen met downloaden van GWSW leidingen naar {output_gpkg}",
+            level=Qgis.Info,
+            duration=5,
+        )
+    
+        # Perform download
+        task = NetworkTask(CBS_GEMEENTES_API_URL, output_gpkg, extent_bbox, extent_geometry_wkt, "default_lijn")
+    
+        # Connect the task's finished signal to a custom slot to handle completion
+        task.taskCompleted.connect(self.on_task_finished)
+    
+        # Start the task via the QGIS Task Manager
+        QgsApplication.taskManager().addTask(task)
+        
+        # Change UI
+        output_file = self.dlg.gwswApiOutput.filePath()
+        self.dlg.pipe_file.setFilePath(output_file)
+        self.dlg.inputExtentComboBox.setLayer(extent_layer)
+        self.dlg.inputExtentComboBox.setEnabled(True)
+        self.dlg.inputExtentGroupBox.setChecked(True)
+        
+        # Save download in settings of run
+        self.download_gwsw = True
+    
+    def on_task_finished(self, exception=None):
+        """
+        This method is called when the task finishes.
+        It pushes a message to the message bar indicating the completion.
+        """
+        output_gpkg = self.dlg.gwswApiOutput.filePath()
+        if exception is None:
+            # Task finished successfully
+            self.iface.messageBar().pushMessage(
+                "Info",
+                f'GWSW leidingen gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
+                level=Qgis.Info,
+                duration=20,  # Longer so the user has time to click the link
+            )
+        else:
+            # Task failed
+            self.iface.messageBar().pushMessage(
+                "Error",
+                f"Er is een fout opgetreden tijdens het downloaden van GWSW leidingen: {exception}",
+                level=Qgis.Critical,
+                duration=10,
+            )
+    
+        # Display a warning if some municipalities don't have a GWSW dataset
+        if NOT_FOUND_GEMEENTES:
+            self.iface.messageBar().pushMessage(
+                "Warning",
+                f'De gemeente(s) {NOT_FOUND_GEMEENTES} heeft/hebben geen GWSW dataset. Download de waterschapsdata via de GWSW website of neem contact op met de beheerder',
+                level=Qgis.Warning,
+                duration=20,
+            )
+        
+    def download_bag_from_api(self):
+        # Input settings
+        extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
+        extent_geometry_wkt = self.validate_extent_layer(extent_layer)
+        extent_bbox = extent_layer.extent()
+        output_gpkg = self.dlg.bagApiOutput.filePath()
+        
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f"Begonnen met downloaden van BAG panden naar {output_gpkg}",
+            level=Qgis.Info,
+            duration=5,
+        )
+        
+        # Perform download
+        task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
+        QgsApplication.taskManager().addTask(task)
+        
+        self.iface.messageBar().pushMessage(
+            MESSAGE_CATEGORY,
+            f'BAG panden gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
+            level=Qgis.Info,
+            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
+        )
+        
+        # Change UI
+        output_file = self.dlg.bagApiOutput.filePath()
+        self.dlg.building_file.setFilePath(output_file)
+        self.dlg.inputExtentComboBox.setLayer(extent_layer)
+        self.dlg.inputExtentComboBox.setEnabled(True)
+        self.dlg.inputExtentGroupBox.setChecked(True)
+        
+        # Save download in settings of run
+        self.download_bag = True
 
     def on_run(self):
 
         # input files
+        results_file = self.dlg.results_file.filePath()
         bgt_file = self.dlg.bgt_file.filePath()
         pipe_file = self.dlg.pipe_file.filePath()
         building_file = self.dlg.building_file.filePath()
         kolken_file = self.dlg.kolken_file.filePath()
+        stats_file = self.dlg.stats_file.filePath()
 
         if self.dlg.inputExtentGroupBox.isChecked():
             extent_layer = self.dlg.inputExtentComboBox.currentLayer()
@@ -534,6 +915,13 @@ class BGTInloopTool:
                 return
         else:
             extent_geometry_wkt = None
+
+        if self.dlg.outputFileGroupBox.isChecked():
+            output_folder = self.dlg.output_folder.filePath()
+            temporary = False
+        else:
+            temporary = True
+            output_folder = None
 
         # Iniate bgt inlooptool class with parameters
         parameters = InputParameters(
@@ -544,8 +932,14 @@ class BGTInloopTool:
             max_afstand_afgekoppeld=self.dlg.max_afstand_afgekoppeld.value(),
             max_afstand_drievoudig=self.dlg.max_afstand_drievoudig.value(),
             afkoppelen_hellende_daken=self.dlg.afkoppelen_hellende_daken.isChecked(),
+            leidingcodes_koppelen=self.dlg.leidingcodes_koppelen.isChecked(),
             gebruik_bag=building_file != "",
             gebruik_kolken=kolken_file != "",
+            gebruik_resultaten=results_file != "",
+            gebruik_statistieken=stats_file != "",
+            download_bgt=self.download_bgt,
+            download_gwsw=self.download_gwsw,
+            download_bag=self.download_bag,
             bouwjaar_gescheiden_binnenhuisriolering=self.dlg.bouwjaar_gescheiden_binnenhuisriolering.value(),
             verhardingsgraad_erf=self.dlg.verhardingsgraad_erf.value(),
             verhardingsgraad_half_verhard=self.dlg.verhardingsgraad_half_verhard.value(),
@@ -559,6 +953,10 @@ class BGTInloopTool:
             building_file=building_file,
             kolken_file=kolken_file,
             input_extent_mask_wkt=extent_geometry_wkt,
+            stats_file = stats_file,
+            results_file = results_file,
+            temporary = temporary,
+            output_folder = output_folder,
         )
 
         self.tm.addTask(inlooptooltask)
@@ -569,13 +967,20 @@ class BGTInloopTool:
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start is True:
+            #print(self.first_start)
             self.first_start = False
 
             self.dlg = BGTInloopToolDialog()
-
+            
+            self.download_bgt = False
+            self.download_gwsw = False
+            self.download_bag = False
             # Initiating the tool in 'on_run'
             self.dlg.pushButtonRun.clicked.connect(self.on_run)
             self.dlg.pushButtonDownloadBGT.clicked.connect(self.download_bgt_from_api)
+            self.dlg.pushButtonDownloadGWSW.clicked.connect(self.download_gwsw_from_api)
+            self.dlg.pushButtonDownloadBAG.clicked.connect(self.download_bag_from_api)
+            self.dlg.pushButtonReset.clicked.connect(self.reset_parameters)
 
         # Create a mask layer for clipping and extracting bgt surfaces
         # mask_polygon = QgsVectorLayer("Polygon?crs=epsg:28992", "Extent layer", "memory")
