@@ -845,20 +845,16 @@ class InloopTool:
                         result_table.SetFeature(result_feature)
                         self.inf_pavements_green_roof_surfaces.append(result_feature)
 
-        
-    def calculate_statistics(self, stats_path): 
+    def calculate_statistics(self, stats_path):
         dest_layer = self._database.statistics_table
         stats_abspath = os.path.abspath(stats_path)
         it_layer = self._database.result_table
         
         if not os.path.isfile(stats_abspath):
-            raise FileNotFoundError(
-                "Shapefile met gebieden voor statistieken niet gevonden: {}".format(stats_abspath)
-            )
+            raise FileNotFoundError(f"Shapefile met gebieden voor statistieken niet gevonden: {stats_abspath}")
         
         stats_ds = ogr.Open(stats_abspath)
         stats_layer = stats_ds.GetLayer()
-        
         gebied_id = 0
         field_prefix = ["opp", "perc"]
         field_middle = ["_totaal", "_gemengd", "_hwa", "_vgs", "_dwa", "_infiltratievoorziening", "_open_water", "_maaiveld"]
@@ -872,8 +868,10 @@ class InloopTool:
             new_feature.SetGeometry(geom.Clone())
             new_feature.SetField(STATISTICS_TABLE_FIELD_ID, gebied_id)
             
+            intersecting_it_features = self.find_indices_intersecting_features(it_layer,new_feature)
+            
             intersection_areas = {}
-    
+            
             for prefix in field_prefix:
                 for middle in field_middle:
                     middle_key = middle[1:]
@@ -881,7 +879,7 @@ class InloopTool:
                         for suffix in field_suffix:
                             field_name = ("STATISTICS_TABLE_FIELD_" + prefix + middle + suffix).upper()
                             if field_name not in intersection_areas:
-                                intersection_areas[field_name] = self.calculate_intersection_area(it_layer, new_feature, middle_key, suffix[1:])
+                                intersection_areas[field_name] = self.calculate_intersection_area(intersecting_it_features, new_feature, middle_key, suffix[1:])
                             new_feature.SetField(globals()[field_name], intersection_areas[field_name])
                     else:
                         for suffix in field_suffix:
@@ -898,7 +896,7 @@ class InloopTool:
                     field_name = ("STATISTICS_TABLE_FIELD_" + prefix + suffix_verharding).upper()
                     if prefix == "opp":
                         if field_name not in intersection_areas:
-                            intersection_areas[field_name] = self.calculate_intersection_area(it_layer, new_feature, "verharding", suffix_verharding[1:])
+                            intersection_areas[field_name] = self.calculate_intersection_area(intersecting_it_features, new_feature, "verharding", suffix_verharding[1:])
                         new_feature.SetField(globals()[field_name], intersection_areas[field_name])
                     else:
                         field_name_opp = field_name.replace("PERC", "OPP")
@@ -906,14 +904,45 @@ class InloopTool:
                         if new_feature[globals()[field_name_tot]] > 0:
                             perc_value = round((100 * new_feature[globals()[field_name_opp]] / new_feature[globals()[field_name_tot]]), 2)
                             new_feature.SetField(globals()[field_name], perc_value)
-
+    
             dest_layer.CreateFeature(new_feature)
             new_feature = None
-        
+
+    
         stats_ds = None
         it_layer = None
     
-    def calculate_intersection_area(self, layer, stats_feature, stat_type, type_verharding):
+    def find_indices_intersecting_features(self, layer, stats_feature):
+        """
+        Returns a list of feature IDs (FIDs) of all features in 'layer' that intersect with 'stats_feature'.
+        
+        Parameters:
+            layer (ogr.Layer): The layer to check for intersecting features.
+            stats_feature (ogr.Feature): The feature to check intersections against.
+        
+        Returns:
+            List[int]: List of feature IDs (FIDs) in 'layer' that intersect with 'stats_feature'.
+        """
+        intersecting_fids = []
+        
+        # Get the geometry of the stats_feature to check intersections
+        stats_geom = stats_feature.GetGeometryRef()
+        
+        # Loop through all features in the layer
+        for feature in layer:
+            feature_geom = feature.GetGeometryRef()
+            
+            # Check if the geometries intersect
+            if feature_geom and stats_geom and feature_geom.Intersects(stats_geom):
+                intersecting_fids.append(feature.GetFID())
+        
+        # Reset the reading for the layer to allow further use
+        layer.ResetReading()
+        
+        return intersecting_fids
+
+    def calculate_intersection_area(self, intersecting_it_features, stats_feature, stat_type, type_verharding):
+        it_layer = self._database.result_table
         area_totals = {
             "totaal": 0,
             "gemengd": 0,
@@ -923,7 +952,7 @@ class InloopTool:
             "infiltratievoorziening": 0,
             "open_water": 0,
             "maaiveld": 0,
-            "verharding":0
+            "verharding": 0
         }
         
         stats_geom = stats_feature.GetGeometryRef()
@@ -933,15 +962,15 @@ class InloopTool:
             "groen_dak": VERHARDINGSTYPE_GROEN_DAK,
             "waterpas_verh": VERHARDINGSTYPE_WATERPASSEREND_VERHARD,
         }
-        verhardingstype = verhardingstype_map.get(type_verharding, type_verharding) # look for type_verharding in mapping. If not found, take type_verharding as verhardingstype
+        verhardingstype = verhardingstype_map.get(type_verharding, type_verharding)
         
-        # Ensure stats_geom is valid
         if not stats_geom.IsValid():
             stats_geom = stats_geom.MakeValid()
         
-        for it_feature in layer:
+        for fid in intersecting_it_features:
+            it_feature = it_layer.GetFeature(fid)
             it_geom = it_feature.GetGeometryRef()
-            # Ensure it_geom is valid
+            
             if not it_geom.IsValid():
                 it_geom = it_geom.MakeValid()
             
@@ -950,7 +979,6 @@ class InloopTool:
                     try:
                         intersection_geom = stats_geom.Intersection(it_geom)
                         intersection_area = intersection_geom.GetArea()
-                        
                         area_totals["totaal"] += intersection_area
                         area_totals["verharding"] += intersection_area
                         area_totals["gemengd"] += intersection_area * it_feature[TARGET_TYPE_GEMENGD_RIOOL] / 100
@@ -960,12 +988,11 @@ class InloopTool:
                         area_totals["infiltratievoorziening"] += intersection_area * it_feature[TARGET_TYPE_INFILTRATIEVOORZIENING] / 100
                         area_totals["open_water"] += intersection_area * it_feature[TARGET_TYPE_OPEN_WATER] / 100
                         area_totals["maaiveld"] += intersection_area * it_feature[TARGET_TYPE_MAAIVELD] / 100
-                    
                     except Exception as e:
                         print(f"Error calculating intersection: {e}")
                         continue
         
-        return round(area_totals[stat_type] / 10000, 2)    
+        return round(area_totals[stat_type] / 10000, 2) 
     
     def generate_warnings(self): #TO DO: aanvullen met andere waarschuwing, evt. nog opdelen in verschillende functies, en prints weghalen. 
         checks_table = self._database.checks_table
@@ -1033,8 +1060,9 @@ class InloopTool:
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
         
-        #Check 4: # relatieve hoogteligging (to do: waarschuwing beter verwoorden)
+        #Check 4: relatieve hoogteligging (to do: waarschuwing beter verwoorden) (to do: evt. alles met rh=-1 of lager verwijderen uit surfaces?)
         warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Neerslag valt op het vlak met de hoogste relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
+        
         for surface in self.relative_hoogteligging_surfaces:
             fid += 1
             geom = surface.GetGeometryRef()
@@ -1050,6 +1078,11 @@ class InloopTool:
                                    )
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
+        
+        #Check 5: nieuwe vlakken in de BGT, met nieuwe IDs, dan kunnen deze overlappen met de handmatige wijzigingen. 
+        warning_new_BGT_surfaces = "Dit vlak heeft meer dan 50% overlap met een nieuw BGT vlak die momenteel niet in de data zit. Controleer of dit vlak behouden moet blijven. "
+        #Check 6: handmatig gewijzigd BGT vlak heeft een eindregistratie gekregen
+        warning_outdated_changed_surfaces = "" 
         
         checks_table = None
         it_layer = None
