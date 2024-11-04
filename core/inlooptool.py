@@ -126,6 +126,8 @@ class InloopTool:
         self._database = Database()
         self.inf_pavements_green_roof_surfaces = []
         self.relative_hoogteligging_surfaces = []
+        self.new_BGT_surfaces = []
+        self.outdated_changed_surfaces = []
         
     def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
         settings_table = self._database.settings_table
@@ -742,9 +744,10 @@ class InloopTool:
         pipe = None
         return distances                    
     
-    def overwrite_by_manual_edits(self,leidingcode_koppelen):
+    def overwrite_by_manual_edits(self,leidingcodes_koppelen):
         result_table = self._database.result_table
         manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
+        bgt_surfaces = self._database.bgt_surfaces
     
         if manual_results_prev is None:
             print("No manual edits to keep.")
@@ -813,7 +816,33 @@ class InloopTool:
     
         # Sync the changes to disk
         result_table.SyncToDisk()
-    
+        
+        # Check if the manual edits overlap with new BGT feature (for more than 50% of its own surface)          
+        for prev_feat in manual_results_prev:
+            #intersecting_fids = []
+            overlapping_area = 0
+            #calculate area of prev_feat
+            prev_feat_geom = prev_feat.GetGeometryRef()
+            area_prev_feat = prev_feat_geom.GetArea()
+            for surface in bgt_surfaces:
+                surface_geom = surface.GetGeometryRef()
+                if surface_geom.Intersects(prev_feat_geom) and (prev_feat["bgt_identificatie"]!= surface["identificatie_lokaalid"]):
+                    intersection = surface_geom.Intersection(prev_feat_geom)
+                    if intersection:
+                        overlapping_area += intersection.GetArea()
+            
+            if area_prev_feat > 0 and (overlapping_area/area_prev_feat > 0.5): 
+                self.new_BGT_surfaces.append(prev_feat)  
+            
+            # Check if the manual edits have an eindregistratie (and are therefor old BGT features)    
+            #if prev_feat["bgt_identificatie"] in self._database.surfaces_excluded_by_eindregistratie: # to do: mag uiteindelijk 
+            surfaces_ids = []
+            for surface in bgt_surfaces:
+                surfaces_ids.append(surface.GetField("identificatie_lokaalid"))
+            
+            if prev_feat["bgt_identificatie"] not in surfaces_ids:
+                self.outdated_changed_surfaces.append(prev_feat)
+        
     
     def intersect_inf_pavement_green_roofs(self):
         result_table = self._database.result_table
@@ -1072,7 +1101,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE,4)
             check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"5. BGT oppervlakken")
-            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT ID")
+            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT Identificatie")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,surface["identificatie_lokaalid"])
             check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_relatieve_hoogteligging
                                    )
@@ -1080,9 +1109,40 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 5: nieuwe vlakken in de BGT, met nieuwe IDs, dan kunnen deze overlappen met de handmatige wijzigingen. 
-        warning_new_BGT_surfaces = "Dit vlak heeft meer dan 50% overlap met een nieuw BGT vlak die momenteel niet in de data zit. Controleer of dit vlak behouden moet blijven. "
+        warning_new_BGT_surfaces = "Dit handmatige gewijzigde vlak heeft meer dan 50% overlap met een nieuw BGT vlak. Controleer of dit vlak behouden moet blijven."
+        for it_feature in self.new_BGT_surfaces:
+            fid += 1
+            geom = it_feature.GetGeometryRef()
+            check_feature = ogr.Feature(feature_defn)
+            check_feature.SetGeometry(geom.Clone())
+            check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
+            check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
+            check_feature.SetField(CHECKS_TABLE_FIELD_CODE,5)
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT identificatie")
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,it_feature["bgt_identificatie"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_new_BGT_surfaces
+                                   )
+            checks_table.CreateFeature(check_feature)
+            check_feature = None  # Cleanup after creating the feature
+        
         #Check 6: handmatig gewijzigd BGT vlak heeft een eindregistratie gekregen
-        warning_outdated_changed_surfaces = "" 
+        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak heeft een eindregistratie gekregen. Controleer of het nog steeds bestaat." 
+        for it_feature in self.outdated_changed_surfaces:
+            fid += 1
+            geom = it_feature.GetGeometryRef()
+            check_feature = ogr.Feature(feature_defn)
+            check_feature.SetGeometry(geom.Clone())
+            check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
+            check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
+            check_feature.SetField(CHECKS_TABLE_FIELD_CODE,6)
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT identificatie")
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,it_feature["bgt_identificatie"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_outdated_changed_surfaces
+                                   )
+            checks_table.CreateFeature(check_feature)
+            check_feature = None  # Cleanup after creating the feature
         
         checks_table = None
         it_layer = None
@@ -1110,6 +1170,7 @@ class Database:
             table_name=CHECKS_TABLE_NAME, table_schema=CHECKS_TABLE_SCHEMA
         )
         self.non_matching_buildings = []
+        # self.surfaces_excluded_by_eindregistratie = [] To do: mag uiteindelijk weg
         
     @property
     def result_table(self):
@@ -1570,6 +1631,7 @@ class Database:
             for feature in input_layer:
                 if hasattr(feature, "eindRegistratie"):
                     if feature["eindRegistratie"] is not None:
+                        # self.surfaces_excluded_by_eindregistratie.append(feature["identificatie.lokaalID"]) # to do: regel mag uiteindelijk weg
                         continue
                 if hasattr(feature, "plus-status"):
                     if feature["plus-status"] in ["plan", "historie"]:
