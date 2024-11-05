@@ -1071,7 +1071,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 3: surface which intersect with green roofs or infiltrating pavement
-        warning_infiltrating_surfaces = "Dit oppervlak is waterpasserende verharding of een groen dak. Het type verharding is daarop aangepast, maar de percentuele afwatering nog niet."
+        warning_infiltrating_surfaces = "Dit vlak is waterpasserende verharding of een groen dak. Het type verharding is daarop aangepast, maar de percentuele afwatering nog niet."
         
         for surface in self.inf_pavements_green_roof_surfaces:
             fid += 1
@@ -1127,7 +1127,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 6: handmatig gewijzigd BGT vlak heeft een eindregistratie gekregen
-        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak heeft een eindregistratie gekregen. Controleer of het nog steeds bestaat." 
+        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak bestaat niet meer in de BGT data. Controleer of het nog steeds bestaat." 
         for it_feature in self.outdated_changed_surfaces:
             fid += 1
             geom = it_feature.GetGeometryRef()
