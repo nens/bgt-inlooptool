@@ -26,31 +26,6 @@
     <string>Bereken afwateringskenmerken</string>
    </property>
   </widget>
-  <widget class="QListWidget" name="listWidget">
-   <property name="geometry">
-    <rect>
-     <x>600</x>
-     <y>50</y>
-     <width>341</width>
-     <height>581</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>Hier info over de tool inzetten</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>New Item</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>New Item</string>
-    </property>
-   </item>
-  </widget>
   <widget class="QLabel" name="label_13">
    <property name="geometry">
     <rect>
@@ -83,7 +58,7 @@
     </sizepolicy>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="import_data_tab">
     <attribute name="title">
@@ -694,6 +669,40 @@
      </property>
     </widget>
    </widget>
+  </widget>
+  <widget class="QTextBrowser" name="textBrowser">
+   <property name="geometry">
+    <rect>
+     <x>600</x>
+     <y>50</y>
+     <width>341</width>
+     <height>531</height>
+    </rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:14px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Brondata downloaden&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;In het tabblad &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;Brondata&amp;quot;&lt;/span&gt; kunnen BGT-vlakken, GWSW-leidingen en BAG-panden worden gedownload. Hiervoor is alleen een gebiedsgrens nodig. Nadat de gewenste bestandslocatie is gespecificeerd, wordt de data gedownload op basis van deze gebiedsgrenzen.&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;De gebiedsgrens moet een laag zijn die in het QGIS-project is geladen waarin de BGT Inlooptool is geopend. Dit moet een vectorbestand zijn; rasterdata kan niet worden gebruikt als gebiedsgrens.&lt;/p&gt;
+&lt;p style=&quot; margin-top:14px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Input bestanden&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;In het tabblad &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;Input&amp;quot;&lt;/span&gt; wordt alle benodigde data voor de analyse gespecificeerd. De BGT-vlakken en GWSW-leidingen zijn verplichte invoerbestanden. De overige bestanden zijn optioneel, afhankelijk van het doel van de analyse. Hieronder volgt een overzicht van de verschillende invoerbestanden:&lt;/p&gt;
+&lt;ol style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Resultaten vorige analyse&lt;/span&gt;: Een GPKG-bestand met de resultaten van de vorige analyse. Het is sterk aanbevolen om dit bestand mee te geven aan de analyse, indien beschikbaar. Dit zorgt ervoor dat handmatige wijzigingen behouden blijven, rekeninstellingen kunnen worden vergeleken en dat waterpasserende verharding en groene daken (indien gespecificeerd) worden meegenomen.&lt;/li&gt;
+&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BGT-vlakken&lt;/span&gt;: Een ZIP-bestand met de BGT-vlakken. Het is aanbevolen om dit te downloaden in het tabblad &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;Brondata&amp;quot;&lt;/span&gt;, omdat andere methoden mogelijk niet worden ondersteund.&lt;/li&gt;
+&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GWSW-leidingen&lt;/span&gt;: Een GPKG-bestand met de GWSW-leidingen. Downloaden via het tabblad &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;Brondata&amp;quot;&lt;/span&gt; is aanbevolen, maar het kan ook via de GWSW-website. Let op: de tool werkt niet met GWSW-leidingen uit PDOK.&lt;/li&gt;
+&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BAG-panden&lt;/span&gt;: Een GPKG- of SHP-bestand met panden uit de BAG. Dit bestand wordt alleen gebruikt om het bouwjaar te koppelen aan de panden uit de BGT.&lt;/li&gt;
+&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Kolken&lt;/span&gt;: Een GPKG- of SHP-bestand met de locaties van de kolken.&lt;/li&gt;
+&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Gebieden voor statistiekberekening&lt;/span&gt;: Een GPKG- of SHP-bestand met één of meerdere gebieden. De resultaten van de BGT Inlooptool kunnen worden geaggregeerd per bemalingsgebied, gemeente, buurt of wijk. Voor elk polygoon in het invoerbestand worden statistieken berekend, zoals de percentuele afwatering naar verschillende stelsels en het type verharding.&lt;/li&gt;&lt;/ol&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Het wordt aanbevolen om de analyse te beperken tot een klein interessegebied om de snelheid van de tool te verhogen. &lt;span style=&quot; font-weight:600;&quot;&gt;De&lt;/span&gt; &lt;span style=&quot; font-weight:600;&quot;&gt;gebiedsafbakening&lt;/span&gt; moet een vectorlaag zijn die in het QGIS-project is geladen; rasterdata kan niet worden gebruikt als gebiedsafbakening.&lt;/p&gt;
+&lt;p style=&quot; margin-top:14px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Resultaten opslaan&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;De resultaten kunnen worden opgeslagen als een GPKG-bestand. Hiervoor hoeft alleen de bestandsmap te worden gespecificeerd. De bestandsnaam wordt bepaald door het revisienummer. Als er geen resultaten van een eerdere analyse zijn meegegeven, wordt dit aangeduid met &amp;quot;v1&amp;quot;. Als er wel een vorige versie is, wordt in de laag &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;&lt;/span&gt;7.&lt;span style=&quot; font-weight:600;&quot;&gt; &lt;/span&gt;Rekeninstellingen&lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;&lt;/span&gt; gekeken welke versie het nieuwe bestand krijgt. Voor revisiebeheer is het verstandig om dezelfde map te selecteren als waar de vorige revisie is opgeslagen.&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Het opslaan van resultaten is optioneel. Door het vinkje bij &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;Resultaten opslaan&amp;quot;&lt;/span&gt; uit te zetten, worden de resultaten als een tijdelijke QGIS-laag ingeladen. Dit versnelt de analyse, maar de resultaten gaan verloren als QGIS wordt afgesloten. Wanneer de resultaten worden opgeslagen als GPKG, worden de styling en eventuele handmatige wijzigingen automatisch bijgehouden.&lt;/p&gt;
+&lt;p style=&quot; margin-top:14px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Instellingen&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;De instellingen beïnvloeden de koppeling tussen BGT-vlakken en GWSW-leidingen. Voor meer details over specifieke instellingen, zie de handleiding van de BGT Inlooptool. Elke instelling heeft een 'default-waarde' en kan worden gereset met de resetknop.&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Als ervoor wordt gekozen om leidingcodes te koppelen, worden de kolommen met codes gevuld op basis van het rioleringstype waar het vlak naar afwatert. Als deze optie niet wordt gebruikt, blijven deze kolommen leeg en verborgen in de inlooptabel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
   </widget>
  </widget>
  <customwidgets>
