@@ -839,7 +839,6 @@ class InloopTool:
                 self.new_BGT_surfaces.append(prev_feat)  
             
             # Check if the manual edits have an eindregistratie (and are therefor old BGT features)    
-            #if prev_feat["bgt_identificatie"] in self._database.surfaces_excluded_by_eindregistratie: # to do: mag uiteindelijk 
             surfaces_ids = []
             for surface in bgt_surfaces:
                 surfaces_ids.append(surface.GetField("identificatie_lokaalid"))
@@ -1027,7 +1026,7 @@ class InloopTool:
         
         return round(area_totals[stat_type] / 10000, 2) 
     
-    def generate_warnings(self): #TO DO: aanvullen met andere waarschuwing, evt. nog opdelen in verschillende functies, en prints weghalen. 
+    def generate_warnings(self): 
         checks_table = self._database.checks_table
         it_layer = self._database.result_table
         feature_defn = checks_table.GetLayerDefn()
@@ -1093,7 +1092,7 @@ class InloopTool:
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
         
-        #Check 4: relatieve hoogteligging (to do: waarschuwing beter verwoorden) (to do: evt. alles met rh=-1 of lager verwijderen uit surfaces?)
+        #Check 4: relatieve hoogteligging 
         warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Neerslag valt op het vlak met de hoogste relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
         
         for surface in self.relative_hoogteligging_surfaces:
@@ -1174,7 +1173,6 @@ class Database:
             table_name=CHECKS_TABLE_NAME, table_schema=CHECKS_TABLE_SCHEMA
         )
         self.non_matching_buildings = []
-        # self.surfaces_excluded_by_eindregistratie = [] To do: mag uiteindelijk weg
         
     @property
     def result_table(self):
@@ -1635,7 +1633,6 @@ class Database:
             for feature in input_layer:
                 if hasattr(feature, "eindRegistratie"):
                     if feature["eindRegistratie"] is not None:
-                        # self.surfaces_excluded_by_eindregistratie.append(feature["identificatie.lokaalID"]) # to do: regel mag uiteindelijk weg
                         continue
                 if hasattr(feature, "plus-status"):
                     if feature["plus-status"] in ["plan", "historie"]:
@@ -1776,11 +1773,6 @@ class Database:
         
         # Sync the data to disk
         dst_layer.SyncToDisk()
-    
-    def _save_to_gpkg_test(self, file_path): #TO DO: weghalen, is alleen voor testen
-        print("Testen van output wegschrijven!!")
-        self.out_db = GPKG_DRIVER.CopyDataSource(self.mem_database, file_path)
-        self.out_db = None
     
     def _save_to_gpkg(self,file_folder,template_gpkg):
         print("Preparing template gpkg")

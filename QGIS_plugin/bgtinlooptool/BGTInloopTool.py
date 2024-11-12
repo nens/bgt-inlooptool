@@ -25,7 +25,6 @@
 import os.path
 import sys
 import json
-#import urllib.parse #To do: wordt niet gebruikt, dus kan weg vgm
 
 
 from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
@@ -275,7 +274,7 @@ class InloopToolTask(QgsTask):
     def finished(self, result):
         if result:
 
-            if self.temp_QGIS_layers: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
+            if self.temp_QGIS_layers: 
                 file_name = "BGT_inlooptabel"
                 layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name)
                 #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
