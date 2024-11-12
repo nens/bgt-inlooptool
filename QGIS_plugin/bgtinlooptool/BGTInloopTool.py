@@ -274,9 +274,10 @@ class InloopToolTask(QgsTask):
 
     def finished(self, result):
         if result:
-            file_name = self.it._database.set_output_name()
-            layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
+
             if self.temp_QGIS_layers: # Load as temporary layer, to do: overige lagen later evt. nog toevoegen
+                file_name = "BGT_inlooptabel"
+                layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name)
                 #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=STATISTICS_TABLE_NAME,layer_tree_layer_name="Statistieken", qml=STATS_STYLE,layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=SURFACES_TABLE_NAME, layer_tree_layer_name="BGT Oppervlakken",qml=BGT_STYLE,layer_group=layer_group)
@@ -288,7 +289,11 @@ class InloopToolTask(QgsTask):
                 self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
 
             else: # Load from file
-                
+                gpkg_files = [f for f in os.listdir(self.output_folder) if f.endswith(".gpkg")]
+                gpkg_paths = [os.path.join(self.output_folder, f) for f in gpkg_files]
+                file_name = max(gpkg_files, key=lambda f: os.path.getmtime(os.path.join(self.output_folder, f)))
+                #file_name = latest gpkg file in self.output_folder
+                layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
                 gpkg_path = os.path.join(self.output_folder, file_name)
                 self.gpkg_to_layer_group(gpkg_path, "7. Rekeninstellingen", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "6. Statistieken", layer_group)
@@ -820,7 +825,7 @@ class BGTInloopTool:
         task = NetworkTask(CBS_GEMEENTES_API_URL, output_gpkg, extent_bbox, extent_geometry_wkt, "default_lijn")
     
         # Connect the task's finished signal to a custom slot to handle completion
-        task.taskCompleted.connect(self.on_task_finished)
+        task.taskCompleted.connect(self.on_task_finished_gwsw)
     
         # Start the task via the QGIS Task Manager
         QgsApplication.taskManager().addTask(task)
@@ -835,7 +840,7 @@ class BGTInloopTool:
         # Save download in settings of run
         self.download_gwsw = True
     
-    def on_task_finished(self, exception=None):
+    def on_task_finished_gwsw(self, exception=None):
         """
         This method is called when the task finishes.
         It pushes a message to the message bar indicating the completion.
@@ -847,7 +852,7 @@ class BGTInloopTool:
                 "Info",
                 f'GWSW leidingen gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
                 level=Qgis.Info,
-                duration=20,  # Longer so the user has time to click the link
+                duration=30,  # Longer so the user has time to click the link
             )
         else:
             # Task failed
@@ -855,7 +860,7 @@ class BGTInloopTool:
                 "Error",
                 f"Er is een fout opgetreden tijdens het downloaden van GWSW leidingen: {exception}",
                 level=Qgis.Critical,
-                duration=10,
+                duration=20,
             )
     
         # Display a warning if some municipalities don't have a GWSW dataset
@@ -864,7 +869,7 @@ class BGTInloopTool:
                 "Warning",
                 f'De gemeente(s) {NOT_FOUND_GEMEENTES} heeft/hebben geen GWSW dataset. Download de waterschapsdata via de GWSW website of neem contact op met de beheerder',
                 level=Qgis.Warning,
-                duration=20,
+                duration=15,
             )
         
     def download_bag_from_api(self):
@@ -883,14 +888,9 @@ class BGTInloopTool:
         
         # Perform download
         task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
+        # Connect the task's finished signal to a custom slot to handle completion
+        task.taskCompleted.connect(self.on_task_finished_bag)
         QgsApplication.taskManager().addTask(task)
-        
-        self.iface.messageBar().pushMessage(
-            MESSAGE_CATEGORY,
-            f'BAG panden gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
-            level=Qgis.Info,
-            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
-        )
         
         # Change UI
         output_file = self.dlg.bagApiOutput.filePath()
@@ -901,6 +901,29 @@ class BGTInloopTool:
         
         # Save download in settings of run
         self.download_bag = True
+
+    def on_task_finished_bag(self, exception=None):
+        """
+        This method is called when the task finishes.
+        It pushes a message to the message bar indicating the completion.
+        """
+        output_gpkg = self.dlg.bagApiOutput.filePath()
+        if exception is None:
+            # Task finished successfully
+            self.iface.messageBar().pushMessage(
+                MESSAGE_CATEGORY,
+                f'BAG panden gedownload naar <a href="{output_gpkg}">{output_gpkg}</a>',
+                level=Qgis.Info,
+                duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
+            )
+        else:
+            # Task failed
+            self.iface.messageBar().pushMessage(
+                "Error",
+                f"Er is een fout opgetreden tijdens het downloaden van BAG panden: {exception}",
+                level=Qgis.Critical,
+                duration=20,
+            )
 
     def on_run(self):
 

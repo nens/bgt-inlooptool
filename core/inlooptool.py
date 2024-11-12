@@ -10,18 +10,22 @@ from osgeo import ogr
 from datetime import datetime
 
 try: # Rtree should be installed by the plugin for QGIS
-    import rtree  
-except ImportError: # For ArcGIS Pro the following is needed
-    import sys
-    from pathlib import Path
-    
+    import rtree
+except ImportError:
     try:
-        from .rtree_installer import unpack_rtree
-        if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
-            rtree_path = unpack_rtree()
-            sys.path.append(str(rtree_path))
-    except ImportError:
-        print("The 'rtree' package installation failed.")
+        import subprocess
+        command = ["python", "-m", "pip", "install", "rtree"]
+        result = subprocess.run(command, capture_output=True, text=True)
+        import rtree
+    except: # For ArcGIS Pro the following is needed
+        from pathlib import Path
+        try:
+            from .rtree_installer import unpack_rtree
+            if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
+                rtree_path = unpack_rtree()
+                sys.path.append(str(rtree_path))
+        except ImportError:
+            print("The 'rtree' package installation failed.")
     
 # Local imports
 from core.table_schemas import *
@@ -1780,7 +1784,7 @@ class Database:
     
     def _save_to_gpkg(self,file_folder,template_gpkg):
         print("Preparing template gpkg")
-        file_name = self.set_output_name()
+        file_name = self.set_output_name(file_folder)
         file_path = os.path.join(file_folder, file_name)
         self.copy_and_rename_file(template_gpkg, file_path)
         
@@ -1803,24 +1807,33 @@ class Database:
             for db_layer, gpkg_layer in layers:
                 print(f"Saving {gpkg_layer} layer in gpkg")
                 self._write_to_disk(dst_gpkg, db_layer, gpkg_layer)
-                if db_layer == RESULT_TABLE_NAME: #to do: hide leidingcode kolommen als niet leidingcodes_koppelen #to do: ook in temp laag!
+                if db_layer == RESULT_TABLE_NAME:
                     self.track_changes(dst_gpkg)
            
         print("All layers saved successfully.")
     
-    def set_output_name(self):
+    def set_output_name(self, file_folder):
         # Determine max. run_id
         max_run_id = -1
         for feature in self.settings_table: 
             run_id = feature.GetField("run_id")
             if run_id > max_run_id:
                 max_run_id = run_id
-        
+    
         if max_run_id < 1:
             max_run_id = 1
-        #Set the output name
+        
+        # Set the initial output name
         output_name = f"v{max_run_id}_BGT_inlooptabel.gpkg"
-        return output_name        
+        file_path = os.path.join(file_folder, output_name)
+        
+        # Check if file already exists
+        if os.path.exists(file_path):
+            # Append current date and time to the output name
+            current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_name = f"v{max_run_id}_BGT_inlooptabel_{current_time}.gpkg"
+        
+        return output_name 
     
     def copy_and_rename_file(self,original_file_path, new_file_path):
         """
