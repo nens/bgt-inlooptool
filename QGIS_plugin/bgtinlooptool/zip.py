@@ -8,6 +8,7 @@ ROOT_DIR_FILES = [
     "BGTInloopTool.py",
     "BGTInloopTool_dialog.py",
     "BGTInloopTool_dialog_base.ui",
+    "constants.py",
     "icon.png",
     "metadata.txt",
     "ogr2qgis.py",
@@ -15,7 +16,7 @@ ROOT_DIR_FILES = [
     "resources.qrc",
 ]
 
-DIRECTORIES = ["core", "style"]
+DIRECTORIES = ["core", "style", "processing"]
 
 IGNORE = ["core/__pycache__", "core/.gitignore"]
 

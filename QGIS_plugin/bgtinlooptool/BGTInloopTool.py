@@ -54,6 +54,8 @@ from .resources import *
 
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
+from bgtinlooptool.processing.provider import BGTInloopToolProcessingProvider
+
 
 # Import the BGT Inlooptool core
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -62,22 +64,22 @@ from core.constants import *
 from .core.defaults import *
 from .ogr2qgis import *
 
-MESSAGE_CATEGORY = "BGT Inlooptool"
-BGT_API_URL = "https://api.pdok.nl/lv/bgt/download/v1_0/full/custom"
-BAG_API_URL = "https://service.pdok.nl/lv/bag/wfs/v2_0?service=WFS&version=2.0.0&request=GetFeature&typeName=bag:pand&outputFormat=application/json"
-GWSW_API_URL = "https://service.pdok.nl/rioned/beheerstedelijkwater/wfs/v1_0?service=WFS&version=2.0.0&request=GetFeature&typeName=beheerstedelijkwater:BeheerLeiding&outputFormat=application/json"
-CBS_GEMEENTES_API_URL = "https://service.pdok.nl/kadaster/bestuurlijkegebieden/wfs/v1_0?service=WFS&version=1.0.0&request=GetFeature&typeName=Gemeentegebied&outputFormat=application/json"
-
-NOT_FOUND_GEMEENTES = []  # Initialize the list for not found gemeentes (GWSW server)
-
-INLOOPTABEL_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_inlooptabel.qml")
-INLOOPTABEL_STYLE_HIDDEN = os.path.join(os.path.dirname(__file__), "style", "bgt_inlooptabel_hidden.qml")
-PIPES_STYLE = os.path.join(os.path.dirname(__file__), "style", "gwsw_lijn.qml")
-BGT_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_oppervlakken.qml")
-STATS_STYLE = os.path.join(os.path.dirname(__file__), "style", "stats.qml")
-CHECKS_STYLE = os.path.join(os.path.dirname(__file__), "style", "checks.qml")
-GPKG_TEMPLATE = os.path.join(os.path.dirname(__file__), "style", "template_output.gpkg")
-GPKG_TEMPLATE_HIDDEN = os.path.join(os.path.dirname(__file__), "style", "template_output_hidden_fields.gpkg")
+from bgtinlooptool.constants import (
+    MESSAGE_CATEGORY,
+    BGT_API_URL,
+    BAG_API_URL,
+    GWSW_API_URL,
+    CBS_GEMEENTES_API_URL,
+    INLOOPTABEL_STYLE,
+    INLOOPTABEL_STYLE_HIDDEN,
+    PIPES_STYLE,
+    BGT_STYLE,
+    STATS_STYLE,
+    CHECKS_STYLE,
+    GPKG_TEMPLATE,
+    GPKG_TEMPLATE_HIDDEN,
+    NOT_FOUND_GEMEENTES,
+)
 
 class InloopToolTask(QgsTask):
     def __init__(
@@ -535,6 +537,7 @@ class BGTInloopTool:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+        self.provider = BGTInloopToolProcessingProvider()
 
         # Declare instance attributes
         self.actions = []
@@ -628,11 +631,14 @@ class BGTInloopTool:
             parent=self.iface.mainWindow(),
         )
 
+        QgsApplication.processingRegistry().addProvider(self.provider)
+
         # will be set False in run()
         self.first_start = True
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        QgsApplication.processingRegistry().removeProvider(self.provider)
         for action in self.actions:
             self.iface.removePluginMenu("&BGT Inlooptool", action)
             self.iface.removeToolBarIcon(action)
