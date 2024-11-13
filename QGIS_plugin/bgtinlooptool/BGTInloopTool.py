@@ -51,6 +51,8 @@ from .resources import *
 
 # Import the code for the dialog
 from .BGTInloopTool_dialog import BGTInloopToolDialog
+from bgtinlooptool.processing.provider import BGTInloopToolProcessingProvider
+
 
 # Import the BGT Inlooptool core
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -58,14 +60,13 @@ from core.inlooptool import *
 from core.constants import *
 from .ogr2qgis import *
 
-MESSAGE_CATEGORY = "BGT Inlooptool"
-BGT_API_URL = "https://api.pdok.nl/lv/bgt/download/v1_0/full/custom"
-
-INLOOPTABEL_STYLE = os.path.join(
-    os.path.dirname(__file__), "style", "bgt_inlooptabel.qml"
+from bgtinlooptool.constants import (
+    MESSAGE_CATEGORY,
+    BGT_API_URL,
+    INLOOPTABEL_STYLE,
+    PIPES_STYLE,
+    BGT_STYLE,
 )
-PIPES_STYLE = os.path.join(os.path.dirname(__file__), "style", "gwsw_lijn.qml")
-BGT_STYLE = os.path.join(os.path.dirname(__file__), "style", "bgt_oppervlakken.qml")
 
 
 class InloopToolTask(QgsTask):
@@ -275,6 +276,7 @@ class BGTInloopTool:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+        self.provider = BGTInloopToolProcessingProvider()
 
         # Declare instance attributes
         self.actions = []
@@ -368,11 +370,14 @@ class BGTInloopTool:
             parent=self.iface.mainWindow(),
         )
 
+        QgsApplication.processingRegistry().addProvider(self.provider)
+
         # will be set False in run()
         self.first_start = True
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        QgsApplication.processingRegistry().removeProvider(self.provider)
         for action in self.actions:
             self.iface.removePluginMenu("&BGT Inlooptool", action)
             self.iface.removeToolBarIcon(action)
