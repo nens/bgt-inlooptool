@@ -93,6 +93,7 @@ from bgtinlooptool.core.constants import (
     CHECKS_TABLE_FIELD_DESCRIPTION, SETTINGS_TABLE_NAME, STATISTICS_TABLE_NAME, CHECKS_TABLE_NAME,
     INF_PAVEMENT_TABLE_NAME_PREV,
 )
+from bgtinlooptool.core.constants import * #To do: dit nog in bovenstaande zetten
 from bgtinlooptool.core.defaults import (
     MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
     MAX_AFSTAND_VLAK_OPPWATER,
