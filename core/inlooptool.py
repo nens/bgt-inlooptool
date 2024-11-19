@@ -1,6 +1,5 @@
 # System imports
 import os
-import sys
 import contextlib
 
 # Third-party imports
@@ -9,9 +8,11 @@ from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
 
-try: # Rtree should be installed by the plugin for QGIS
-    import rtree
-except ImportError:
+try:  # Rtree should be installed by the plugin for QGIS
+    import rtree  
+except ImportError: # For ArcGIS Pro the following is needed
+    import sys
+    from pathlib import Path
     try:
         import subprocess
         command = ["python", "-m", "pip", "install", "rtree"]
@@ -28,21 +29,73 @@ except ImportError:
             print("The 'rtree' package installation failed.")
     
 # Local imports
-from core.table_schemas import *
-from core.constants import *
 from core.constants import (
     ALL_USED_SURFACE_TYPES,
+    BUILDINGS_TABLE_NAME,
+    DISTANCE_TYPES,
+    GWSW_PIPE_TYPE_FIELD,
+    GWSW_STELSEL_TYPE_FIELD,
+    GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL,
+    INTERNAL_PIPE_TYPE_FIELD,
+    INTERNAL_PIPE_TYPE_GEMENGD_RIOOL,
+    INTERNAL_PIPE_TYPE_HEMELWATERRIOOL,
+    INTERNAL_PIPE_TYPE_IGNORE,
+    INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING,
+    INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL,
+    KOLK,
+    KOLK_CONNECTABLE_SURFACE_TYPES,
+    KOLKEN_TABLE_NAME,
     MULTIPLE_GEOMETRY_SURFACE_TYPES,
-    SURFACES_TABLE_NAME,
-    RESULT_TABLE_FIELD_GRAAD_VERHARDING,
-    RESULT_TABLE_FIELD_TYPE_VERHARDING,
-    SURFACE_TYPE_PAND,
-    VERHARDINGSTYPE_PAND,
-    SURFACE_TYPE_WATERDEEL,
-    VERHARDINGSTYPE_WATER,
+    NON_CONNECTABLE_SURFACE_TYPES,
+    OPEN_WATER,
+    PIPE_MAP,
     PIPES_TABLE_NAME,
+    PSEUDO_INFINITE,
+    RESULT_TABLE_FIELD_BGT_IDENTIFICATIE,
+    RESULT_TABLE_FIELD_GRAAD_VERHARDING,
+    RESULT_TABLE_FIELD_ID,
+    RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
+    RESULT_TABLE_FIELD_TYPE_VERHARDING,
+    RESULT_TABLE_NAME,
+    SOURCE_PIPES_TABLE_NAME,
+    SURFACE_TYPE_GEBOUWINSTALLATIE,
+    SURFACE_TYPE_ONDERSTEUNENDWATERDEEL,
+    SURFACE_TYPE_PAND,
+    SURFACE_TYPE_WATERDEEL,
+    SURFACE_TYPES_MET_FYSIEK_VOORKOMEN,
+    SURFACES_TABLE_NAME,
+    TARGET_TYPE_GEMENGD_RIOOL,
+    TARGET_TYPE_HEMELWATERRIOOL,
+    TARGET_TYPE_INFILTRATIEVOORZIENING,
+    TARGET_TYPE_MAAIVELD,
+    TARGET_TYPE_OPEN_WATER,
+    TARGET_TYPE_VGS_HEMELWATERRIOOL,
+    TARGET_TYPE_VUILWATERRIOOL,
+    TARGET_TYPES,
+    VERHARDINGSTYPE_GESLOTEN_VERHARD,
+    VERHARDINGSTYPE_ONVERHARD,
+    VERHARDINGSTYPE_OPEN_VERHARD,
+    VERHARDINGSTYPE_PAND,
+    VERHARDINGSTYPE_WATER,
 )
-from core.defaults import *
+from core.defaults import (
+    MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
+    MAX_AFSTAND_VLAK_OPPWATER,
+    MAX_AFSTAND_PAND_OPPWATER,
+    MAX_AFSTAND_VLAK_KOLK,
+    MAX_AFSTAND_AFGEKOPPELD,
+    MAX_AFSTAND_DRIEVOUDIG,
+    AFKOPPELEN_HELLENDE_DAKEN,
+    GEBRUIK_BAG,
+    GEBRUIK_KOLKEN,
+    BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
+    VERHARDINGSGRAAD_ERF,
+    VERHARDINGSGRAAD_HALF_VERHARD,
+)
+from core.table_schemas import (
+    RESULT_TABLE_SCHEMA,
+    SURFACES_TABLE_SCHEMA,
+)
 
 # Globals
 GFS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gfs")
