@@ -10,7 +10,7 @@ from datetime import datetime
 
 try:  # Rtree should be installed by the plugin for QGIS
     import rtree  
-except ImportError: # For ArcGIS Pro the following is needed
+except ImportError:  # For ArcGIS Pro the following is needed
     import sys
     from pathlib import Path
     try:
@@ -18,7 +18,7 @@ except ImportError: # For ArcGIS Pro the following is needed
         command = ["python", "-m", "pip", "install", "rtree"]
         result = subprocess.run(command, capture_output=True, text=True)
         import rtree
-    except: # For ArcGIS Pro the following is needed
+    except Exception:  # For ArcGIS Pro the following is needed
         from pathlib import Path
         try:
             from .rtree_installer import unpack_rtree
@@ -29,7 +29,7 @@ except ImportError: # For ArcGIS Pro the following is needed
             print("The 'rtree' package installation failed.")
     
 # Local imports
-from core.constants import (
+from bgtinlooptool.core.constants import (
     ALL_USED_SURFACE_TYPES,
     BUILDINGS_TABLE_NAME,
     DISTANCE_TYPES,
@@ -76,9 +76,24 @@ from core.constants import (
     VERHARDINGSTYPE_ONVERHARD,
     VERHARDINGSTYPE_OPEN_VERHARD,
     VERHARDINGSTYPE_PAND,
-    VERHARDINGSTYPE_WATER,
+    VERHARDINGSTYPE_WATER, SETTINGS_TABLE_NAME_PREV, SETTINGS_TABLE_FIELD_ID, SETTINGS_TABLE_FIELD_TIJD_START,
+    SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, SETTINGS_TABLE_FIELD_DOWNLOAD_BAG,
+    SETTINGS_TABLE_FIELD_PAD_BGT, SETTINGS_TABLE_FIELD_PAD_GWSW, SETTINGS_TABLE_FIELD_PAD_BAG,
+    SETTINGS_TABLE_FIELD_PAD_KOLKEN, SETTINGS_TABLE_FIELD_AFSTAND_AFWATERINGSVOORZIENING,
+    SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_OPP_WATER, SETTINGS_TABLE_FIELD_AFSTAND_PAND_OPP_WATER,
+    SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_KOLK, SETTINGS_TABLE_FIELD_AFSTAND_AFKOPPELD,
+    SETTINGS_TABLE_FIELD_AFSTAND_DRIEVOUDIG, SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_ERF,
+    SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_HALF_VERHARD, SETTINGS_TABLE_FIELD_AFKOPPELEN_HELLEND,
+    SETTINGS_TABLE_FIELD_BOUWJAAR_GESCHEIDEN_BINNENHUIS, SETTINGS_TABLE_FIELD_LEIDINGCODES_KOPPELEN,
+    SETTINGS_TABLE_FIELD_TIJD_EIND, RESULT_TABLE_FIELD_CODE_GEMENGD, RESULT_TABLE_FIELD_CODE_HWA,
+    RESULT_TABLE_FIELD_CODE_DWA, RESULT_TABLE_FIELD_CODE_INFILTRATIE, INTERNAL_PIPE_TYPE_VUILWATERRIOOL,
+    RESULT_TABLE_FIELD_WIJZIGING, RESULT_TABLE_NAME_PREV, STATISTICS_TABLE_FIELD_ID, VERHARDINGSTYPE_GROEN_DAK,
+    VERHARDINGSTYPE_WATERPASSEREND_VERHARD, CHECKS_LARGE_AREA, CHECKS_TABLE_FIELD_ID, CHECKS_TABLE_FIELD_LEVEL,
+    CHECKS_TABLE_FIELD_CODE, CHECKS_TABLE_FIELD_TABLE, CHECKS_TABLE_FIELD_COLUMN, CHECKS_TABLE_FIELD_VALUE,
+    CHECKS_TABLE_FIELD_DESCRIPTION, SETTINGS_TABLE_NAME, STATISTICS_TABLE_NAME, CHECKS_TABLE_NAME,
+    INF_PAVEMENT_TABLE_NAME_PREV,
 )
-from core.defaults import (
+from bgtinlooptool.core.defaults import (
     MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
     MAX_AFSTAND_VLAK_OPPWATER,
     MAX_AFSTAND_PAND_OPPWATER,
@@ -90,11 +105,12 @@ from core.defaults import (
     GEBRUIK_KOLKEN,
     BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
     VERHARDINGSGRAAD_ERF,
-    VERHARDINGSGRAAD_HALF_VERHARD,
+    VERHARDINGSGRAAD_HALF_VERHARD, KOPPEL_LEIDINGCODES, GEBRUIK_RESULTATEN, GEBRUIK_STATISTIEKEN, DOWNLOAD_BGT,
+    DOWNLOAD_GWSW, DOWNLOAD_BAG,
 )
-from core.table_schemas import (
+from bgtinlooptool.core.table_schemas import (
     RESULT_TABLE_SCHEMA,
-    SURFACES_TABLE_SCHEMA,
+    SURFACES_TABLE_SCHEMA, SETTINGS_TABLE_SCHEMA, STATISTICS_TABLE_SCHEMA, CHECKS_TABLE_SCHEMA,
 )
 
 # Globals
@@ -186,7 +202,7 @@ class InloopTool:
         self.new_BGT_surfaces = []
         self.outdated_changed_surfaces = []
         
-    def set_settings_start(self,bgt_file,pipe_file,building_file, kolken_file):
+    def set_settings_start(self, bgt_file, pipe_file,building_file, kolken_file):
         settings_table = self._database.settings_table
         feature_defn = settings_table.GetLayerDefn()
         feature = ogr.Feature(feature_defn)
@@ -195,7 +211,7 @@ class InloopTool:
         prev_settings = self._database.mem_database.GetLayerByName(SETTINGS_TABLE_NAME_PREV)
         
         if prev_settings is not None:
-            self._database.copy_features_with_matching_fields(prev_settings,settings_table,"run_id")
+            self._database.copy_features_with_matching_fields(prev_settings, settings_table,"run_id")
 
         max_fid = -1
         for feature in settings_table:
@@ -305,7 +321,7 @@ class InloopTool:
         else:
             print("No features found in the layer.")
     
-    def import_results(self,file_path):
+    def import_results(self, file_path):
         """
         Import results from previous run to _database
         :param file_path: path to results gpkg of a previous run
@@ -316,13 +332,13 @@ class InloopTool:
         self._database.import_it_results(file_path)
         self._database.clean_it_results()
         
-    def import_surfaces(self, file_path,extent_wkt):
+    def import_surfaces(self, file_path, extent_wkt):
         """
         Import BGT Surfaces to _database
         :param file_path: path to bgt zip file
         :return: None
         """
-        self._database.import_surfaces_raw(file_path,extent_wkt)
+        self._database.import_surfaces_raw(file_path, extent_wkt)
         self._database.clean_surfaces()
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
@@ -369,7 +385,6 @@ class InloopTool:
 
         def verhard():
             """Is het oppervlak (mogelijk/deels) verhard?"""
-            a = surface.type_verharding
             if surface.surface_type in NON_CONNECTABLE_SURFACE_TYPES:
                 return False
             elif surface.type_verharding in {

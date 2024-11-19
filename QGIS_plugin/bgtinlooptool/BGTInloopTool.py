@@ -58,11 +58,9 @@ from bgtinlooptool.processing.provider import BGTInloopToolProcessingProvider
 
 
 # Import the BGT Inlooptool core
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from core.inlooptool import *
-from core.constants import *
-from .core.defaults import *
-from .ogr2qgis import *
+from bgtinlooptool.core.inlooptool import *
+from bgtinlooptool.core.defaults import *
+from bgtinlooptool.ogr2qgis import *
 
 from bgtinlooptool.constants import (
     MESSAGE_CATEGORY,
@@ -80,6 +78,7 @@ from bgtinlooptool.constants import (
     GPKG_TEMPLATE_HIDDEN,
     NOT_FOUND_GEMEENTES,
 )
+
 
 class InloopToolTask(QgsTask):
     def __init__(
