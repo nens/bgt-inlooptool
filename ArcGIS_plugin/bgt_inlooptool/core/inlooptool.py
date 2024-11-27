@@ -29,7 +29,7 @@ except ImportError:  # For ArcGIS Pro the following is needed
             print("The 'rtree' package installation failed.")
     
 # Local imports
-from bgtinlooptool.core.constants import (
+from core.constants import (
     ALL_USED_SURFACE_TYPES,
     BUILDINGS_TABLE_NAME,
     DISTANCE_TYPES,
@@ -93,8 +93,8 @@ from bgtinlooptool.core.constants import (
     CHECKS_TABLE_FIELD_DESCRIPTION, SETTINGS_TABLE_NAME, STATISTICS_TABLE_NAME, CHECKS_TABLE_NAME,
     INF_PAVEMENT_TABLE_NAME_PREV,
 )
-from bgtinlooptool.core.constants import * #To do: dit nog in bovenstaande zetten
-from bgtinlooptool.core.defaults import (
+from core.constants import * #To do: dit nog in bovenstaande zetten
+from core.defaults import (
     MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
     MAX_AFSTAND_VLAK_OPPWATER,
     MAX_AFSTAND_PAND_OPPWATER,
@@ -109,7 +109,7 @@ from bgtinlooptool.core.defaults import (
     VERHARDINGSGRAAD_HALF_VERHARD, KOPPEL_LEIDINGCODES, GEBRUIK_RESULTATEN, GEBRUIK_STATISTIEKEN, DOWNLOAD_BGT,
     DOWNLOAD_GWSW, DOWNLOAD_BAG,
 )
-from bgtinlooptool.core.table_schemas import (
+from core.table_schemas import (
     RESULT_TABLE_SCHEMA,
     SURFACES_TABLE_SCHEMA, SETTINGS_TABLE_SCHEMA, STATISTICS_TABLE_SCHEMA, CHECKS_TABLE_SCHEMA,
 )

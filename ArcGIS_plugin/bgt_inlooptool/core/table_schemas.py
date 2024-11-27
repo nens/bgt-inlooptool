@@ -1,5 +1,5 @@
 from osgeo import ogr
-from bgtinlooptool.core.constants import *
+from core.constants import *
 
 
 class TableSchema:
