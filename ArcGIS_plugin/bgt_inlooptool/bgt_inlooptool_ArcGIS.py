@@ -46,6 +46,30 @@ class BGTInloopToolArcGIS(BaseTool):
         self.canRunInBackground = True
         self.arcgis_com = GeneralUse(sys, arcpy)
 
+        self.parameter_names = ["bgt", "leidingen", "bag", "kolken_file", "input_extent_mask_wkt", "output_gpkg", "max_vlak_afwatervoorziening", "max_vlak_oppwater",
+                                "max_pand_opwater", "max_vlak_kolk", "max_afgekoppeld", "max_drievoudig", "afkoppelen_daken", "bouwjaar_riool", "verhardingsgraaf_erf",
+                                "verhardingsgraad_half_verhard", "bgt_oppervlakken_symb", "bgt_inlooptabel_symb", "gwsw_lijn_symb"]
+        
+        self.bgt_idx = self.parameter_names.index("bgt")
+        self.leidingen_idx = self.parameter_names.index("leidingen")
+        self.bag_idx = self.parameter_names.index("bag")
+        self.kolken_file_idx = self.parameter_names.index("kolken_file")
+        self.input_extent_mask_wkt_idx = self.parameter_names.index("input_extent_mask_wkt")
+        self.output_gpkg_idx = self.parameter_names.index("output_gpkg")
+        self.max_vlak_afwatervoorziening_idx = self.parameter_names.index("max_vlak_afwatervoorziening")
+        self.max_vlak_oppwater_idx = self.parameter_names.index("max_vlak_oppwater")
+        self.max_pand_opwater_idx = self.parameter_names.index("max_pand_opwater")
+        self.max_vlak_kolk_idx = self.parameter_names.index("max_vlak_kolk")
+        self.max_afgekoppeld_idx = self.parameter_names.index("max_afgekoppeld")
+        self.max_drievoudig_idx = self.parameter_names.index("max_drievoudig")
+        self.afkoppelen_daken_idx = self.parameter_names.index("afkoppelen_daken")
+        self.bouwjaar_riool_idx = self.parameter_names.index("bouwjaar_riool")
+        self.verhardingsgraaf_erf_idx = self.parameter_names.index("verhardingsgraaf_erf")
+        self.verhardingsgraad_half_verhard_idx = self.parameter_names.index("verhardingsgraad_half_verhard")
+        self.bgt_oppervlakken_symb_idx = self.parameter_names.index("bgt_oppervlakken_symb")
+        self.bgt_inlooptabel_symb_idx = self.parameter_names.index("bgt_inlooptabel_symb")
+        self.gwsw_lijn_symb_idx = self.parameter_names.index("gwsw_lijn_symb")
+
     def getParameterInfo(self):
         """return Parameter definitions."""
         """Create your parameters here using the paramater function.
@@ -55,162 +79,162 @@ class BGTInloopToolArcGIS(BaseTool):
         """
         layers = os.path.join(os.path.dirname(__file__), "layers")
 
-        parameters = [
-            parameter(
-                displayName="BGT (als zipfile)",
-                name="bgt",
-                datatype="DEFile",
-                parameterType="Required",
-                direction="Input",
-            ),
-            parameter(
-                displayName="GWSW Leidingen (als geopackage)",
-                name="leidingen",
-                datatype="DEDatasetType",
-                parameterType="Required",
-                direction="Input",
-            ),
-            parameter(
-                displayName="BAG (als geopackage)",
-                name="bag",
-                datatype="DEDatasetType",
-                parameterType="Optional",
-                direction="Input",
-            ),
-            parameter(
-                displayName="Kolken",
-                name="kolken_file",
-                datatype="GPFeatureLayer",
-                parameterType="Optional",
-                direction="Input",
-            ),
-            parameter(
-                displayName="Analyse gebied",
-                name="input_extent_mask_wkt",
-                datatype="GPFeatureLayer",
-                parameterType="Optional",
-                direction="Input",
-            ),
-            parameter(
-                displayName="Opslag locatie gpkg",
-                name="output_gpkg",
-                datatype="DEDatasetType",
-                parameterType="Required",
-                direction="Output",
-            ),
-            parameter(
-                displayName="maximale afstand vlak afwateringsvoorziening",
-                name="max_vlak_afwatervoorziening",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
-            ),
-            parameter(
-                displayName="maximale afstand vlak oppervlaktewater",
-                name="max_vlak_oppwater",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=MAX_AFSTAND_VLAK_OPPWATER,
-            ),
-            parameter(
-                displayName="maximale afstand pand oppervlaktewater",
-                name="max_pand_opwater",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=MAX_AFSTAND_PAND_OPPWATER,
-            ),
-            parameter(
-                displayName="maximale afstand vlak kolk",
-                name="max_vlak_kolk",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=MAX_AFSTAND_VLAK_KOLK,
-            ),
-            parameter(
-                displayName="maximale afstand afgekoppeld",
-                name="max_afgekoppeld",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=MAX_AFSTAND_AFGEKOPPELD,
-            ),
-            parameter(
-                displayName="maximale afstand drievoudig",
-                name="max_drievoudig",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=MAX_AFSTAND_DRIEVOUDIG,
-            ),
-            parameter(
-                displayName="afkoppelen hellende daken",
-                name="afkoppelen_daken",
-                datatype="GPBoolean",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=AFKOPPELEN_HELLENDE_DAKEN,
-            ),
-            parameter(
-                displayName="bouwjaar gescheiden binnenhuisriolering",
-                name="bouwjaar_riool",
-                datatype="GPLong",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
-            ),
-            parameter(
-                displayName="verhardingsgraad erf",
-                name="verhardingsgraaf_erf",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=VERHARDINGSGRAAD_ERF,
-            ),
-            parameter(
-                displayName="verhardingsgraad half verhard",
-                name="verhardingsgraad_half_verhard",
-                datatype="GPDouble",
-                parameterType="Required",
-                direction="Input",
-                defaultValue=VERHARDINGSGRAAD_HALF_VERHARD,
-            ),
-            parameter(
-                displayName="BGT oppervlakken symbology",
-                name="bgt_oppervlakken_symb",
-                datatype="GPLayer",
-                parameterType="Derived",
-                direction="Output",
-                symbology=os.path.join(layers, "bgt_oppervlakken.lyrx"),
-            ),
-            parameter(
-                displayName="BGT Inlooptabel symoblogy",
-                name="bgt_inlooptabel_symb",
-                datatype="GPLayer",
-                parameterType="Derived",
-                direction="Output",
-                symbology=os.path.join(layers, "bgt_inlooptabel.lyrx"),
-            ),
-            parameter(
-                displayName="GWSW lijnen symbology",
-                name="gwsw_lijn_symb",
-                datatype="GPLayer",
-                parameterType="Derived",
-                direction="Output",
-                symbology=os.path.join(layers, "gwsw_lijn.lyrx"),
-            ),
-        ]
+        bgt = parameter(
+            displayName="BGT (als zipfile)",
+            name="bgt",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input",
+        ),
+        leidingen = parameter(
+            displayName="GWSW Leidingen (als geopackage)",
+            name="leidingen",
+            datatype="DEDatasetType",
+            parameterType="Required",
+            direction="Input",
+        ),
+        bag = parameter(
+            displayName="BAG (als geopackage)",
+            name="bag",
+            datatype="DEDatasetType",
+            parameterType="Optional",
+            direction="Input",
+        ),
+        kolken_file = parameter(
+            displayName="Kolken",
+            name="kolken_file",
+            datatype="GPFeatureLayer",
+            parameterType="Optional",
+            direction="Input",
+        ),
+        input_extent_mask_wkt = parameter(
+            displayName="Analyse gebied",
+            name="input_extent_mask_wkt",
+            datatype="GPFeatureLayer",
+            parameterType="Optional",
+            direction="Input",
+        ),
+        output_gpkg = parameter(
+            displayName="Opslag locatie gpkg",
+            name="output_gpkg",
+            datatype="DEDatasetType",
+            parameterType="Required",
+            direction="Output",
+        ),
+        max_vlak_afwatervoorziening = parameter(
+            displayName="maximale afstand vlak afwateringsvoorziening",
+            name="max_vlak_afwatervoorziening",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
+        ),
+        max_vlak_oppwater = parameter(
+            displayName="maximale afstand vlak oppervlaktewater",
+            name="max_vlak_oppwater",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=MAX_AFSTAND_VLAK_OPPWATER,
+        ),
+        max_pand_opwater = parameter(
+            displayName="maximale afstand pand oppervlaktewater",
+            name="max_pand_opwater",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=MAX_AFSTAND_PAND_OPPWATER,
+        ),
+        max_vlak_kolk = parameter(
+            displayName="maximale afstand vlak kolk",
+            name="max_vlak_kolk",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=MAX_AFSTAND_VLAK_KOLK,
+        ),
+        max_afgekoppeld = parameter(
+            displayName="maximale afstand afgekoppeld",
+            name="max_afgekoppeld",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=MAX_AFSTAND_AFGEKOPPELD,
+        ),
+        max_drievoudig = parameter(
+            displayName="maximale afstand drievoudig",
+            name="max_drievoudig",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=MAX_AFSTAND_DRIEVOUDIG,
+        ),
+        afkoppelen_daken = parameter(
+            displayName="afkoppelen hellende daken",
+            name="afkoppelen_daken",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=AFKOPPELEN_HELLENDE_DAKEN,
+        ),
+        bouwjaar_riool = parameter(
+            displayName="bouwjaar gescheiden binnenhuisriolering",
+            name="bouwjaar_riool",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
+        ),
+        verhardingsgraaf_erf = parameter(
+            displayName="verhardingsgraad erf",
+            name="verhardingsgraaf_erf",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=VERHARDINGSGRAAD_ERF,
+        ),
+        verhardingsgraad_half_verhard = parameter(
+            displayName="verhardingsgraad half verhard",
+            name="verhardingsgraad_half_verhard",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input",
+            defaultValue=VERHARDINGSGRAAD_HALF_VERHARD,
+        ),
+        bgt_oppervlakken_symb = parameter(
+            displayName="BGT oppervlakken symbology",
+            name="bgt_oppervlakken_symb",
+            datatype="GPLayer",
+            parameterType="Derived",
+            direction="Output",
+            symbology=os.path.join(layers, "bgt_oppervlakken.lyrx"),
+        ),
+        bgt_inlooptabel_symb = parameter(
+            displayName="BGT Inlooptabel symoblogy",
+            name="bgt_inlooptabel_symb",
+            datatype="GPLayer",
+            parameterType="Derived",
+            direction="Output",
+            symbology=os.path.join(layers, "bgt_inlooptabel.lyrx"),
+        ),
+        gwsw_lijn_symb = parameter(
+            displayName="GWSW lijnen symbology",
+            name="gwsw_lijn_symb",
+            datatype="GPLayer",
+            parameterType="Derived",
+            direction="Output",
+            symbology=os.path.join(layers, "gwsw_lijn.lyrx"),
+        ),
 
-        return parameters
+        return [bgt, leidingen, bag, kolken_file, input_extent_mask_wkt, output_gpkg, max_vlak_afwatervoorziening, max_vlak_oppwater,
+                                max_pand_opwater, max_vlak_kolk, max_afgekoppeld, max_drievoudig, afkoppelen_daken, bouwjaar_riool, verhardingsgraaf_erf,
+                                verhardingsgraad_half_verhard, bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb]
 
     def updateParameters(self, parameters):
         """
         updates a parameter in the interface if specified
         """
-        output_gpkg = parameters[5]
+        output_gpkg = parameters[self.output_gpkg_idx]
         if output_gpkg.altered:
             # TODO pad default naar projectmap
             if "." in output_gpkg.valueAsText:
@@ -224,10 +248,10 @@ class BGTInloopToolArcGIS(BaseTool):
         """
         returns messages in the interface the wrong paths are filled in for the different parameters
         """
-        bgt_file = parameters[0]
-        pipe_file = parameters[1]
-        bag_file = parameters[2]
-        input_area = parameters[4]
+        bgt_file = parameters[self.bgt_idx]
+        pipe_file = parameters[self.leidingen_idx]
+        bag_file = parameters[self.bag_idx]
+        input_area = parameters[self.input_extent_mask_wkt_idx]
 
         if bgt_file.altered:
             if bgt_file.valueAsText[-4:].lower() != ".zip":
@@ -275,32 +299,32 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.StartAnalyse()
             self.arcgis_com.AddMessage("Start BGT Inlooptool!")
 
-            bgt_file = parameters[0].valueAsText
-            pipe_file = parameters[1].valueAsText
-            building_file = parameters[2].valueAsText
-            kolken_file = parameters[3].valueAsText
-            input_area = parameters[4].valueAsText
-            output_gpkg = parameters[5].valueAsText
+            bgt_file = parameters[self.bgt_idx].valueAsText
+            pipe_file = parameters[self.leidingen_idx].valueAsText
+            building_file = parameters[self.bag_idx].valueAsText
+            kolken_file = parameters[self.kolken_file_idx].valueAsText
+            input_area = parameters[self.input_extent_mask_wkt_idx].valueAsText
+            output_gpkg = parameters[self.output_gpkg_idx].valueAsText
 
             core_parameters = InputParameters(
-                max_afstand_vlak_afwateringsvoorziening=parameters[6].value,
-                max_afstand_vlak_oppwater=parameters[7].value,
-                max_afstand_pand_oppwater=parameters[8].value,
-                max_afstand_vlak_kolk=parameters[9].value,
-                max_afstand_afgekoppeld=parameters[10].value,
-                max_afstand_drievoudig=parameters[11].value,
-                afkoppelen_hellende_daken=parameters[12].value,
+                max_afstand_vlak_afwateringsvoorziening=parameters[self.max_vlak_afwatervoorziening_idx].value,
+                max_afstand_vlak_oppwater=parameters[self.max_vlak_oppwater_idx].value,
+                max_afstand_pand_oppwater=parameters[self.max_pand_opwater_idx].value,
+                max_afstand_vlak_kolk=parameters[self.max_vlak_kolk_idx].value,
+                max_afstand_afgekoppeld=parameters[self.max_afgekoppeld_idx].value,
+                max_afstand_drievoudig=parameters[self.max_drievoudig_idx].value,
+                afkoppelen_hellende_daken=parameters[self.afkoppelen_daken_idx].value,
                 gebruik_bag=building_file != None,
                 gebruik_kolken=kolken_file != None,
-                bouwjaar_gescheiden_binnenhuisriolering=parameters[13].value,
-                verhardingsgraad_erf=parameters[14].value,
-                verhardingsgraad_half_verhard=parameters[15].value,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[self.bouwjaar_riool_idx].value,
+                verhardingsgraad_erf=parameters[self.verhardingsgraaf_erf_idx].value,
+                verhardingsgraad_half_verhard=parameters[self.verhardingsgraad_half_verhard_idx].value,
             )
 
             # Output layers
-            bgt_oppervlakken_symb = parameters[16]
-            bgt_inlooptabel_symb = parameters[17]
-            gwsw_lijn_symb = parameters[18]
+            bgt_oppervlakken_symb = parameters[self.bgt_oppervlakken_symb_idx]
+            bgt_inlooptabel_symb = parameters[self.bgt_inlooptabel_symb_idx]
+            gwsw_lijn_symb = parameters[self.gwsw_lijn_symb_idx]
 
             # start of the core
             inlooptool = InloopTool(core_parameters)
@@ -363,7 +387,7 @@ class BGTInloopToolArcGIS(BaseTool):
 
             visualize_layers = VisualizeLayers()
             for x, layer_parameter in enumerate(
-                [bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb], 16
+                [bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb], self.bgt_oppervlakken_symb_idx
             ):
                 visualize_layers.add_layer_to_map(in_param=layer_parameter, param_nr=x)
             visualize_layers.save()

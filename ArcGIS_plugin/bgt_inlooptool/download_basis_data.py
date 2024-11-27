@@ -28,13 +28,13 @@ def enable_disable_options(parameters, bool_idx, input_field_idx):
         parameters[input_field_idx].enabled = False
         parameters[input_field_idx].parameterType = None
 
-def add_zip_to_path(parameters, input_field_idx):
+def add_extension_to_path(parameters, input_field_idx, extension):
     if parameters[input_field_idx].altered:
         # TODO pad default naar projectmap
         if "." in parameters[1].valueAsText:
-            parameters[input_field_idx].value = parameters[input_field_idx].valueAsText.split(".")[0] + ".zip"
+            parameters[input_field_idx].value = parameters[input_field_idx].valueAsText.split(".")[0] + extension
         else:
-            parameters[input_field_idx].value = parameters[input_field_idx].valueAsText + ".zip"
+            parameters[input_field_idx].value = parameters[input_field_idx].valueAsText + extension
 
 def check_if_file_already_exists(parameters, input_field_idx):
     if parameters[input_field_idx].altered:
@@ -108,7 +108,7 @@ class DownloadBasisData(BaseTool):
         gwsw_download_bool.value = True
 
         gwsw_storage_path =  parameter(
-            displayName="GWSW download als zipfile van PDOK",
+            displayName="GWSW download als .gpkg van PDOK",
             name="gwsw_zip_path",
             datatype="DEFile",
             parameterType="Required",
@@ -125,7 +125,7 @@ class DownloadBasisData(BaseTool):
         bag_download_bool.value = True
 
         bag_storage_path =  parameter(
-            displayName="BAG panden download als zipfile van PDOK",
+            displayName="BAG panden download als .pgkg van PDOK",
             name="bag_zip_path",
             datatype="DEFile",
             parameterType="Required",
@@ -141,9 +141,9 @@ class DownloadBasisData(BaseTool):
         """
 
         # Set correct path
-        add_zip_to_path(parameters, self.bgt_storage_path_idx)
-        add_zip_to_path(parameters, self.gwsw_storage_path_idx)
-        add_zip_to_path(parameters, self.bag_storage_path_idx)
+        add_extension_to_path(parameters, self.bgt_storage_path_idx, ".zip")
+        add_extension_to_path(parameters, self.gwsw_storage_path_idx, ".gpkg")
+        add_extension_to_path(parameters, self.bag_storage_path_idx, ".gpkg")
 
         # Enable/disable BGT parameters
         enable_disable_options(parameters, self.bgt_download_bool_idx, self.bgt_storage_path_idx)
