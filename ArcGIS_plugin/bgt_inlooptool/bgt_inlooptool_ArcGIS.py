@@ -48,7 +48,7 @@ class BGTInloopToolArcGIS(BaseTool):
 
         self.parameter_names = ["previous_results", "bgt", "leidingen", "bag", "kolken_file", "input_extent_mask_wkt", "input_statistics_shape", "output_gpkg", "max_vlak_afwatervoorziening", "max_vlak_oppwater",
                                 "max_pand_opwater", "max_vlak_kolk", "max_afgekoppeld", "max_drievoudig", "afkoppelen_daken", "bouwjaar_riool", "verhardingsgraaf_erf",
-                                "verhardingsgraad_half_verhard", "bgt_oppervlakken_symb", "bgt_inlooptabel_symb", "gwsw_lijn_symb", "copy_pipe_codes"]
+                                "verhardingsgraad_half_verhard", "bgt_oppervlakken_symb", "bgt_inlooptabel_symb", "gwsw_lijn_symb", "copy_pipe_codes", "reset_input"]
         
         self.previous_results_idx = self.parameter_names.index("previous_results")
         self.bgt_idx = self.parameter_names.index("bgt")
@@ -72,6 +72,7 @@ class BGTInloopToolArcGIS(BaseTool):
         self.bgt_inlooptabel_symb_idx = self.parameter_names.index("bgt_inlooptabel_symb")
         self.gwsw_lijn_symb_idx = self.parameter_names.index("gwsw_lijn_symb")
         self.copy_pipe_codes_idx = self.parameter_names.index("copy_pipe_codes")
+        self.reset_input_idx = self.parameter_names.index("reset_input")
 
     def getParameterInfo(self):
         """return Parameter definitions."""
@@ -86,58 +87,58 @@ class BGTInloopToolArcGIS(BaseTool):
             displayName="Vorige tooluitkomsten (als geopackage)",
             name="previous_results",
             datatype="DEDatasetType",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Input",
-        ),
+        )
         bgt = parameter(
             displayName="BGT (als zipfile)",
             name="bgt",
             datatype="DEFile",
             parameterType="Required",
             direction="Input",
-        ),
+        )
         leidingen = parameter(
             displayName="GWSW Leidingen (als geopackage)",
             name="leidingen",
             datatype="DEDatasetType",
             parameterType="Required",
             direction="Input",
-        ),
+        )
         bag = parameter(
             displayName="BAG (als geopackage)",
             name="bag",
             datatype="DEDatasetType",
             parameterType="Optional",
             direction="Input",
-        ),
+        )
         kolken_file = parameter(
             displayName="Kolken",
             name="kolken_file",
             datatype="GPFeatureLayer",
             parameterType="Optional",
             direction="Input",
-        ),
+        )
         input_extent_mask_wkt = parameter(
             displayName="Analysegebied",
             name="input_extent_mask_wkt",
             datatype="GPFeatureLayer",
             parameterType="Optional",
             direction="Input",
-        ),
+        )
         input_statistics_shape = parameter(
             displayName="Statistiekgebieden",
             name="input_statistics_shape",
             datatype="GPFeatureLayer",
             parameterType="Optional",
             direction="Input",
-        ),
+        )
         output_gpkg = parameter(
             displayName="Opslaglocatie gpkg",
             name="output_gpkg",
             datatype="DEDatasetType",
             parameterType="Required",
             direction="Output",
-        ),
+        )
         max_vlak_afwatervoorziening = parameter(
             displayName="maximale afstand vlak afwateringsvoorziening",
             name="max_vlak_afwatervoorziening",
@@ -145,7 +146,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
-        ),
+        )
         max_vlak_oppwater = parameter(
             displayName="maximale afstand vlak oppervlaktewater",
             name="max_vlak_oppwater",
@@ -153,7 +154,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=MAX_AFSTAND_VLAK_OPPWATER,
-        ),
+        )
         max_pand_opwater = parameter(
             displayName="maximale afstand pand oppervlaktewater",
             name="max_pand_opwater",
@@ -161,7 +162,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=MAX_AFSTAND_PAND_OPPWATER,
-        ),
+        )
         max_vlak_kolk = parameter(
             displayName="maximale afstand vlak kolk",
             name="max_vlak_kolk",
@@ -169,7 +170,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=MAX_AFSTAND_VLAK_KOLK,
-        ),
+        )
         max_afgekoppeld = parameter(
             displayName="maximale afstand afgekoppeld",
             name="max_afgekoppeld",
@@ -177,7 +178,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=MAX_AFSTAND_AFGEKOPPELD,
-        ),
+        )
         max_drievoudig = parameter(
             displayName="maximale afstand drievoudig",
             name="max_drievoudig",
@@ -185,7 +186,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=MAX_AFSTAND_DRIEVOUDIG,
-        ),
+        )
         afkoppelen_daken = parameter(
             displayName="afkoppelen hellende daken",
             name="afkoppelen_daken",
@@ -193,7 +194,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=AFKOPPELEN_HELLENDE_DAKEN,
-        ),
+        )
         bouwjaar_riool = parameter(
             displayName="bouwjaar gescheiden binnenhuisriolering",
             name="bouwjaar_riool",
@@ -201,7 +202,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
-        ),
+        )
         verhardingsgraaf_erf = parameter(
             displayName="verhardingsgraad erf",
             name="verhardingsgraaf_erf",
@@ -209,7 +210,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=VERHARDINGSGRAAD_ERF,
-        ),
+        )
         verhardingsgraad_half_verhard = parameter(
             displayName="verhardingsgraad half verhard",
             name="verhardingsgraad_half_verhard",
@@ -217,7 +218,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Required",
             direction="Input",
             defaultValue=VERHARDINGSGRAAD_HALF_VERHARD,
-        ),
+        )
         bgt_oppervlakken_symb = parameter(
             displayName="BGT oppervlakken symbology",
             name="bgt_oppervlakken_symb",
@@ -225,7 +226,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Derived",
             direction="Output",
             symbology=os.path.join(layers, "bgt_oppervlakken.lyrx"),
-        ),
+        )
         bgt_inlooptabel_symb = parameter(
             displayName="BGT Inlooptabel symoblogy",
             name="bgt_inlooptabel_symb",
@@ -233,7 +234,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Derived",
             direction="Output",
             symbology=os.path.join(layers, "bgt_inlooptabel.lyrx"),
-        ),
+        )
         gwsw_lijn_symb = parameter(
             displayName="GWSW lijnen symbology",
             name="gwsw_lijn_symb",
@@ -241,7 +242,7 @@ class BGTInloopToolArcGIS(BaseTool):
             parameterType="Derived",
             direction="Output",
             symbology=os.path.join(layers, "gwsw_lijn.lyrx"),
-        ),
+        )
         copy_pipe_codes =  parameter(
             displayName="Leidingcodes koppelen",
             name="copy_pipe_codes",
@@ -251,9 +252,18 @@ class BGTInloopToolArcGIS(BaseTool):
         )
         copy_pipe_codes.value = False
 
+        reset_input =  parameter(
+            displayName="Vink aan om alle rekeningstellingen naar default te resetten",
+            name="reset_input",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input",
+        )
+        copy_pipe_codes.value = False
+
         return [previous_results, bgt, leidingen, bag, kolken_file, input_extent_mask_wkt, input_statistics_shape, output_gpkg, max_vlak_afwatervoorziening, max_vlak_oppwater,
                                 max_pand_opwater, max_vlak_kolk, max_afgekoppeld, max_drievoudig, afkoppelen_daken, bouwjaar_riool, verhardingsgraaf_erf,
-                                verhardingsgraad_half_verhard, bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb, copy_pipe_codes]
+                                verhardingsgraad_half_verhard, bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb, copy_pipe_codes, reset_input]
 
     def updateParameters(self, parameters):
         """
@@ -266,6 +276,21 @@ class BGTInloopToolArcGIS(BaseTool):
                 output_gpkg.value = output_gpkg.valueAsText.split(".")[0] + ".gpkg"
             else:
                 output_gpkg.value = output_gpkg.valueAsText + ".gpkg"
+
+        # If reset is true, reset all calculation parameters
+        if parameters[self.reset_input_idx].value is True:
+            parameters[self.max_vlak_afwatervoorziening_idx].value = MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
+            parameters[self.max_vlak_oppwater_idx].value = MAX_AFSTAND_VLAK_OPPWATER
+            parameters[self.max_pand_opwater_idx].value = MAX_AFSTAND_PAND_OPPWATER
+            parameters[self.max_vlak_kolk_idx].value = MAX_AFSTAND_VLAK_KOLK
+            parameters[self.max_afgekoppeld_idx].value = MAX_AFSTAND_AFGEKOPPELD
+            parameters[self.max_drievoudig_idx].value = MAX_AFSTAND_DRIEVOUDIG
+            parameters[self.afkoppelen_daken_idx].value = AFKOPPELEN_HELLENDE_DAKEN
+            parameters[self.bouwjaar_riool_idx].value = BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
+            parameters[self.verhardingsgraaf_erf_idx].value = VERHARDINGSGRAAD_ERF
+            parameters[self.verhardingsgraad_half_verhard_idx].value = VERHARDINGSGRAAD_HALF_VERHARD
+            parameters[self.copy_pipe_codes_idx].value = False
+            parameters[self.reset_input_idx].value = False
 
         super(BGTInloopToolArcGIS, self).updateParameters(parameters)
 
