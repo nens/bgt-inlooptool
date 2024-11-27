@@ -46,15 +46,17 @@ class BGTInloopToolArcGIS(BaseTool):
         self.canRunInBackground = True
         self.arcgis_com = GeneralUse(sys, arcpy)
 
-        self.parameter_names = ["bgt", "leidingen", "bag", "kolken_file", "input_extent_mask_wkt", "output_gpkg", "max_vlak_afwatervoorziening", "max_vlak_oppwater",
+        self.parameter_names = ["previous_results", "bgt", "leidingen", "bag", "kolken_file", "input_extent_mask_wkt", "input_statistics_shape", "output_gpkg", "max_vlak_afwatervoorziening", "max_vlak_oppwater",
                                 "max_pand_opwater", "max_vlak_kolk", "max_afgekoppeld", "max_drievoudig", "afkoppelen_daken", "bouwjaar_riool", "verhardingsgraaf_erf",
-                                "verhardingsgraad_half_verhard", "bgt_oppervlakken_symb", "bgt_inlooptabel_symb", "gwsw_lijn_symb"]
+                                "verhardingsgraad_half_verhard", "bgt_oppervlakken_symb", "bgt_inlooptabel_symb", "gwsw_lijn_symb", "copy_pipe_codes"]
         
+        self.previous_results_idx = self.parameter_names.index("previous_results")
         self.bgt_idx = self.parameter_names.index("bgt")
         self.leidingen_idx = self.parameter_names.index("leidingen")
         self.bag_idx = self.parameter_names.index("bag")
         self.kolken_file_idx = self.parameter_names.index("kolken_file")
         self.input_extent_mask_wkt_idx = self.parameter_names.index("input_extent_mask_wkt")
+        self.input_statistics_shape_idx = self.parameter_names.index("input_statistics_shape")
         self.output_gpkg_idx = self.parameter_names.index("output_gpkg")
         self.max_vlak_afwatervoorziening_idx = self.parameter_names.index("max_vlak_afwatervoorziening")
         self.max_vlak_oppwater_idx = self.parameter_names.index("max_vlak_oppwater")
@@ -69,6 +71,7 @@ class BGTInloopToolArcGIS(BaseTool):
         self.bgt_oppervlakken_symb_idx = self.parameter_names.index("bgt_oppervlakken_symb")
         self.bgt_inlooptabel_symb_idx = self.parameter_names.index("bgt_inlooptabel_symb")
         self.gwsw_lijn_symb_idx = self.parameter_names.index("gwsw_lijn_symb")
+        self.copy_pipe_codes_idx = self.parameter_names.index("copy_pipe_codes")
 
     def getParameterInfo(self):
         """return Parameter definitions."""
@@ -79,6 +82,13 @@ class BGTInloopToolArcGIS(BaseTool):
         """
         layers = os.path.join(os.path.dirname(__file__), "layers")
 
+        previous_results =  parameter(
+            displayName="Vorige tooluitkomsten (als geopackage)",
+            name="previous_results",
+            datatype="DEDatasetType",
+            parameterType="Required",
+            direction="Input",
+        ),
         bgt = parameter(
             displayName="BGT (als zipfile)",
             name="bgt",
@@ -108,14 +118,21 @@ class BGTInloopToolArcGIS(BaseTool):
             direction="Input",
         ),
         input_extent_mask_wkt = parameter(
-            displayName="Analyse gebied",
+            displayName="Analysegebied",
             name="input_extent_mask_wkt",
             datatype="GPFeatureLayer",
             parameterType="Optional",
             direction="Input",
         ),
+        input_statistics_shape = parameter(
+            displayName="Statistiekgebieden",
+            name="input_statistics_shape",
+            datatype="GPFeatureLayer",
+            parameterType="Optional",
+            direction="Input",
+        ),
         output_gpkg = parameter(
-            displayName="Opslag locatie gpkg",
+            displayName="Opslaglocatie gpkg",
             name="output_gpkg",
             datatype="DEDatasetType",
             parameterType="Required",
@@ -225,10 +242,18 @@ class BGTInloopToolArcGIS(BaseTool):
             direction="Output",
             symbology=os.path.join(layers, "gwsw_lijn.lyrx"),
         ),
+        copy_pipe_codes =  parameter(
+            displayName="Leidingcodes koppelen",
+            name="copy_pipe_codes",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input",
+        )
+        copy_pipe_codes.value = False
 
-        return [bgt, leidingen, bag, kolken_file, input_extent_mask_wkt, output_gpkg, max_vlak_afwatervoorziening, max_vlak_oppwater,
+        return [previous_results, bgt, leidingen, bag, kolken_file, input_extent_mask_wkt, input_statistics_shape, output_gpkg, max_vlak_afwatervoorziening, max_vlak_oppwater,
                                 max_pand_opwater, max_vlak_kolk, max_afgekoppeld, max_drievoudig, afkoppelen_daken, bouwjaar_riool, verhardingsgraaf_erf,
-                                verhardingsgraad_half_verhard, bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb]
+                                verhardingsgraad_half_verhard, bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb, copy_pipe_codes]
 
     def updateParameters(self, parameters):
         """
@@ -305,6 +330,8 @@ class BGTInloopToolArcGIS(BaseTool):
             kolken_file = parameters[self.kolken_file_idx].valueAsText
             input_area = parameters[self.input_extent_mask_wkt_idx].valueAsText
             output_gpkg = parameters[self.output_gpkg_idx].valueAsText
+            previous_results_file = parameters[self.previous_results_idx].valueAsText
+            statistics_area = parameters[self.input_statistics_shape_idx].valueAsText
 
             core_parameters = InputParameters(
                 max_afstand_vlak_afwateringsvoorziening=parameters[self.max_vlak_afwatervoorziening_idx].value,
@@ -316,9 +343,12 @@ class BGTInloopToolArcGIS(BaseTool):
                 afkoppelen_hellende_daken=parameters[self.afkoppelen_daken_idx].value,
                 gebruik_bag=building_file != None,
                 gebruik_kolken=kolken_file != None,
+                gebruik_resultaten=previous_results_file!= None,
+                gebruik_statistieken=statistics_area!= None,
                 bouwjaar_gescheiden_binnenhuisriolering=parameters[self.bouwjaar_riool_idx].value,
                 verhardingsgraad_erf=parameters[self.verhardingsgraaf_erf_idx].value,
                 verhardingsgraad_half_verhard=parameters[self.verhardingsgraad_half_verhard_idx].value,
+                leidingcodes_koppelen=parameters[self.copy_pipe_codes_idx].value
             )
 
             # Output layers
