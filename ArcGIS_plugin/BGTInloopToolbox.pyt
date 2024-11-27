@@ -6,7 +6,7 @@ Date: 29/09/2020
 """
 
 from bgt_inlooptool.bgt_inlooptool_ArcGIS import BGTInloopToolArcGIS
-from bgt_inlooptool.download_bgt_vlakken import DownloadBGTVlakken
+from bgt_inlooptool.download_basis_data import DownloadBasisData
 
 
 class Toolbox(object):
@@ -17,6 +17,6 @@ class Toolbox(object):
         self.description = 'BGT Inloop Toolbox voor ArcGIS'
 
         # Explicitly define tools here.
-        self.tools = [BGTInloopToolArcGIS, DownloadBGTVlakken]
+        self.tools = [BGTInloopToolArcGIS, DownloadBasisData]
 
 
