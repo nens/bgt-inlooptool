@@ -17,7 +17,7 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, "core"))
 # Set path to Generic modules
 from cls_general_use import GeneralUse
 from common import BaseTool, parameter, get_wkt_extent
-from get_bgt_api_surfaces import get_bgt_api_surfaces
+from ArcGIS_plugin.bgt_inlooptool.download_apis import get_bgt_features, get_bag_features, get_gwsw_features
 
 
 def enable_disable_options(parameters, bool_idx, input_field_idx):
@@ -195,14 +195,26 @@ class DownloadBasisData(BaseTool):
         try:
             self.arcgis_com = GeneralUse(sys, arcpy)
             self.arcgis_com.StartAnalyse()
-            self.arcgis_com.AddMessage("Start downloading BGT from PDOK!")
 
-            input_area = parameters[0].valueAsText
-            bgt_zip = parameters[1].valueAsText
 
             # get the input extent as wkt from the input_area
+            input_area = parameters[self.search_area_idx].valueAsText
             extent_wkt = get_wkt_extent(input_area)
-            get_bgt_api_surfaces(extent_wkt, bgt_zip)
+
+            if parameters[self.bgt_download_bool_idx].value:
+                self.arcgis_com.AddMessage("Start downloading BGT!")
+                bgt_output = parameters[self.bgt_storage_path_idx].valueAsText
+                get_bgt_features(extent_wkt, bgt_output)
+            
+            if parameters[self.gwsw_download_bool_idx].value:
+                self.arcgis_com.AddMessage("Start downloading GWSW!")
+                gwsw_output = parameters[self.gwsw_storage_path_idx].valueAsText
+                get_gwsw_features(extent_wkt, gwsw_output)
+
+            if parameters[self.bag_download_bool_idx].value:
+                self.arcgis_com.AddMessage("Start downloading BAG!")
+                bag_output = parameters[self.bag_storage_path_idx].valueAsText
+                get_bag_features(extent_wkt, bag_output)
 
         except Exception:
             self.arcgis_com.Traceback()
