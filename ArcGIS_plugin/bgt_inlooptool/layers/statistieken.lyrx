@@ -1,0 +1,1162 @@
+{
+  "type": "CIMLayerDocument",
+  "build": 15850,
+  "version": "2.3.0",
+  "layerDefinitions": [
+    {
+      "type": "CIMFeatureLayer",
+      "useSourceMetadata": false,
+      "sourceModifiedTime": {
+        "type": "TimeInstant"
+      },
+      "uRI": "CIMPATH=6__Statistieken_dc7e0bd4_c067_4b0a_b9e3_be5bc9a34b1d.xml",
+      "name": "v1_BGT_inlooptabel \u2014 6. Statistieken",
+      "enableLayerEffects": false,
+      "useVisibilityTimeExtent": false,
+      "rasterizeOnExport": false,
+      "layerScaleVisibilityOptions": {
+        "type": "CIMLayerScaleVisibilityOptions",
+        "showLayerAtAllScales": true,
+        "savedMinScale": 100000000.0,
+        "savedMaxScale": 0.0
+      },
+      "allowDrapingOnIntegratedMesh": false,
+      "blendingMode": "Alpha",
+      "showMapTips": false,
+      "refreshRateUnit": "esriTimeUnitsSeconds",
+      "refreshRate": -1,
+      "searchable": false,
+      "serviceLayerID": -1,
+      "showPopups": false,
+      "maxDisplayCacheAge": 5,
+      "displayCacheType": "Permanent",
+      "visibility": true,
+      "transparency": 0.0,
+      "showLegends": true,
+      "layerType": "Operational",
+      "expanded": true,
+      "description": "",
+      "attribution": "",
+      "layerEffectsMode": "Layer",
+      "featureBlendingMode": "Alpha",
+      "displayFiltersType": "ByChoice",
+      "enableDisplayFilters": false,
+      "featureCacheType": "None",
+      "useSelectionSymbol": false,
+      "selectable": true,
+      "isFlattened": true,
+      "htmlPopupEnabled": false,
+      "featureTable": {
+        "type": "CIMFeatureTable",
+        "isLicensedDataSource": false,
+        "searchOrder": "esriSearchOrderSpatial",
+        "studyAreaSpatialRel": "esriSpatialRelUndefined",
+        "dataConnection": {
+          "type": "CIMSqlQueryDataConnection",
+          "datasetType": "esriDTFeatureClass",
+          "dataset": "main.%\"6. Statistieken\"",
+          "workspaceFactory": "Sql",
+          "workspaceConnectionString": "AUTHENTICATION_MODE=OSA;DATABASE=..\\inlooptool_test\\v1_BGT_inlooptabel.gpkg",
+          "mappedOIDFieldLength": "OID64Bit",
+          "isTableBased": true,
+          "spatialStorageType": 11,
+          "queryFields": [
+            {
+              "name": "id",
+              "type": "esriFieldTypeBigInteger",
+              "isNullable": false,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "required": true,
+              "editable": false,
+              "dbmsType": 11
+            },
+            {
+              "name": "geom",
+              "type": "esriFieldTypeGeometry",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "geometryDef": {
+                "avgNumPoints": 0,
+                "geometryType": "esriGeometryPolygon",
+                "hasM": false,
+                "hasZ": false,
+                "spatialReference": {
+                  "latestWkid": 28992,
+                  "wkid": 28992
+                }
+              },
+              "dbmsType": 8
+            },
+            {
+              "name": "opp_totaal",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_gemengd",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_hwa",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_vgs",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_dwa",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_infiltratievoorziening",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_open_water",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_maaiveld",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_gemengd",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_hwa",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_vgs",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_dwa",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_infiltratievoorziening",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_open_water",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_maaiveld",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_totaal_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_totaal_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_totaal_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_totaal_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_gemengd_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_gemengd_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_gemengd_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_gemengd_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_hwa_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_hwa_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_hwa_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_hwa_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_vgs_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_vgs_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_vgs_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_vgs_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_dwa_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_dwa_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_dwa_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_dwa_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_infiltratievoorziening_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_infiltratievoorziening_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_infiltratievoorziening_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_infiltratievoorziening_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_open_water_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_open_water_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_open_water_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_open_water_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_maaiveld_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_maaiveld_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_maaiveld_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_maaiveld_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_gemengd_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_gemengd_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_gemengd_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_gemengd_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_hwa_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_hwa_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_hwa_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_hwa_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_vgs_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_vgs_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_vgs_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_vgs_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_dwa_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_dwa_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_dwa_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_dwa_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_infiltratievoorziening_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_infiltratievoorziening_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_infiltratievoorziening_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_infiltratievoorziening_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_open_water_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_open_water_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_open_water_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_open_water_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_maaiveld_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_maaiveld_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_maaiveld_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_maaiveld_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_groen_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_waterpas_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "opp_water",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_gesl_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_open_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_onverhard",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_groen_dak",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_waterpas_verh",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            },
+            {
+              "name": "perc_water",
+              "type": "esriFieldTypeDouble",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 4
+            }
+          ],
+          "extent": {
+            "spatialReference": {
+              "latestWkid": 28992,
+              "wkid": 28992
+            },
+            "ymin": 506510.933975525,
+            "ymax": 509766.179826049,
+            "xmin": 109520.210607026,
+            "xmax": 112044.482627022
+          },
+          "geometryType": "esriGeometryPolygon",
+          "oIDFields": "id",
+          "spatialReference": {
+            "latestWkid": 28992,
+            "wkid": 28992
+          },
+          "srid": "28992",
+          "sqlQuery": "select id,geom,\"opp_totaal\",\"opp_gemengd\",\"opp_hwa\",\"opp_vgs\",\"opp_dwa\",\"opp_infiltratievoorziening\",\"opp_open_water\",\"opp_maaiveld\",\"perc_gemengd\",\"perc_hwa\",\"perc_vgs\",\"perc_dwa\",\"perc_infiltratievoorziening\",\"perc_open_water\",\"perc_maaiveld\",\"opp_totaal_dak\",\"opp_totaal_gesl_verh\",\"opp_totaal_open_verh\",\"opp_totaal_onverhard\",\"opp_gemengd_dak\",\"opp_gemengd_gesl_verh\",\"opp_gemengd_open_verh\",\"opp_gemengd_onverhard\",\"opp_hwa_dak\",\"opp_hwa_gesl_verh\",\"opp_hwa_open_verh\",\"opp_hwa_onverhard\",\"opp_vgs_dak\",\"opp_vgs_gesl_verh\",\"opp_vgs_open_verh\",\"opp_vgs_onverhard\",\"opp_dwa_dak\",\"opp_dwa_gesl_verh\",\"opp_dwa_open_verh\",\"opp_dwa_onverhard\",\"opp_infiltratievoorziening_dak\",\"opp_infiltratievoorziening_gesl_verh\",\"opp_infiltratievoorziening_open_verh\",\"opp_infiltratievoorziening_onverhard\",\"opp_open_water_dak\",\"opp_open_water_gesl_verh\",\"opp_open_water_open_verh\",\"opp_open_water_onverhard\",\"opp_maaiveld_dak\",\"opp_maaiveld_gesl_verh\",\"opp_maaiveld_open_verh\",\"opp_maaiveld_onverhard\",\"perc_gemengd_dak\",\"perc_gemengd_gesl_verh\",\"perc_gemengd_open_verh\",\"perc_gemengd_onverhard\",\"perc_hwa_dak\",\"perc_hwa_gesl_verh\",\"perc_hwa_open_verh\",\"perc_hwa_onverhard\",\"perc_vgs_dak\",\"perc_vgs_gesl_verh\",\"perc_vgs_open_verh\",\"perc_vgs_onverhard\",\"perc_dwa_dak\",\"perc_dwa_gesl_verh\",\"perc_dwa_open_verh\",\"perc_dwa_onverhard\",\"perc_infiltratievoorziening_dak\",\"perc_infiltratievoorziening_gesl_verh\",\"perc_infiltratievoorziening_open_verh\",\"perc_infiltratievoorziening_onverhard\",\"perc_open_water_dak\",\"perc_open_water_gesl_verh\",\"perc_open_water_open_verh\",\"perc_open_water_onverhard\",\"perc_maaiveld_dak\",\"perc_maaiveld_gesl_verh\",\"perc_maaiveld_open_verh\",\"perc_maaiveld_onverhard\",\"opp_dak\",\"opp_gesl_verh\",\"opp_open_verh\",\"opp_onverhard\",\"opp_groen_dak\",\"opp_waterpas_verh\",\"opp_water\",\"perc_dak\",\"perc_gesl_verh\",\"perc_open_verh\",\"perc_onverhard\",\"perc_groen_dak\",\"perc_waterpas_verh\",\"perc_water\" from main.\"6. Statistieken\""
+        },
+        "useSubtypeValue": false,
+        "selectRelatedData": false,
+        "timeDisplayDefinition": {
+          "type": "CIMTimeDisplayDefinition",
+          "timeOffsetUnits": "esriTimeUnitsYears",
+          "timeIntervalUnits": "esriTimeUnitsHours",
+          "timeInterval": 0,
+          "cumulative": false
+        },
+        "timeDefinition": {
+          "type": "CIMTimeDataDefinition",
+          "timeExtentCanChange": false,
+          "hasLiveData": true,
+          "useTime": false
+        },
+        "timeFields": {
+          "type": "CIMTimeTableDefinition"
+        },
+        "editable": true
+      },
+      "autoGenerateFeatureTemplates": true,
+      "showTracks": false,
+      "showPreviousObservations": false,
+      "useRealWorldSymbolSizes": false,
+      "snappable": true,
+      "scaleSymbols": true,
+      "renderer": {
+        "type": "CIMSimpleRenderer",
+        "symbol": {
+          "type": "CIMSymbolReference",
+          "symbol": {
+            "type": "CIMPolygonSymbol",
+            "useRealWorldSymbolSizes": false,
+            "symbolLayers": [
+              {
+                "type": "CIMSolidStroke",
+                "overprint": false,
+                "colorLocked": false,
+                "enable": true,
+                "effects": [
+                  {
+                    "type": "CIMGeometricEffectDashes",
+                    "controlPointEnding": "NoConstraint",
+                    "lineDashEnding": "NoConstraint",
+                    "dashTemplate": [
+                      5.215744745987562,
+                      2.607872372993781
+                    ]
+                  }
+                ],
+                "anchor3D": "Center",
+                "closeCaps3D": false,
+                "width": 1.3039361864968906,
+                "miterLimit": 10,
+                "lineStyle3D": "Tube",
+                "joinStyle": "Bevel",
+                "capStyle": "Butt",
+                "color": {
+                  "type": "CIMGrayColor",
+                  "values": [
+                    134,
+                    100.0
+                  ]
+                }
+              },
+              {
+                "type": "CIMSolidFill",
+                "overprint": false,
+                "colorLocked": false,
+                "enable": true,
+                "color": {
+                  "type": "CIMRGBColor",
+                  "values": [
+                    152,
+                    125,
+                    183,
+                    0.0
+                  ]
+                }
+              }
+            ],
+            "angleAlignment": "Display"
+          }
+        },
+        "patch": "Default"
+      },
+      "labelVisibility": true,
+      "labelClasses": [
+        {
+          "type": "CIMLabelClass",
+          "iD": -1,
+          "visibility": true,
+          "useCodedValue": false,
+          "textSymbol": {
+            "type": "CIMSymbolReference",
+            "symbol": {
+              "type": "CIMTextSymbol",
+              "overprint": false,
+              "billboardMode3D": "None",
+              "wordSpacing": 100.0,
+              "verticalGlyphOrientation": "Right",
+              "verticalAlignment": "Baseline",
+              "underline": false,
+              "textDirection": "LTR",
+              "textCase": "Normal",
+              "symbol3DProperties": {
+                "type": "CIM3DSymbolProperties",
+                "rotationOrder3D": "XYZ",
+                "dominantSizeAxis3D": "Z"
+              },
+              "symbol": {
+                "type": "CIMPolygonSymbol",
+                "useRealWorldSymbolSizes": false,
+                "symbolLayers": [
+                  {
+                    "type": "CIMSolidFill",
+                    "overprint": false,
+                    "colorLocked": false,
+                    "enable": true,
+                    "color": {
+                      "type": "CIMGrayColor",
+                      "values": [
+                        50,
+                        100
+                      ]
+                    }
+                  }
+                ],
+                "angleAlignment": "Display"
+              },
+              "strikethrough": false,
+              "smallCaps": false,
+              "lineGapType": "ExtraLeading",
+              "ligatures": false,
+              "letterWidth": 100,
+              "letterSpacing": 0.0,
+              "kerning": true,
+              "horizontalAlignment": "Left",
+              "hinting": "None",
+              "height": 10.0,
+              "haloSize": 0,
+              "fontType": "Unspecified",
+              "fontStyleName": "Regular",
+              "fontFamilyName": "MS Shell Dlg 2",
+              "fontEncoding": "Unicode",
+              "fontEffects": "Normal",
+              "extrapolateBaselines": false,
+              "drawSoftHyphen": false,
+              "drawGlyphsAsGeometry": false,
+              "depth3D": 1,
+              "compatibilityMode": false,
+              "blockProgression": "TTB"
+            }
+          },
+          "standardLabelPlacementProperties": {
+            "type": "CIMStandardLabelPlacementProperties",
+            "featureType": "Point",
+            "allowOverlappingLabels": false,
+            "placeOnlyInsidePolygon": false,
+            "polygonPlacementMethod": "AlwaysHorizontal",
+            "perpendicularToAngle": false,
+            "rotationType": "Geographic",
+            "pointPlacementMethod": "AroundPoint",
+            "numLabelsOption": "NoLabelRestrictions",
+            "labelWeight": "Low",
+            "featureWeight": "None"
+          },
+          "priority": 2,
+          "name": "Default",
+          "maplexLabelPlacementProperties": {
+            "type": "CIMMaplexLabelPlacementProperties",
+            "featureType": "Point",
+            "secondaryOffsetUnit": "Map",
+            "removeAmbiguousLabels": "All",
+            "measureFromClippedFeatureGeometry": false,
+            "centerLabelAnchorType": "Symbol",
+            "avoidOverlappingLabeledPolygonsAsIfHoles": false,
+            "polygonAnchorPointPerimeterInsetUnit": "Map",
+            "useExactSymbolOutline": false,
+            "thinningDistanceUnit": "Map",
+            "thinDuplicateLabels": false,
+            "spreadWords": false,
+            "spreadCharacters": false,
+            "repetitionIntervalUnit": "Map",
+            "repeatLabel": false,
+            "removeExtraWhiteSpace": false,
+            "removeExtraLineBreaks": false,
+            "primaryOffsetUnit": "Map",
+            "preferLabelNearMapBorder": false,
+            "preferLabelNearJunction": false,
+            "preferHorizontalPlacement": false,
+            "polygonPlacementMethod": "HorizontalInPolygon",
+            "polygonFeatureType": "General",
+            "polygonAnchorPointType": "GeometricCenter",
+            "pointPlacementMethod": "AroundPoint",
+            "neverRemoveLabel": false,
+            "multiPartOption": "OneLabelPerFeature",
+            "minimumFeatureSizeUnit": "Map",
+            "maximumLabelOverrunUnit": "Map",
+            "linePlacementMethod": "CenteredHorizontalOnLine",
+            "lineFeatureType": "General",
+            "labelLargestPolygon": false,
+            "isOffsetFromFeatureGeometry": false,
+            "isMinimumSizeBasedOnArea": false,
+            "isLabelBufferHardConstraint": false,
+            "graticuleAlignmentType": "Straight",
+            "graticuleAlignment": false,
+            "enableSecondaryOffset": false,
+            "enablePolygonFixedPosition": false,
+            "enablePointPlacementPriorities": false,
+            "enableConnection": false,
+            "contourLadderType": "None",
+            "contourAlignmentType": "Uphill",
+            "constrainOffset": "NoConstraint",
+            "connectionType": "MinimizeLabels",
+            "canUseAlternateLabelExpression": false,
+            "canTruncateLabel": false,
+            "canStackLabel": false,
+            "canShiftPointLabel": false,
+            "canRemoveOverlappingLabel": false,
+            "canReduceLeading": false,
+            "canReduceFontSize": false,
+            "canPlaceLabelOutsidePolygon": false,
+            "canPlaceLabelOnTopOfFeature": false,
+            "canOverrunFeature": false,
+            "canKeyNumberLabel": false,
+            "canFlipStackedStreetLabel": false,
+            "canAbbreviateLabel": false,
+            "boundaryLabelingSingleSidedOnLine": false,
+            "boundaryLabelingAllowSingleSided": false,
+            "boundaryLabelingAllowHoles": false,
+            "backgroundLabel": false,
+            "avoidPolygonHoles": false,
+            "allowStraddleStacking": false,
+            "allowAsymmetricOverrun": false,
+            "alignLabelToLineDirection": false
+          },
+          "featuresToLabel": "AllVisibleFeatures",
+          "expressionEngine": "Arcade",
+          "expression": "((((((((((((((((((((((((((((('Gebied: ' + None) + '\\n') + 'Gemengd riool: ') + None) + '%') + '\\n') + 'Hemelwaterriool: ') + None) + '%') + '\\n') + 'VGS hemelwateriool: ') + None) + '%') + '\\n') + 'Vuilwaterriool: ') + None) + '%') + '\\n') + 'Infiltratievoorziening: ') + None) + '%') + '\\n') + 'Open water : ') + None) + '%') + '\\n') + 'Maaiveld: ') + None) + '%')"
+        }
+      ]
+    }
+  ],
+  "layers": [
+    "CIMPATH=6__Statistieken_dc7e0bd4_c067_4b0a_b9e3_be5bc9a34b1d.xml"
+  ]
+}
