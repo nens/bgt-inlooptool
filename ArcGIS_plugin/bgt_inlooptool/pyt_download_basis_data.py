@@ -31,7 +31,7 @@ def enable_disable_options(parameters, bool_idx, input_field_idx):
 def add_extension_to_path(parameters, input_field_idx, extension):
     if parameters[input_field_idx].altered:
         # TODO pad default naar projectmap
-        if "." in parameters[1].valueAsText:
+        if "." in parameters[input_field_idx].valueAsText:
             parameters[input_field_idx].value = parameters[input_field_idx].valueAsText.split(".")[0] + extension
         else:
             parameters[input_field_idx].value = parameters[input_field_idx].valueAsText + extension
