@@ -15,10 +15,10 @@ sys.path.append(bgt_inlooptool_dir)
 sys.path.append(os.path.join(bgt_inlooptool_dir, "core"))
 
 # Set path to Generic modules
-from cls_general_use import GeneralUse
-from common import BaseTool, parameter, get_wkt_extent, layers_to_gdb
-from common import add_bgt_inlooptabel_symbologyfield, add_gwsw_symbologyfield
-from visualize_layers import VisualizeLayers
+from helper_functions.cls_general_use import GeneralUse
+from helper_functions.common import BaseTool, parameter, get_wkt_extent, layers_to_gdb
+from helper_functions.common import add_bgt_inlooptabel_symbologyfield, add_gwsw_symbologyfield
+from helper_functions.visualize_layers import VisualizeLayers
 
 # import bgt inlooptool
 from core.inlooptool import InloopTool, InputParameters

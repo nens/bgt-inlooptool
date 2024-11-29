@@ -15,9 +15,9 @@ sys.path.append(bgt_inlooptool_dir)
 sys.path.append(os.path.join(bgt_inlooptool_dir, "core"))
 
 # Set path to Generic modules
-from cls_general_use import GeneralUse
-from common import BaseTool, parameter, get_wkt_extent
-from ArcGIS_plugin.bgt_inlooptool.download_apis import get_bgt_features, get_bag_features, get_gwsw_features
+from helper_functions.cls_general_use import GeneralUse
+from helper_functions.common import BaseTool, parameter, get_wkt_extent
+from helper_functions.download_apis import get_bgt_features, get_bag_features, get_gwsw_features
 
 
 def enable_disable_options(parameters, bool_idx, input_field_idx):
@@ -231,13 +231,19 @@ if __name__ == "__main__":
         tool = DownloadBasisData()
         params = tool.getParameterInfo()
 
-        # bag_file
-        params[
-            0
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\ws.gdb\zwolle"
-        params[
-            1
-        ].value = r"C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\dokkum\nieuwe_plek.zip"
+        params[0].value = r"C:\Users\vdi\Downloads\inlooptool_test\testdata.gdb\extent"
+
+        # BGT
+        params[1].value = False
+        params[2].value = r"C:\Users\vdi\Downloads\inlooptool_test\brondata\bgt.zip"
+
+        # GWSW
+        params[3].value = True
+        params[4].value = r"C:\Users\vdi\Downloads\inlooptool_test\brondata\gwsw.gpkg"
+
+        # BAG
+        params[5].value = False
+        params[6].value = r"C:\Users\vdi\Downloads\inlooptool_test\brondata\bag.gpkg"
 
         tool.execute(parameters=params, messages=None)
 

@@ -86,9 +86,10 @@ def get_bgt_features(extent_wkt, output_zip):
         print("Error Info:\n" + str(sys.exc_info()[1]))
         print("einde!")
 
-def get_gwsw_features(extent_wkt, output_zip):
+def get_gwsw_features(extent_wkt, output_gpkg):
     try:
-        nwt = NetworkTask(BAG_API_URL)
+        nwt = NetworkTask(CBS_GEMEENTES_API_URL, output_gpkg, extent_wkt, "default_lijn")
+        nwt.run()
     except Exception:
         import sys
         import traceback
@@ -100,9 +101,10 @@ def get_gwsw_features(extent_wkt, output_zip):
         print("Error Info:\n" + str(sys.exc_info()[1]))
         print("einde!")
 
-def get_bag_features(extent_wkt, output_zip):
+def get_bag_features(extent_wkt, output_gpkg):
     try:
-        nwt = NetworkTask(BAG_API_URL, r"C:\Users\vdi\Downloads\inlooptool_test\bag.gpkg")
+        nwt = NetworkTask(BAG_API_URL, output_gpkg, extent_wkt, "bag_panden")
+        nwt.run()
     except Exception:
         import sys
         import traceback
@@ -115,12 +117,11 @@ def get_bag_features(extent_wkt, output_zip):
         print("einde!")
 
 class NetworkTask():
-    def __init__(self, url, output_gpkg, extent_bbox, extent_geometry_wkt, layer_name):
-        super().__init__("Download and Convert Data")
+    def __init__(self, url, output_gpkg, extent_geometry_wkt, layer_name):
         self.url = url
         self.output_gpkg = output_gpkg
-        self.extent_bbox = extent_bbox
         self.extent_geometry_wkt = extent_geometry_wkt
+        self.extent_bbox = self.wkt_to_bbox()
         self.layer_name = layer_name
         
     def run(self):
@@ -138,8 +139,8 @@ class NetworkTask():
         print("Fetching features within BBox")
         while not_all_features_found:
             request_url = self.url + f"&startIndex={index}" + f"&BBOX={bbox}"
-            response_text = self.load_api_data(request_url, "")
-            data = json.loads(response_text)
+            data = self.load_api_data(request_url, "")
+
             
             all_features.extend(data['features'])
             
@@ -201,13 +202,12 @@ class NetworkTask():
             
             while not_all_features_found:
                 request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
-                response_text = self.load_api_data(request_url,gemeente_name)
+                data = self.load_api_data(request_url,gemeente_name)
                 
-                if response_text is None:
+                if data is None:
                     NOT_FOUND_GEMEENTES.append(gemeente_name)
                     break
                 
-                data = json.loads(response_text)
                 all_features.extend(data['features'])
                 
                 if len(data['features']) < 1000:
@@ -253,9 +253,10 @@ class NetworkTask():
                 out_feature = None
     
     def wkt_to_bbox(self):
-        # Format the BBOX string
-        bbox = f"{self.extent_bbox.xMinimum()},{self.extent_bbox.yMinimum()},{self.extent_bbox.xMaximum()},{self.extent_bbox.yMaximum()}"
-        return bbox
+        
+        geom = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
+        env = geom.GetEnvelope()
+        return "%d,%d,%d,%d" %(env[0],env[2],env[1],env[3])
     
     def geojson_to_wkt(self,geojson):
         geom = ogr.CreateGeometryFromJson(str(geojson))
@@ -264,10 +265,14 @@ class NetworkTask():
 
 if __name__ == "__main__":
 
-    extent_wkt = (
-        extent_polygon_wkt
-    ) = "Polygon ((110870.34528933660476469 455397.70264967781258747, 110927.88217626001278404 454151.07009967073099688, 112143.82838657461979892 454139.56272228603484109, 112093.96308457433769945 455535.79117829399183393, 110870.34528933660476469 455397.70264967781258747))"
+    extent_wkt =  "Polygon ((110870.34528933660476469 455397.70264967781258747, 110927.88217626001278404 454151.07009967073099688, 112143.82838657461979892 454139.56272228603484109, 112093.96308457433769945 455535.79117829399183393, 110870.34528933660476469 455397.70264967781258747))"
     output_zip = r"C:\GIS\test_data_inlooptool\test_bgt_download1.zip"
-    get_bgt_features(extent_wkt, output_zip)
+    output_bag = r"C:\Users\vdi\Downloads\inlooptool_test\bag.gpkg"
+    output_gwsw = r"C:\Users\vdi\Downloads\inlooptool_test\gwsw.gpkg"
+    # get_bgt_features(extent_wkt, output_zip)
+
+    # get_bag_features(extent_wkt, output_bag)
+
+    get_gwsw_features(extent_wkt, output_gwsw)
 
     print("Klaar!")
