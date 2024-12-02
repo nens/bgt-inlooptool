@@ -93,7 +93,7 @@ from core.constants import (
     CHECKS_TABLE_FIELD_DESCRIPTION, SETTINGS_TABLE_NAME, STATISTICS_TABLE_NAME, CHECKS_TABLE_NAME,
     INF_PAVEMENT_TABLE_NAME_PREV,
 )
-from core.constants import * #To do: dit nog in bovenstaande zetten
+from core.constants import *
 from core.defaults import (
     MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
     MAX_AFSTAND_VLAK_OPPWATER,
@@ -1116,7 +1116,7 @@ class InloopTool:
                 check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
                 check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
                 check_feature.SetField(CHECKS_TABLE_FIELD_CODE,1)
-                check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+                check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4_BGT_inlooptabel")
                 check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"")
                 check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,str(round(area,2)))
                 check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_large_area)
@@ -1134,7 +1134,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
             check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Info")
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE,2)
-            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT Identificatie")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,building["identificatie_lokaalid"])   #identificatiebagpnd
             check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_bgt_bag_mismatch
@@ -1153,7 +1153,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
             check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Info")
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE,3)
-            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"Type verharding")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,surface["type_verharding"])
             check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_infiltrating_surfaces
@@ -1172,7 +1172,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
             check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE,4)
-            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"5. BGT oppervlakken")
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"5_BGT_oppervlakken")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT Identificatie")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,surface["identificatie_lokaalid"])
             check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_relatieve_hoogteligging
@@ -1190,7 +1190,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
             check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE,5)
-            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT identificatie")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,it_feature["bgt_identificatie"])
             check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_new_BGT_surfaces
@@ -1208,7 +1208,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_ID,fid)
             check_feature.SetField(CHECKS_TABLE_FIELD_LEVEL, "Waarschuwing")
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE,6)
-            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4. BGT inlooptabel")
+            check_feature.SetField(CHECKS_TABLE_FIELD_TABLE,"4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN,"BGT identificatie")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE,it_feature["bgt_identificatie"])
             check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION,warning_outdated_changed_surfaces
@@ -1324,7 +1324,7 @@ class Database:
         # TODO more thorough checks of validity of input geopackage
         try:
             self.mem_database.CopyLayer(
-                it_ds.GetLayerByName("4. BGT inlooptabel"), RESULT_TABLE_NAME_PREV
+                it_ds.GetLayerByName("4_BGT_inlooptabel"), RESULT_TABLE_NAME_PREV
             )
         except Exception:
             # TODO more specific exception
@@ -1361,7 +1361,7 @@ class Database:
         # TODO more thorough checks of validity of input geopackage
         try:
             self.mem_database.CopyLayer(
-                it_ds.GetLayerByName("7. Rekeninstellingen"), SETTINGS_TABLE_NAME_PREV
+                it_ds.GetLayerByName("7_Rekeninstellingen"), SETTINGS_TABLE_NAME_PREV
             )
         except Exception:
             # TODO more specific exception
@@ -1381,7 +1381,7 @@ class Database:
         # TODO more thorough checks of validity of input geopackage/shapefile
         try:
             self.mem_database.CopyLayer(
-                it_ds.GetLayerByName("1. Waterpasserende verharding en groene daken [optionele input]"), INF_PAVEMENT_TABLE_NAME_PREV
+                it_ds.GetLayerByName("1_Waterpasserende_verharding_en_groene_daken"), INF_PAVEMENT_TABLE_NAME_PREV
             )
         except Exception:
             # TODO more specific exception
@@ -1852,17 +1852,17 @@ class Database:
         print("Saving layers to gpkg")
         # Initialize layers with common elements
         layers = [
-            (CHECKS_TABLE_NAME, "2. Controles"),
-            (PIPES_TABLE_NAME, "3. GWSW leidingen"),
-            (RESULT_TABLE_NAME, "4. BGT inlooptabel"),
-            (SURFACES_TABLE_NAME, "5. BGT oppervlakken"),
-            (STATISTICS_TABLE_NAME, "6. Statistieken"),
-            (SETTINGS_TABLE_NAME, "7. Rekeninstellingen")
+            (CHECKS_TABLE_NAME, "2_Controles"),
+            (PIPES_TABLE_NAME, "3_GWSW_leidingen"),
+            (RESULT_TABLE_NAME, "4_BGT_inlooptabel"),
+            (SURFACES_TABLE_NAME, "5_BGT_oppervlakken"),
+            (STATISTICS_TABLE_NAME, "6_Statistieken"),
+            (SETTINGS_TABLE_NAME, "7_Rekeninstellingen")
         ]
         
         # Prepend the additional element if the layer exists
         if self.mem_database.GetLayerByName(INF_PAVEMENT_TABLE_NAME_PREV) is not None:
-            layers.insert(0, (INF_PAVEMENT_TABLE_NAME_PREV, "1. Waterpasserende verharding en groene daken [optionele input]"))
+            layers.insert(0, (INF_PAVEMENT_TABLE_NAME_PREV, "1_Waterpasserende_verharding_en_groene_daken"))
         
         with self.open_gpkg(file_path) as dst_gpkg:
             for db_layer, gpkg_layer in layers:
@@ -1975,20 +1975,20 @@ class Database:
         sql_time_last_change = """
         CREATE TRIGGER update_laaste_wijziging_on_update AFTER UPDATE
         OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, leidingcode_gemengd, leidingcode_hwa, leidingcode_dwa, leidingcode_infiltratie, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
-        ON "4. BGT inlooptabel"
+        ON "4_BGT_inlooptabel"
         FOR EACH ROW
         BEGIN
-        UPDATE "4. BGT inlooptabel" SET laatste_wijziging = CURRENT_TIMESTAMP WHERE id = old.id;
+        UPDATE "4_BGT_inlooptabel" SET laatste_wijziging = CURRENT_TIMESTAMP WHERE id = old.id;
         END 
         """
         
         sql_changed_tf = """
         CREATE TRIGGER update_wijziging_on_update AFTER UPDATE
         OF bgt_identificatie, type_verharding, graad_verharding, hellingstype, hellingspercentage, type_private_voorziening, berging_private_voorziening, leidingcode_gemengd, leidingcode_hwa, leidingcode_dwa, leidingcode_infiltratie, gemengd_riool, hemelwaterriool, vgs_hemelwaterriool, vuilwaterriool, infiltratievoorziening, open_water, maaiveld
-        ON "4. BGT inlooptabel"
+        ON "4_BGT_inlooptabel"
         FOR EACH ROW
         BEGIN
-        UPDATE "4. BGT inlooptabel" SET wijziging = 1 WHERE id = old.id;
+        UPDATE "4_BGT_inlooptabel" SET wijziging = 1 WHERE id = old.id;
         END
         """
         
