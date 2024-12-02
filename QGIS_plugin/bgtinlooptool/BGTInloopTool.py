@@ -295,13 +295,13 @@ class InloopToolTask(QgsTask):
                 #file_name = latest gpkg file in self.output_folder
                 layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
                 gpkg_path = os.path.join(self.output_folder, file_name)
-                self.gpkg_to_layer_group(gpkg_path, "7. Rekeninstellingen", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "6. Statistieken", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "5. BGT oppervlakken", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "4. BGT inlooptabel", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "3. GWSW leidingen", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "2. Controles", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "1. Waterpasserende verharding en groene daken [optionele input]", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "7_Rekeninstellingen", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "6_Statistieken", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "5_BGT_oppervlakken", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "4_BGT_inlooptabel", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "3_GWSW_leidingen", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "2_Controles", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "1_Waterpasserende_verharding_en_groene_daken", layer_group)
             
             iface.messageBar().pushMessage(
                 MESSAGE_CATEGORY,
