@@ -740,7 +740,23 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
 
         return extent_geometry_wkt
+
+    def get_bounding_box_from_wkt(self,wkt_string):
+        # Create a QgsGeometry from the WKT
+        geometry = QgsGeometry.fromWkt(wkt_string)
         
+        # Check if the geometry is a valid MultiPolygon
+        if geometry.isMultipart():
+            # Get the bounding box of the geometry (this works for MultiPolygon too)
+            bbox = geometry.boundingBox()
+            
+            # Convert the bounding box into a WKT string (as a polygon with 1 ring)
+            bbox_wkt = f"POLYGON(({bbox.xMinimum()} {bbox.yMinimum()}, {bbox.xMaximum()} {bbox.yMinimum()}, {bbox.xMaximum()} {bbox.yMaximum()}, {bbox.xMinimum()} {bbox.yMaximum()}, {bbox.xMinimum()} {bbox.yMinimum()}))"
+            
+            return bbox_wkt
+        else:
+            return wkt_string  # If it's not a MultiPolygon, return the original WKT
+    
     def download_bgt_from_api(self):
 
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
@@ -774,7 +790,19 @@ class BGTInloopTool:
         data_array.append(json.dumps(data))
 
         response = nam.post(networkrequest, data_array)
-
+        
+        if response > 0: # in case a response error arises (0 = valid response)
+            #Convert extent_geometry_wkt to its bounding box
+            extent_geometry_wkt = self.get_bounding_box_from_wkt(extent_geometry_wkt)
+            # Retry the request with the bounding box geometry
+            data["geofilter"] = extent_geometry_wkt  # Update the data with the new geometry
+        
+            data_array.clear()  # Clear previous data
+            data_array.append(json.dumps(data))  # Append new data with the bounding box
+        
+            # Send the new request
+            response = nam.post(networkrequest, data_array)
+        
         response_bytes = bytes(nam.reply().content())
         response_json = json.loads(response_bytes.decode("ascii"))
         download_id = response_json["downloadRequestId"]
@@ -809,6 +837,7 @@ class BGTInloopTool:
         self.dlg.inputExtentGroupBox.setChecked(True)
         
         self.download_bgt = True
+
     
     def download_gwsw_from_api(self):
         # Input settings
