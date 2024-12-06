@@ -7,26 +7,21 @@ from osgeo import osr
 from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
+from pathlib import Path
+import sys
 
-try:  # Rtree should be installed by the plugin for QGIS
-    import rtree  
-except ImportError:  # For ArcGIS Pro the following is needed
-    import sys
-    from pathlib import Path
+try:
+    import rtree
+except ImportError:
+    from .rtree_installer import unpack_rtree
+    if not os.path.isdir(Path(__file__).parent / "rtree"):  # bgt_inlooptool\\rtree
+        rtree_path = unpack_rtree()
+        sys.path.append(str(rtree_path))
+    
     try:
-        import subprocess
-        command = ["python", "-m", "pip", "install", "rtree"]
-        result = subprocess.run(command, capture_output=True, text=True)
         import rtree
-    except Exception:  # For ArcGIS Pro the following is needed
-        from pathlib import Path
-        try:
-            from .rtree_installer import unpack_rtree
-            if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
-                rtree_path = unpack_rtree()
-                sys.path.append(str(rtree_path))
-        except ImportError:
-            print("The 'rtree' package installation failed.")
+    except ImportError:
+        print("The 'rtree' package installation failed.")   
     
 # Local imports
 from core.constants import (
@@ -1843,7 +1838,7 @@ class Database:
         # Sync the data to disk
         dst_layer.SyncToDisk()
     
-    def _save_to_gpkg(self,file_folder,template_gpkg):
+    def _save_to_gpkg(self,file_folder,template_gpkg) -> str:
         print("Preparing template gpkg")
         file_name = self.set_output_name(file_folder)
         file_path = os.path.join(file_folder, file_name)
@@ -1872,6 +1867,7 @@ class Database:
                     self.track_changes(dst_gpkg)
            
         print("All layers saved successfully.")
+        return str(file_path)
     
     def set_output_name(self, file_folder):
         # Determine max. run_id

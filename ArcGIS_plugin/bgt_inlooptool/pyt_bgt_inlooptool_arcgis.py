@@ -141,7 +141,7 @@ class BGTInloopToolArcGIS(BaseTool):
             name="output_folder",
             datatype="DEFolder",
             parameterType="Required",
-            direction="Output",
+            direction="Input",
         )
         max_vlak_afwatervoorziening = parameter(
             displayName="maximale afstand vlak afwateringsvoorziening",
@@ -447,11 +447,10 @@ class BGTInloopToolArcGIS(BaseTool):
 
             # Export results
             self.arcgis_com.AddMessage("Exporteren naar GPKG")
-            gpkg_file = inlooptool._database.set_output_name(output_folder)
             if parameters[self.copy_pipe_codes_idx].value:
-                inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE)
+                gpkg_file = inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE)
             else: 
-                inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE_HIDDEN)
+                gpkg_file = inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE_HIDDEN)
             
             # inlooptool._database._write_to_disk(output_gpkg)
 
@@ -459,26 +458,57 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Visualiseren van resultaten!")
             out_gdb = os.path.join(output_folder, "output.gdb")
 
-            # add symbology field for bgt_inlooptabel
-            # TODO fixen zodra laagnamen door ArcGIS gesnapt worden
-            main_bgt_inlooptabel = layers_to_gdb(
-                input_dataset=os.path.join(os.path.join(output_folder, gpkg_file), "main.4. BGT inlooptabel"),
+            # 1. Water passerende verharding en groene daken
+            lyr_water_passerende_verharding = layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"),
                 output_gdb=out_gdb,
             )
-            add_bgt_inlooptabel_symbologyfield(main_bgt_inlooptabel)
-            bgt_oppervlakken_symb.value = main_bgt_inlooptabel
-            bgt_inlooptabel_symb.value = main_bgt_inlooptabel
+            parameters[self.water_passerende_verharding_symb_idx].value = lyr_water_passerende_verharding
 
-            # add symbology field for GWSW lijnen
-            main_default_lijn = layers_to_gdb(
-                input_dataset=os.path.join(pipe_file, "main.default_lijn"),
+            # 2. controles
+            lyr_controler = layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.2_Controles"),
                 output_gdb=out_gdb,
             )
-            add_gwsw_symbologyfield(main_default_lijn)
-            gwsw_lijn_symb.value = main_default_lijn
+            parameters[self.controles_symb_idx].value = lyr_controler
 
-            # TODO Nog doen
-            visualize_layers = VisualizeLayers()
+            # 3. GWSW pipes
+            lyr_gwsws_pipes = layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.3_GWSW_leidingen"),
+                output_gdb=out_gdb,
+            )
+            add_gwsw_symbologyfield(lyr_gwsws_pipes)
+            parameters[self.gwsw_lijn_symb_idx].value = lyr_gwsws_pipes
+
+            # 4. add symbology field for bgt_inlooptabel
+            lyr_bgt_inlooptabel = layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.4_BGT_inlooptabel"),
+                output_gdb=out_gdb,
+            )
+            add_bgt_inlooptabel_symbologyfield(lyr_bgt_inlooptabel)
+            parameters[self.bgt_inlooptabel_symb_idx].value = lyr_bgt_inlooptabel
+
+            # 5. add symbology field for bgt_ppervlakken
+            lyr_bgt_oppervlakken = layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.5_BGT_oppervlakken"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.bgt_oppervlakken_symb_idx].value = lyr_bgt_oppervlakken
+
+            # 6. add symbology field for statistieken
+            lyr_statistics = layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.statistieken_symb_idx].value = lyr_statistics
+            
+            # 7. add symbology field for calculation parameters to gdb
+            layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.7_Rekeninstellingen"),
+                output_gdb=out_gdb,
+            )
+
+            visualize_layers = VisualizeLayers(r"C:\Users\vdi\OneDrive - TAUW Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
             for x, layer_parameter in enumerate(
                 [
                 parameters[self.water_passerende_verharding_symb_idx], 

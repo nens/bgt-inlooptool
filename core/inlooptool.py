@@ -1843,7 +1843,7 @@ class Database:
         # Sync the data to disk
         dst_layer.SyncToDisk()
     
-    def _save_to_gpkg(self,file_folder,template_gpkg):
+    def _save_to_gpkg(self,file_folder,template_gpkg) -> str:
         print("Preparing template gpkg")
         file_name = self.set_output_name(file_folder)
         file_path = os.path.join(file_folder, file_name)
@@ -1872,6 +1872,7 @@ class Database:
                     self.track_changes(dst_gpkg)
            
         print("All layers saved successfully.")
+        return str(file_path)
     
     def set_output_name(self, file_folder):
         # Determine max. run_id
