@@ -473,19 +473,19 @@ class BGTInloopToolArcGIS(BaseTool):
             parameters[self.controles_symb_idx].value = os.path.join(gpkg_file, "main.2_Controles")
 
             # 3. GWSW pipes
+            add_gwsw_symbologyfield(os.path.join(gpkg_file, "main.3_GWSW_leidingen"))
             lyr_gwsws_pipes = layers_to_gdb(
                 input_dataset=os.path.join(gpkg_file, "main.3_GWSW_leidingen"),
                 output_gdb=out_gdb,
             )
-            add_gwsw_symbologyfield(lyr_gwsws_pipes)
             parameters[self.gwsw_lijn_symb_idx].value = os.path.join(gpkg_file, "main.3_GWSW_leidingen")
 
             # 4. add symbology field for bgt_inlooptabel
+            add_bgt_inlooptabel_symbologyfield(os.path.join(gpkg_file, "main.4_BGT_inlooptabel"))
             lyr_bgt_inlooptabel = layers_to_gdb(
                 input_dataset=os.path.join(gpkg_file, "main.4_BGT_inlooptabel"),
                 output_gdb=out_gdb,
             )
-            add_bgt_inlooptabel_symbologyfield(lyr_bgt_inlooptabel)
             parameters[self.bgt_inlooptabel_symb_idx].value = os.path.join(gpkg_file, "main.4_BGT_inlooptabel")
 
             # 5. add symbology field for bgt_ppervlakken
@@ -511,16 +511,19 @@ class BGTInloopToolArcGIS(BaseTool):
             visualize_layers = VisualizeLayers(r"C:\Users\vdi\OneDrive - TAUW Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
             for x, layer_parameter in enumerate(
                 [
-                 [parameters[self.water_passerende_verharding_symb_idx], None], 
-                 [parameters[self.controles_symb_idx], "error_code"],
-                 [parameters[self.bgt_oppervlakken_symb_idx], None],
-                 [parameters[self.bgt_inlooptabel_symb_idx], "categorie"],
-                 [parameters[self.gwsw_lijn_symb_idx], "pip_type"],
-                 [parameters[self.statistieken_symb_idx], None],
+                 [parameters[self.water_passerende_verharding_symb_idx], None, "1. Waterpasserende verharding en groene daken"], 
+                 [parameters[self.controles_symb_idx], "error_code", "2. Controles"],
+                 [parameters[self.gwsw_lijn_symb_idx], "pipe_type", "3. GWSW leidingen"],
+                 [parameters[self.bgt_inlooptabel_symb_idx], "categorie", "4. BGT inlooptabel"],
+                 [parameters[self.bgt_oppervlakken_symb_idx], None, "5. BGT Oppervlakten"],
+                 [parameters[self.statistieken_symb_idx], None, "6. Statistieken"],
                  ],
             ):
-                visualize_layers.add_layer_to_map(in_param=layer_parameter[0], symbology_field=layer_parameter[1], param_nr=x)
+                visualize_layers.add_layer_to_map(in_param=layer_parameter[0], symbology_field=layer_parameter[1], layer_name=layer_parameter[2], param_nr=x)
+            
+            # add_statistics_labels()
             visualize_layers.save()
+
 
         except Exception:
             self.arcgis_com.Traceback()

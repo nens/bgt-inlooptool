@@ -19,7 +19,7 @@ class VisualizeLayers:
         self.arcgis_project.save()
 
     def add_layer_to_map(
-        self, in_param, symbology_field: Union[str , None], param_nr=None, 
+        self, in_param, symbology_field: Union[str , None],layer_name: str, param_nr=None, 
     ):
         """
         Add layers to map with symbology if a symbology layer is specified
@@ -27,6 +27,7 @@ class VisualizeLayers:
         try:
             # add data to the map
             output_layer = self.map.addDataFromPath(in_param.valueAsText)
+            print(f"adding {in_param.valueAsText}")
 
             # add symbology if it is available
             if in_param.symbology is not None:
@@ -36,10 +37,12 @@ class VisualizeLayers:
                     break
                 else:
                     sym_layer = layer_file
-                output_layer.name = sym_layer.name
-                arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer, symbology_fields=symbology_field)
+                output_layer.name = layer_name
+                arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer)
                 arcpy.SetParameterAsText(param_nr, output_layer)
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDExOTkwNw==
             # workaround works when parameter 16 is defined as a layer and as parameterType Derived
+
         except Exception:
             self.arcgis_com.Traceback()
+
