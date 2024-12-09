@@ -463,14 +463,14 @@ class BGTInloopToolArcGIS(BaseTool):
                 input_dataset=os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"),
                 output_gdb=out_gdb,
             )
-            parameters[self.water_passerende_verharding_symb_idx].value = lyr_water_passerende_verharding
+            parameters[self.water_passerende_verharding_symb_idx].value = os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken")
 
             # 2. controles
             lyr_controler = layers_to_gdb(
                 input_dataset=os.path.join(gpkg_file, "main.2_Controles"),
                 output_gdb=out_gdb,
             )
-            parameters[self.controles_symb_idx].value = lyr_controler
+            parameters[self.controles_symb_idx].value = os.path.join(gpkg_file, "main.2_Controles")
 
             # 3. GWSW pipes
             lyr_gwsws_pipes = layers_to_gdb(
@@ -478,7 +478,7 @@ class BGTInloopToolArcGIS(BaseTool):
                 output_gdb=out_gdb,
             )
             add_gwsw_symbologyfield(lyr_gwsws_pipes)
-            parameters[self.gwsw_lijn_symb_idx].value = lyr_gwsws_pipes
+            parameters[self.gwsw_lijn_symb_idx].value = os.path.join(gpkg_file, "main.3_GWSW_leidingen")
 
             # 4. add symbology field for bgt_inlooptabel
             lyr_bgt_inlooptabel = layers_to_gdb(
@@ -486,21 +486,21 @@ class BGTInloopToolArcGIS(BaseTool):
                 output_gdb=out_gdb,
             )
             add_bgt_inlooptabel_symbologyfield(lyr_bgt_inlooptabel)
-            parameters[self.bgt_inlooptabel_symb_idx].value = lyr_bgt_inlooptabel
+            parameters[self.bgt_inlooptabel_symb_idx].value = os.path.join(gpkg_file, "main.4_BGT_inlooptabel")
 
             # 5. add symbology field for bgt_ppervlakken
             lyr_bgt_oppervlakken = layers_to_gdb(
                 input_dataset=os.path.join(gpkg_file, "main.5_BGT_oppervlakken"),
                 output_gdb=out_gdb,
             )
-            parameters[self.bgt_oppervlakken_symb_idx].value = lyr_bgt_oppervlakken
+            parameters[self.bgt_oppervlakken_symb_idx].value = os.path.join(gpkg_file, "main.5_BGT_oppervlakken")
 
             # 6. add symbology field for statistieken
             lyr_statistics = layers_to_gdb(
                 input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"),
                 output_gdb=out_gdb,
             )
-            parameters[self.statistieken_symb_idx].value = lyr_statistics
+            parameters[self.statistieken_symb_idx].value = os.path.join(gpkg_file, "main.6_Statistieken")
             
             # 7. add symbology field for calculation parameters to gdb
             layers_to_gdb(
@@ -511,15 +511,15 @@ class BGTInloopToolArcGIS(BaseTool):
             visualize_layers = VisualizeLayers(r"C:\Users\vdi\OneDrive - TAUW Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
             for x, layer_parameter in enumerate(
                 [
-                parameters[self.water_passerende_verharding_symb_idx], 
-                 parameters[self.controles_symb_idx],
-                 parameters[self.bgt_oppervlakken_symb_idx],
-                 parameters[self.bgt_inlooptabel_symb_idx],
-                 parameters[self.gwsw_lijn_symb_idx],
-                 parameters[self.statistieken_symb_idx],
-                 ], self.water_passerende_verharding_symb_idx
+                 [parameters[self.water_passerende_verharding_symb_idx], None], 
+                 [parameters[self.controles_symb_idx], "error_code"],
+                 [parameters[self.bgt_oppervlakken_symb_idx], None],
+                 [parameters[self.bgt_inlooptabel_symb_idx], "categorie"],
+                 [parameters[self.gwsw_lijn_symb_idx], "pip_type"],
+                 [parameters[self.statistieken_symb_idx], None],
+                 ],
             ):
-                visualize_layers.add_layer_to_map(in_param=layer_parameter, param_nr=x)
+                visualize_layers.add_layer_to_map(in_param=layer_parameter[0], symbology_field=layer_parameter[1], param_nr=x)
             visualize_layers.save()
 
         except Exception:
