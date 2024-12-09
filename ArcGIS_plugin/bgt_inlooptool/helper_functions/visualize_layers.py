@@ -1,5 +1,6 @@
 import arcpy
 from .cls_general_use import GeneralUse
+from typing import Union
 
 
 class VisualizeLayers:
@@ -18,7 +19,7 @@ class VisualizeLayers:
         self.arcgis_project.save()
 
     def add_layer_to_map(
-        self, in_param, in_dataset=None, param_nr=None, symbology_layer=None
+        self, in_param, symbology_field: Union[str , None], param_nr=None, 
     ):
         """
         Add layers to map with symbology if a symbology layer is specified
@@ -36,7 +37,7 @@ class VisualizeLayers:
                 else:
                     sym_layer = layer_file
                 output_layer.name = sym_layer.name
-                arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer)
+                arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer, symbology_fields=symbology_field)
                 arcpy.SetParameterAsText(param_nr, output_layer)
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDExOTkwNw==
             # workaround works when parameter 16 is defined as a layer and as parameterType Derived
