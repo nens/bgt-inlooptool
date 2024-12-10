@@ -12,3 +12,4 @@ class VisualizeLayer(NamedTuple):
     visualize_field: Union[str, None]
     layer_name: str
     params_idx: int
+    has_symbology: bool

@@ -28,18 +28,24 @@ class VisualizeLayers:
         try:
             # add data to the map
             output_layer = self.map.addDataFromPath(visualize_settings.symbology_param.valueAsText)
+            output_layer.name = visualize_settings.layer_name
+            return output_layer
+        except Exception:
+            self.arcgis_com.Traceback()
 
+
+    def apply_symbology(self, visualize_settings: VisualizeLayer, added_layer):
+            
+        try:
             # add symbology if it is available
-            if visualize_settings.symbology_param.symbology is not None:
-                layer_file = arcpy.mp.LayerFile(visualize_settings.symbology_param.symbology)
-                for layer in layer_file.listLayers():
-                    sym_layer = layer
-                    break
-                else:
-                    sym_layer = layer_file
-                output_layer.name = visualize_settings.layer_name
-                arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer)
-                arcpy.SetParameterAsText(visualize_settings.params_idx, output_layer)
+            layer_file = arcpy.mp.LayerFile(visualize_settings.symbology_param.symbology)
+            for layer in layer_file.listLayers():
+                sym_layer = layer
+                break
+            else:
+                sym_layer = layer_file
+            arcpy.ApplySymbologyFromLayer_management(added_layer, sym_layer)
+            arcpy.SetParameterAsText(visualize_settings.params_idx, added_layer)
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDExOTkwNw==
             # workaround works when parameter 16 is defined as a layer and as parameterType Derived
 
