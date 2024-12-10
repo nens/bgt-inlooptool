@@ -1,6 +1,7 @@
 import arcpy
 from .cls_general_use import GeneralUse
 from typing import Union
+from .constants import VisualizeLayer
 
 
 class VisualizeLayers:
@@ -19,27 +20,26 @@ class VisualizeLayers:
         self.arcgis_project.save()
 
     def add_layer_to_map(
-        self, in_param, symbology_field: Union[str , None],layer_name: str, param_nr=None, 
+        self, visualize_settings: VisualizeLayer, 
     ):
         """
         Add layers to map with symbology if a symbology layer is specified
         """
         try:
             # add data to the map
-            output_layer = self.map.addDataFromPath(in_param.valueAsText)
-            print(f"adding {in_param.valueAsText}")
+            output_layer = self.map.addDataFromPath(visualize_settings.symbology_param.valueAsText)
 
             # add symbology if it is available
-            if in_param.symbology is not None:
-                layer_file = arcpy.mp.LayerFile(in_param.symbology)
+            if visualize_settings.symbology_param.symbology is not None:
+                layer_file = arcpy.mp.LayerFile(visualize_settings.symbology_param.symbology)
                 for layer in layer_file.listLayers():
                     sym_layer = layer
                     break
                 else:
                     sym_layer = layer_file
-                output_layer.name = layer_name
+                output_layer.name = visualize_settings.layer_name
                 arcpy.ApplySymbologyFromLayer_management(output_layer, sym_layer)
-                arcpy.SetParameterAsText(param_nr, output_layer)
+                arcpy.SetParameterAsText(visualize_settings.params_idx, output_layer)
             # https://support.esri.com/en/bugs/nimbus/QlVHLTAwMDExOTkwNw==
             # workaround works when parameter 16 is defined as a layer and as parameterType Derived
 

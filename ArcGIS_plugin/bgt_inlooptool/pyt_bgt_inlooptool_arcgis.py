@@ -34,6 +34,7 @@ from core.defaults import (
     VERHARDINGSGRAAD_ERF,
     VERHARDINGSGRAAD_HALF_VERHARD,
 )
+from helper_functions.constants import VisualizeLayer
 
 GPKG_TEMPLATE = os.path.join(os.path.dirname(__file__), "layers", "template_output.gpkg")
 GPKG_TEMPLATE_HIDDEN = os.path.join(os.path.dirname(__file__), "layers", "template_output_hidden_fields.gpkg")
@@ -399,17 +400,13 @@ class BGTInloopToolArcGIS(BaseTool):
                 leidingcodes_koppelen=parameters[self.copy_pipe_codes_idx].value
             )
 
-            # Output layers
-            bgt_oppervlakken_symb = parameters[self.bgt_oppervlakken_symb_idx]
-            bgt_inlooptabel_symb = parameters[self.bgt_inlooptabel_symb_idx]
-            gwsw_lijn_symb = parameters[self.gwsw_lijn_symb_idx]
-
             if input_area is not None:
                 # get the input extent as wkt from the input_area
                 input_extent_mask_wkt = get_wkt_extent(input_area)
 
             # start of the core
             inlooptool = InloopTool(core_parameters)
+
             # Import surfaces and pipes
             self.arcgis_com.AddMessage("Importeren van BGT bestanden")
             inlooptool.import_surfaces(bgt_file, input_extent_mask_wkt)
@@ -438,12 +435,14 @@ class BGTInloopToolArcGIS(BaseTool):
                     kolken=core_parameters.gebruik_kolken
                 )
 
+            # Calculate results
             self.arcgis_com.AddMessage("Afstanden aan het berekenen")
             inlooptool.calculate_distances(parameters=core_parameters)
             self.arcgis_com.AddMessage("Bereken Runoff targets")
             inlooptool.calculate_runoff_targets(parameters[self.copy_pipe_codes_idx].value)
-            self.arcgis_com.AddMessage("Berekenen statistiek")
-            inlooptool.calculate_statistics(stats_path=statistics_area)
+            if statistics_area != None:
+                self.arcgis_com.AddMessage("Berekenen statistiek")
+                inlooptool.calculate_statistics(stats_path=statistics_area)
 
             # Export results
             self.arcgis_com.AddMessage("Exporteren naar GPKG")
@@ -452,76 +451,69 @@ class BGTInloopToolArcGIS(BaseTool):
             else: 
                 gpkg_file = inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE_HIDDEN)
             
-            # inlooptool._database._write_to_disk(output_gpkg)
-
-            # Add layers to the map
+            # Export layers to gdb amd add layers to the map
             self.arcgis_com.AddMessage("Visualiseren van resultaten!")
             out_gdb = os.path.join(output_folder, "output.gdb")
+            fields_to_visualize = []
 
             # 1. Water passerende verharding en groene daken
-            lyr_water_passerende_verharding = layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"),
-                output_gdb=out_gdb,
-            )
+            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"),output_gdb=out_gdb)
             parameters[self.water_passerende_verharding_symb_idx].value = os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken")
+            fields_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.water_passerende_verharding_symb_idx],
+                                                      visualize_field=None, 
+                                                      layer_name="1. Waterpasserende verharding en groene daken",
+                                                      params_idx=self.water_passerende_verharding_symb_idx))
 
             # 2. controles
-            lyr_controler = layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.2_Controles"),
-                output_gdb=out_gdb,
-            )
+            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.2_Controles"),output_gdb=out_gdb)
             parameters[self.controles_symb_idx].value = os.path.join(gpkg_file, "main.2_Controles")
+            fields_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.controles_symb_idx],
+                                                      visualize_field="error_code", 
+                                                      layer_name="2. Controles",
+                                                      params_idx=self.controles_symb_idx))
 
             # 3. GWSW pipes
             add_gwsw_symbologyfield(os.path.join(gpkg_file, "main.3_GWSW_leidingen"))
-            lyr_gwsws_pipes = layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.3_GWSW_leidingen"),
-                output_gdb=out_gdb,
-            )
+            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.3_GWSW_leidingen"),output_gdb=out_gdb)
             parameters[self.gwsw_lijn_symb_idx].value = os.path.join(gpkg_file, "main.3_GWSW_leidingen")
+            fields_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.gwsw_lijn_symb_idx],
+                                                      visualize_field="pipe_type", 
+                                                      layer_name="3. GWSW leidingen",
+                                                      params_idx=self.gwsw_lijn_symb_idx))
 
             # 4. add symbology field for bgt_inlooptabel
             add_bgt_inlooptabel_symbologyfield(os.path.join(gpkg_file, "main.4_BGT_inlooptabel"))
-            lyr_bgt_inlooptabel = layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.4_BGT_inlooptabel"),
-                output_gdb=out_gdb,
-            )
+            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.4_BGT_inlooptabel"),output_gdb=out_gdb)
             parameters[self.bgt_inlooptabel_symb_idx].value = os.path.join(gpkg_file, "main.4_BGT_inlooptabel")
+            fields_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.bgt_inlooptabel_symb_idx],
+                                                      visualize_field="categorie", 
+                                                      layer_name="4. BGT inlooptabel",
+                                                      params_idx=self.bgt_inlooptabel_symb_idx))
 
             # 5. add symbology field for bgt_ppervlakken
-            lyr_bgt_oppervlakken = layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.5_BGT_oppervlakken"),
-                output_gdb=out_gdb,
-            )
+            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.5_BGT_oppervlakken"), output_gdb=out_gdb)
             parameters[self.bgt_oppervlakken_symb_idx].value = os.path.join(gpkg_file, "main.5_BGT_oppervlakken")
+            fields_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.bgt_oppervlakken_symb_idx],
+                                                      visualize_field=None, 
+                                                      layer_name="5. BGT Oppervlakken",
+                                                      params_idx=self.bgt_oppervlakken_symb_idx))
 
             # 6. add symbology field for statistieken
-            lyr_statistics = layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"),
-                output_gdb=out_gdb,
-            )
-            parameters[self.statistieken_symb_idx].value = os.path.join(gpkg_file, "main.6_Statistieken")
+            if statistics_area != None:
+                layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"),output_gdb=out_gdb)
+                parameters[self.statistieken_symb_idx].value = os.path.join(gpkg_file, "main.6_Statistieken")
+                fields_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.statistieken_symb_idx],
+                                                      visualize_field=None, 
+                                                      layer_name="6. Statistieken",
+                                                      params_idx=self.statistieken_symb_idx))
             
             # 7. add symbology field for calculation parameters to gdb
-            layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.7_Rekeninstellingen"),
-                output_gdb=out_gdb,
-            )
+            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.7_Rekeninstellingen"),output_gdb=out_gdb)
 
-            visualize_layers = VisualizeLayers(r"C:\Users\vdi\OneDrive - TAUW Group bv\ArcGIS\Projects\bgt_inlooptool\bgt_inlooptool.aprx")
-            for x, layer_parameter in enumerate(
-                [
-                 [parameters[self.water_passerende_verharding_symb_idx], None, "1. Waterpasserende verharding en groene daken"], 
-                 [parameters[self.controles_symb_idx], "error_code", "2. Controles"],
-                 [parameters[self.gwsw_lijn_symb_idx], "pipe_type", "3. GWSW leidingen"],
-                 [parameters[self.bgt_inlooptabel_symb_idx], "categorie", "4. BGT inlooptabel"],
-                 [parameters[self.bgt_oppervlakken_symb_idx], None, "5. BGT Oppervlakten"],
-                 [parameters[self.statistieken_symb_idx], None, "6. Statistieken"],
-                 ],
-            ):
-                visualize_layers.add_layer_to_map(in_param=layer_parameter[0], symbology_field=layer_parameter[1], layer_name=layer_parameter[2], param_nr=x)
+            visualize_layers = VisualizeLayers()
+            for layer_parameter in fields_to_visualize:
+                visualize_layers.add_layer_to_map(visualize_settings=layer_parameter)
             
-            # add_statistics_labels()
             visualize_layers.save()
 
 
@@ -552,7 +544,7 @@ if __name__ == "__main__":
         # area_file
         params[5].value = os.path.join(main_path, "extent_Akersloot.shp")  #os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
         # statistics area
-        params[6].value = os.path.join(main_path, "statistiek_gebieden_buurten.shp")
+        # params[6].value = os.path.join(main_path, "statistiek_gebieden_buurten.shp")
         # output_location
         params[7].value = r"C:\Users\vdi\Downloads\inlooptool_test"
 
