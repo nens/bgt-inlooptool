@@ -511,6 +511,7 @@ class BGTInloopToolArcGIS(BaseTool):
             layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.7_Rekeninstellingen"),output_gdb=out_gdb)
 
             visualize_layers = VisualizeLayers()
+            fields_to_visualize.reverse()
             for layer_parameter in fields_to_visualize:
                 visualize_layers.add_layer_to_map(visualize_settings=layer_parameter)
             
