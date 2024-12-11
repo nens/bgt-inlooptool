@@ -1321,7 +1321,7 @@
         },
         "dataConnection" : {
           "type" : "CIMSqlQueryDataConnection",
-          "workspaceConnectionString" : "AUTHENTICATION_MODE=OSA;DATABASE=..\\..\\..\\..\\..\\Users\\vdi\\Downloads\\inlooptool_test\\v1_BGT_inlooptabel_20241210_152229.gpkg",
+          "workspaceConnectionString" : "AUTHENTICATION_MODE=OSA;DATABASE=..\\..\\..\\..\\..\\Users\\vdi\\Downloads\\inlooptool_test\\v1_BGT_inlooptabel_20241210_165828.gpkg",
           "workspaceFactory" : "Sql",
           "dataset" : "main.%\"6_Statistieken\"",
           "datasetType" : "esriDTFeatureClass",
@@ -2201,7 +2201,7 @@
       "labelClasses" : [
         {
           "type" : "CIMLabelClass",
-          "expression" : "var id = $feature.id;\r\nvar perc_gemengd = $feature.perc_gemengd;\r\nvar perc_hwa = $feature.perc_hwa;\r\nvar perc_vgs = $feature.perc_vgs;\r\nvar perc_dwa = $feature.perc_dwa;\r\nvar perc_infiltratievoorziening = $feature.perc_infiltratievoorziening;\r\nvar perc_open_water = $feature.perc_open_water;\r\nvar perc_maaiveld = $feature.perc_maaiveld;\r\n\r\nvar label_string = 'Gebied: ' + Text(id) + '\\n' +\r\n                   'Gemengd riool: ' + Text(perc_gemengd) + '%' + '\\n' +\r\n                   'Hemelwaterriool: ' + Text(perc_hwa) + '%' + '\\n' +\r\n                   'VGS hemelwateriool: ' + Text(perc_vgs) + '%' + '\\n' +\r\n                   'Vuilwaterriool: ' + Text(perc_dwa) + '%' + '\\n' +\r\n                   'Infiltratievoorziening: ' + Text(perc_infiltratievoorziening) + '%' + '\\n' +\r\n                   'Open water : ' + Text(perc_open_water) + '%' + '\\n' +\r\n                   'Maaiveld: ' + Text(perc_maaiveld) + '%';\r\n\r\nreturn label_string;",
+          "expression" : "var id = $feature.id;\nvar perc_gemengd = $feature.perc_gemengd;\nvar perc_hwa = $feature.perc_hwa;\nvar perc_vgs = $feature.perc_vgs;\nvar perc_dwa = $feature.perc_dwa;\nvar perc_infiltratievoorziening = $feature.perc_infiltratievoorziening;\nvar perc_open_water = $feature.perc_open_water;\nvar perc_maaiveld = $feature.perc_maaiveld;\n\nvar label_string = 'Gebied: ' + Text(id) + '\\n' +\n                   'Gemengd riool: ' + Text(perc_gemengd) + '%' + '\\n' +\n                   'Hemelwaterriool: ' + Text(perc_hwa) + '%' + '\\n' +\n                   'VGS hemelwateriool: ' + Text(perc_vgs) + '%' + '\\n' +\n                   'Vuilwaterriool: ' + Text(perc_dwa) + '%' + '\\n' +\n                   'Infiltratievoorziening: ' + Text(perc_infiltratievoorziening) + '%' + '\\n' +\n                   'Open water : ' + Text(perc_open_water) + '%' + '\\n' +\n                   'Maaiveld: ' + Text(perc_maaiveld) + '%';\n\nreturn label_string;",
           "expressionEngine" : "Arcade",
           "featuresToLabel" : "AllVisibleFeatures",
           "maplexLabelPlacementProperties" : {

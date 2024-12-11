@@ -304,8 +304,8 @@ class BGTInloopToolArcGIS(BaseTool):
 
         return [previous_results, bgt, leidingen, bag, kolken_file, input_extent_mask_wkt, input_statistics_shape, output_folder, max_vlak_afwatervoorziening, max_vlak_oppwater,
                                 max_pand_opwater, max_vlak_kolk, max_afgekoppeld, max_drievoudig, afkoppelen_daken, bouwjaar_riool, verhardingsgraaf_erf,
-                                verhardingsgraad_half_verhard, copy_pipe_codes, reset_input, water_passerende_verharding_symb, controles_symb, bgt_oppervlakken_symb, bgt_inlooptabel_symb, gwsw_lijn_symb,
-                                statistieken_symb, rekeninstellingen_symb]
+                                verhardingsgraad_half_verhard, copy_pipe_codes, reset_input, water_passerende_verharding_symb, controles_symb, bgt_oppervlakken_symb, 
+                                bgt_inlooptabel_symb, gwsw_lijn_symb,statistieken_symb, rekeninstellingen_symb]
 
     def updateParameters(self, parameters):
         """

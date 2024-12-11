@@ -35,7 +35,9 @@ class VisualizeLayers:
 
 
     def apply_symbology(self, visualize_settings: VisualizeLayer, added_layer):
-            
+        """
+        Apply the specified layer file to the given layer
+        """
         try:
             # add symbology if it is available
             layer_file = arcpy.mp.LayerFile(visualize_settings.symbology_param.symbology)
