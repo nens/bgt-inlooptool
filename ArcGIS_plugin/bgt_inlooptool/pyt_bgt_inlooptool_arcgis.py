@@ -511,7 +511,7 @@ class BGTInloopToolArcGIS(BaseTool):
             # 6. add symbology field for statistieken
             if statistics_area != None:
                 layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"), output_gdb=out_gdb)
-                parameters[self.statistieken_symb_idx].value = os.path.join(gpkg_file, "main.6_Statistieken")
+                parameters[self.statistieken_symb_idx].value = os.path.join(out_gdb, "main_6_Statistieken")
                 layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.statistieken_symb_idx],
                                                       visualize_field=None, 
                                                       layer_name="6. Statistieken",
@@ -528,8 +528,10 @@ class BGTInloopToolArcGIS(BaseTool):
             visualize_layers = VisualizeLayers()
             layers_to_visualize.reverse()
             for layer_parameter in layers_to_visualize:
+                arcpy.AddMessage(f"Adding layer: {layer_parameter.layer_name}")
                 layer = visualize_layers.add_layer_to_map(layer_parameter)
                 if layer_parameter.has_symbology:
+                    arcpy.AddMessage("- Applying symbology" )
                     visualize_layers.apply_symbology(layer_parameter, layer)
 
             
