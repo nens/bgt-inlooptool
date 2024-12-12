@@ -5,8 +5,9 @@ Created By: Sjoerd Hoekstra
 Date: 29/09/2020
 """
 
-import sys
 import os
+import sys
+
 import arcpy
 
 # Relative imports don't work well in arcgis, therefore paths are appended to sys
@@ -16,28 +17,41 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, "core"))
 
 # Set path to Generic modules
 from helper_functions.cls_general_use import GeneralUse
-from helper_functions.common import BaseTool, parameter, get_wkt_extent, layers_to_gdb
-from helper_functions.common import add_bgt_inlooptabel_symbologyfield, add_gwsw_symbologyfield
+from helper_functions.common import (
+    BaseTool,
+    add_bgt_inlooptabel_symbologyfield,
+    add_gwsw_symbologyfield,
+    get_wkt_extent,
+    layers_to_gdb,
+    parameter,
+)
+from helper_functions.constants import VisualizeLayer
 from helper_functions.visualize_layers import VisualizeLayers
 
-# import bgt inlooptool
-from core.inlooptool import InloopTool, InputParameters
 from core.defaults import (
-    MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
-    MAX_AFSTAND_VLAK_OPPWATER,
-    MAX_AFSTAND_PAND_OPPWATER,
-    MAX_AFSTAND_VLAK_KOLK,
-    MAX_AFSTAND_AFGEKOPPELD,
-    MAX_AFSTAND_DRIEVOUDIG,
     AFKOPPELEN_HELLENDE_DAKEN,
     BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
+    MAX_AFSTAND_AFGEKOPPELD,
+    MAX_AFSTAND_DRIEVOUDIG,
+    MAX_AFSTAND_PAND_OPPWATER,
+    MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
+    MAX_AFSTAND_VLAK_KOLK,
+    MAX_AFSTAND_VLAK_OPPWATER,
     VERHARDINGSGRAAD_ERF,
     VERHARDINGSGRAAD_HALF_VERHARD,
 )
-from helper_functions.constants import VisualizeLayer
 
-GPKG_TEMPLATE = os.path.join(os.path.dirname(__file__), "layers", "template_output.gpkg")
-GPKG_TEMPLATE_HIDDEN = os.path.join(os.path.dirname(__file__), "layers", "template_output_hidden_fields.gpkg")
+# import bgt inlooptool
+from core.inlooptool import InloopTool, InputParameters
+
+GPKG_TEMPLATE = os.path.join(
+    os.path.dirname(__file__), "layers", "template_output.gpkg"
+)
+GPKG_TEMPLATE_HIDDEN = os.path.join(
+    os.path.dirname(__file__), "layers", "template_output_hidden_fields.gpkg"
+)
+
+
 class BGTInloopToolArcGIS(BaseTool):
     def __init__(self):
         """
@@ -48,20 +62,51 @@ class BGTInloopToolArcGIS(BaseTool):
         self.canRunInBackground = True
         self.arcgis_com = GeneralUse(sys, arcpy)
 
-        self.parameter_names = ["previous_results", "bgt", "leidingen", "bag", "kolken_file", "input_extent_mask_wkt", "input_statistics_shape", "output_folder", "max_vlak_afwatervoorziening", "max_vlak_oppwater",
-                                "max_pand_opwater", "max_vlak_kolk", "max_afgekoppeld", "max_drievoudig", "afkoppelen_daken", "bouwjaar_riool", "verhardingsgraaf_erf",
-                                "verhardingsgraad_half_verhard", "copy_pipe_codes", "reset_input","water_passerende_verharding_symb","controles_symb", "bgt_oppervlakken_symb", "bgt_inlooptabel_symb", "gwsw_lijn_symb", 
-                                "statistieken_symb", "rekeninstellingen_symb"]
-        
+        self.parameter_names = [
+            "previous_results",
+            "bgt",
+            "leidingen",
+            "bag",
+            "kolken_file",
+            "input_extent_mask_wkt",
+            "input_statistics_shape",
+            "output_folder",
+            "max_vlak_afwatervoorziening",
+            "max_vlak_oppwater",
+            "max_pand_opwater",
+            "max_vlak_kolk",
+            "max_afgekoppeld",
+            "max_drievoudig",
+            "afkoppelen_daken",
+            "bouwjaar_riool",
+            "verhardingsgraaf_erf",
+            "verhardingsgraad_half_verhard",
+            "copy_pipe_codes",
+            "reset_input",
+            "water_passerende_verharding_symb",
+            "controles_symb",
+            "bgt_oppervlakken_symb",
+            "bgt_inlooptabel_symb",
+            "gwsw_lijn_symb",
+            "statistieken_symb",
+            "rekeninstellingen_symb",
+        ]
+
         self.previous_results_idx = self.parameter_names.index("previous_results")
         self.bgt_idx = self.parameter_names.index("bgt")
         self.leidingen_idx = self.parameter_names.index("leidingen")
         self.bag_idx = self.parameter_names.index("bag")
         self.kolken_file_idx = self.parameter_names.index("kolken_file")
-        self.input_extent_mask_wkt_idx = self.parameter_names.index("input_extent_mask_wkt")
-        self.input_statistics_shape_idx = self.parameter_names.index("input_statistics_shape")
+        self.input_extent_mask_wkt_idx = self.parameter_names.index(
+            "input_extent_mask_wkt"
+        )
+        self.input_statistics_shape_idx = self.parameter_names.index(
+            "input_statistics_shape"
+        )
         self.output_folder_idx = self.parameter_names.index("output_folder")
-        self.max_vlak_afwatervoorziening_idx = self.parameter_names.index("max_vlak_afwatervoorziening")
+        self.max_vlak_afwatervoorziening_idx = self.parameter_names.index(
+            "max_vlak_afwatervoorziening"
+        )
         self.max_vlak_oppwater_idx = self.parameter_names.index("max_vlak_oppwater")
         self.max_pand_opwater_idx = self.parameter_names.index("max_pand_opwater")
         self.max_vlak_kolk_idx = self.parameter_names.index("max_vlak_kolk")
@@ -69,20 +114,31 @@ class BGTInloopToolArcGIS(BaseTool):
         self.max_drievoudig_idx = self.parameter_names.index("max_drievoudig")
         self.afkoppelen_daken_idx = self.parameter_names.index("afkoppelen_daken")
         self.bouwjaar_riool_idx = self.parameter_names.index("bouwjaar_riool")
-        self.verhardingsgraaf_erf_idx = self.parameter_names.index("verhardingsgraaf_erf")
-        self.verhardingsgraad_half_verhard_idx = self.parameter_names.index("verhardingsgraad_half_verhard")
-        self.water_passerende_verharding_symb_idx = self.parameter_names.index("water_passerende_verharding_symb")
+        self.verhardingsgraaf_erf_idx = self.parameter_names.index(
+            "verhardingsgraaf_erf"
+        )
+        self.verhardingsgraad_half_verhard_idx = self.parameter_names.index(
+            "verhardingsgraad_half_verhard"
+        )
+        self.water_passerende_verharding_symb_idx = self.parameter_names.index(
+            "water_passerende_verharding_symb"
+        )
         self.controles_symb_idx = self.parameter_names.index("controles_symb")
-        self.bgt_oppervlakken_symb_idx = self.parameter_names.index("bgt_oppervlakken_symb")
-        self.bgt_inlooptabel_symb_idx = self.parameter_names.index("bgt_inlooptabel_symb")
+        self.bgt_oppervlakken_symb_idx = self.parameter_names.index(
+            "bgt_oppervlakken_symb"
+        )
+        self.bgt_inlooptabel_symb_idx = self.parameter_names.index(
+            "bgt_inlooptabel_symb"
+        )
         self.statistieken_symb_idx = self.parameter_names.index("statistieken_symb")
         self.gwsw_lijn_symb_idx = self.parameter_names.index("gwsw_lijn_symb")
-        self.rekeninstellingen_symb_idx = self.parameter_names.index("rekeninstellingen_symb")
+        self.rekeninstellingen_symb_idx = self.parameter_names.index(
+            "rekeninstellingen_symb"
+        )
         self.copy_pipe_codes_idx = self.parameter_names.index("copy_pipe_codes")
         self.reset_input_idx = self.parameter_names.index("reset_input")
 
     def getParameterInfo(self):
-        """return Parameter definitions."""
         """Create your parameters here using the paramater function.
         Make sure you leave the enclosing brackets and separate your
         parameters using commas.
@@ -90,7 +146,7 @@ class BGTInloopToolArcGIS(BaseTool):
         """
         layers = os.path.join(os.path.dirname(__file__), "layers")
 
-        previous_results =  parameter(
+        previous_results = parameter(
             displayName="Vorige tooluitkomsten (als geopackage)",
             name="previous_results",
             datatype="DEDatasetType",
@@ -226,7 +282,7 @@ class BGTInloopToolArcGIS(BaseTool):
             direction="Input",
             defaultValue=VERHARDINGSGRAAD_HALF_VERHARD,
         )
-        copy_pipe_codes =  parameter(
+        copy_pipe_codes = parameter(
             displayName="Leidingcodes koppelen",
             name="copy_pipe_codes",
             datatype="GPBoolean",
@@ -235,7 +291,7 @@ class BGTInloopToolArcGIS(BaseTool):
         )
         copy_pipe_codes.value = False
 
-        reset_input =  parameter(
+        reset_input = parameter(
             displayName="Vink aan om alle rekeningstellingen naar default te resetten",
             name="reset_input",
             datatype="GPBoolean",
@@ -251,7 +307,9 @@ class BGTInloopToolArcGIS(BaseTool):
             datatype="GPLayer",
             parameterType="Derived",
             direction="Output",
-            symbology=os.path.join(layers, "waterpasserende_verharding_en_groen_daken.lyrx"),
+            symbology=os.path.join(
+                layers, "waterpasserende_verharding_en_groen_daken.lyrx"
+            ),
         )
         controles_symb = parameter(
             displayName="Controles symbology",
@@ -299,13 +357,38 @@ class BGTInloopToolArcGIS(BaseTool):
             datatype="GPLayer",
             parameterType="Derived",
             direction="Output",
-            symbology=None
+            symbology=None,
         )
 
-        return [previous_results, bgt, leidingen, bag, kolken_file, input_extent_mask_wkt, input_statistics_shape, output_folder, max_vlak_afwatervoorziening, max_vlak_oppwater,
-                                max_pand_opwater, max_vlak_kolk, max_afgekoppeld, max_drievoudig, afkoppelen_daken, bouwjaar_riool, verhardingsgraaf_erf,
-                                verhardingsgraad_half_verhard, copy_pipe_codes, reset_input, water_passerende_verharding_symb, controles_symb, bgt_oppervlakken_symb, 
-                                bgt_inlooptabel_symb, gwsw_lijn_symb,statistieken_symb, rekeninstellingen_symb]
+        return [
+            previous_results,
+            bgt,
+            leidingen,
+            bag,
+            kolken_file,
+            input_extent_mask_wkt,
+            input_statistics_shape,
+            output_folder,
+            max_vlak_afwatervoorziening,
+            max_vlak_oppwater,
+            max_pand_opwater,
+            max_vlak_kolk,
+            max_afgekoppeld,
+            max_drievoudig,
+            afkoppelen_daken,
+            bouwjaar_riool,
+            verhardingsgraaf_erf,
+            verhardingsgraad_half_verhard,
+            copy_pipe_codes,
+            reset_input,
+            water_passerende_verharding_symb,
+            controles_symb,
+            bgt_oppervlakken_symb,
+            bgt_inlooptabel_symb,
+            gwsw_lijn_symb,
+            statistieken_symb,
+            rekeninstellingen_symb,
+        ]
 
     def updateParameters(self, parameters):
         """
@@ -313,16 +396,22 @@ class BGTInloopToolArcGIS(BaseTool):
         """
         # If reset is true, reset all calculation parameters
         if parameters[self.reset_input_idx].value is True:
-            parameters[self.max_vlak_afwatervoorziening_idx].value = MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
+            parameters[self.max_vlak_afwatervoorziening_idx].value = (
+                MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
+            )
             parameters[self.max_vlak_oppwater_idx].value = MAX_AFSTAND_VLAK_OPPWATER
             parameters[self.max_pand_opwater_idx].value = MAX_AFSTAND_PAND_OPPWATER
             parameters[self.max_vlak_kolk_idx].value = MAX_AFSTAND_VLAK_KOLK
             parameters[self.max_afgekoppeld_idx].value = MAX_AFSTAND_AFGEKOPPELD
             parameters[self.max_drievoudig_idx].value = MAX_AFSTAND_DRIEVOUDIG
             parameters[self.afkoppelen_daken_idx].value = AFKOPPELEN_HELLENDE_DAKEN
-            parameters[self.bouwjaar_riool_idx].value = BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
+            parameters[self.bouwjaar_riool_idx].value = (
+                BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
+            )
             parameters[self.verhardingsgraaf_erf_idx].value = VERHARDINGSGRAAD_ERF
-            parameters[self.verhardingsgraad_half_verhard_idx].value = VERHARDINGSGRAAD_HALF_VERHARD
+            parameters[self.verhardingsgraad_half_verhard_idx].value = (
+                VERHARDINGSGRAAD_HALF_VERHARD
+            )
             parameters[self.copy_pipe_codes_idx].value = False
             parameters[self.reset_input_idx].value = False
 
@@ -379,6 +468,7 @@ class BGTInloopToolArcGIS(BaseTool):
         super(BGTInloopToolArcGIS, self).updateMessages(parameters)
 
     def execute(self, parameters, messages):
+        """Execute the tool"""
         try:
             self.arcgis_com.StartAnalyse()
             self.arcgis_com.AddMessage("Start BGT Inlooptool!")
@@ -393,21 +483,27 @@ class BGTInloopToolArcGIS(BaseTool):
             statistics_area = parameters[self.input_statistics_shape_idx].valueAsText
 
             core_parameters = InputParameters(
-                max_afstand_vlak_afwateringsvoorziening=parameters[self.max_vlak_afwatervoorziening_idx].value,
+                max_afstand_vlak_afwateringsvoorziening=parameters[
+                    self.max_vlak_afwatervoorziening_idx
+                ].value,
                 max_afstand_vlak_oppwater=parameters[self.max_vlak_oppwater_idx].value,
                 max_afstand_pand_oppwater=parameters[self.max_pand_opwater_idx].value,
                 max_afstand_vlak_kolk=parameters[self.max_vlak_kolk_idx].value,
                 max_afstand_afgekoppeld=parameters[self.max_afgekoppeld_idx].value,
                 max_afstand_drievoudig=parameters[self.max_drievoudig_idx].value,
                 afkoppelen_hellende_daken=parameters[self.afkoppelen_daken_idx].value,
-                gebruik_bag=building_file != None,
-                gebruik_kolken=kolken_file != None,
-                gebruik_resultaten=previous_results_file != None,
-                gebruik_statistieken=statistics_area != None,
-                bouwjaar_gescheiden_binnenhuisriolering=parameters[self.bouwjaar_riool_idx].value,
+                gebruik_bag=building_file is not None,
+                gebruik_kolken=kolken_file is not None,
+                gebruik_resultaten=previous_results_file is not None,
+                gebruik_statistieken=statistics_area is not None,
+                bouwjaar_gescheiden_binnenhuisriolering=parameters[
+                    self.bouwjaar_riool_idx
+                ].value,
                 verhardingsgraad_erf=parameters[self.verhardingsgraaf_erf_idx].value,
-                verhardingsgraad_half_verhard=parameters[self.verhardingsgraad_half_verhard_idx].value,
-                leidingcodes_koppelen=parameters[self.copy_pipe_codes_idx].value
+                verhardingsgraad_half_verhard=parameters[
+                    self.verhardingsgraad_half_verhard_idx
+                ].value,
+                leidingcodes_koppelen=parameters[self.copy_pipe_codes_idx].value,
             )
 
             if input_area is not None:
@@ -449,81 +545,163 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Afstanden aan het berekenen")
             inlooptool.calculate_distances(parameters=core_parameters)
             self.arcgis_com.AddMessage("Bereken Runoff targets")
-            inlooptool.calculate_runoff_targets(parameters[self.copy_pipe_codes_idx].value)
-            if statistics_area != None:
+            inlooptool.calculate_runoff_targets(
+                parameters[self.copy_pipe_codes_idx].value
+            )
+            if statistics_area is not None:
                 self.arcgis_com.AddMessage("Berekenen statistiek")
                 inlooptool.calculate_statistics(stats_path=statistics_area)
 
             # Export results
             self.arcgis_com.AddMessage("Exporteren naar GPKG")
             if parameters[self.copy_pipe_codes_idx].value:
-                gpkg_file = inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE)
-            else: 
-                gpkg_file = inlooptool._database._save_to_gpkg(output_folder,GPKG_TEMPLATE_HIDDEN)
-            
+                gpkg_file = inlooptool._database._save_to_gpkg(
+                    output_folder, GPKG_TEMPLATE
+                )
+            else:
+                gpkg_file = inlooptool._database._save_to_gpkg(
+                    output_folder, GPKG_TEMPLATE_HIDDEN
+                )
+
             # Export layers to gdb amd add layers to the map
             self.arcgis_com.AddMessage("Visualiseren van resultaten!")
             out_gdb = os.path.join(output_folder, "output.gdb")
             layers_to_visualize = []
 
             # 1. Water passerende verharding en groene daken
-            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"),output_gdb=out_gdb)
-            parameters[self.water_passerende_verharding_symb_idx].value = os.path.join(gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken")
-            layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.water_passerende_verharding_symb_idx],
-                                                      visualize_field=None, 
-                                                      layer_name="1. Waterpasserende verharding en groene daken",
-                                                      params_idx=self.water_passerende_verharding_symb_idx, has_symbology=True))
+            layers_to_gdb(
+                input_dataset=os.path.join(
+                    gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"
+                ),
+                output_gdb=out_gdb,
+            )
+            parameters[self.water_passerende_verharding_symb_idx].value = os.path.join(
+                gpkg_file, "main.1_Waterpasserende_verharding_en_groene_daken"
+            )
+            layers_to_visualize.append(
+                VisualizeLayer(
+                    symbology_param=parameters[
+                        self.water_passerende_verharding_symb_idx
+                    ],
+                    visualize_field=None,
+                    layer_name="1. Waterpasserende verharding en groene daken",
+                    params_idx=self.water_passerende_verharding_symb_idx,
+                    has_symbology=True,
+                )
+            )
 
             # 2. controles
-            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.2_Controles"),output_gdb=out_gdb)
-            parameters[self.controles_symb_idx].value = os.path.join(gpkg_file, "main.2_Controles")
-            layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.controles_symb_idx],
-                                                      visualize_field="error_code", 
-                                                      layer_name="2. Controles",
-                                                      params_idx=self.controles_symb_idx, has_symbology=True))
+            layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.2_Controles"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.controles_symb_idx].value = os.path.join(
+                gpkg_file, "main.2_Controles"
+            )
+            layers_to_visualize.append(
+                VisualizeLayer(
+                    symbology_param=parameters[self.controles_symb_idx],
+                    visualize_field="error_code",
+                    layer_name="2. Controles",
+                    params_idx=self.controles_symb_idx,
+                    has_symbology=True,
+                )
+            )
 
             # 3. GWSW pipes
             add_gwsw_symbologyfield(os.path.join(gpkg_file, "main.3_GWSW_leidingen"))
-            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.3_GWSW_leidingen"),output_gdb=out_gdb)
-            parameters[self.gwsw_lijn_symb_idx].value = os.path.join(gpkg_file, "main.3_GWSW_leidingen")
-            layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.gwsw_lijn_symb_idx],
-                                                      visualize_field="pipe_type", 
-                                                      layer_name="3. GWSW leidingen",
-                                                      params_idx=self.gwsw_lijn_symb_idx, has_symbology=True))
+            layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.3_GWSW_leidingen"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.gwsw_lijn_symb_idx].value = os.path.join(
+                gpkg_file, "main.3_GWSW_leidingen"
+            )
+            layers_to_visualize.append(
+                VisualizeLayer(
+                    symbology_param=parameters[self.gwsw_lijn_symb_idx],
+                    visualize_field="pipe_type",
+                    layer_name="3. GWSW leidingen",
+                    params_idx=self.gwsw_lijn_symb_idx,
+                    has_symbology=True,
+                )
+            )
 
             # 4. add symbology field for bgt_inlooptabel
-            add_bgt_inlooptabel_symbologyfield(os.path.join(gpkg_file, "main.4_BGT_inlooptabel"))
-            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.4_BGT_inlooptabel"),output_gdb=out_gdb)
-            parameters[self.bgt_inlooptabel_symb_idx].value = os.path.join(gpkg_file, "main.4_BGT_inlooptabel")
-            layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.bgt_inlooptabel_symb_idx],
-                                                      visualize_field="categorie", 
-                                                      layer_name="4. BGT inlooptabel",
-                                                      params_idx=self.bgt_inlooptabel_symb_idx, has_symbology=True))
+            add_bgt_inlooptabel_symbologyfield(
+                os.path.join(gpkg_file, "main.4_BGT_inlooptabel")
+            )
+            layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.4_BGT_inlooptabel"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.bgt_inlooptabel_symb_idx].value = os.path.join(
+                gpkg_file, "main.4_BGT_inlooptabel"
+            )
+            layers_to_visualize.append(
+                VisualizeLayer(
+                    symbology_param=parameters[self.bgt_inlooptabel_symb_idx],
+                    visualize_field="categorie",
+                    layer_name="4. BGT inlooptabel",
+                    params_idx=self.bgt_inlooptabel_symb_idx,
+                    has_symbology=True,
+                )
+            )
 
             # 5. add symbology field for bgt_ppervlakken
-            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.5_BGT_oppervlakken"), output_gdb=out_gdb)
-            parameters[self.bgt_oppervlakken_symb_idx].value = os.path.join(gpkg_file, "main.5_BGT_oppervlakken")
-            layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.bgt_oppervlakken_symb_idx],
-                                                      visualize_field=None, 
-                                                      layer_name="5. BGT Oppervlakken",
-                                                      params_idx=self.bgt_oppervlakken_symb_idx, has_symbology=True))
+            layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.5_BGT_oppervlakken"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.bgt_oppervlakken_symb_idx].value = os.path.join(
+                gpkg_file, "main.5_BGT_oppervlakken"
+            )
+            layers_to_visualize.append(
+                VisualizeLayer(
+                    symbology_param=parameters[self.bgt_oppervlakken_symb_idx],
+                    visualize_field=None,
+                    layer_name="5. BGT Oppervlakken",
+                    params_idx=self.bgt_oppervlakken_symb_idx,
+                    has_symbology=True,
+                )
+            )
 
             # 6. add symbology field for statistieken
-            if statistics_area != None:
-                layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"), output_gdb=out_gdb)
-                parameters[self.statistieken_symb_idx].value = os.path.join(out_gdb, "main_6_Statistieken")
-                layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.statistieken_symb_idx],
-                                                      visualize_field=None, 
-                                                      layer_name="6. Statistieken",
-                                                      params_idx=self.statistieken_symb_idx, has_symbology=True))
-            
+            if statistics_area is not None:
+                layers_to_gdb(
+                    input_dataset=os.path.join(gpkg_file, "main.6_Statistieken"),
+                    output_gdb=out_gdb,
+                )
+                parameters[self.statistieken_symb_idx].value = os.path.join(
+                    out_gdb, "main_6_Statistieken"
+                )
+                layers_to_visualize.append(
+                    VisualizeLayer(
+                        symbology_param=parameters[self.statistieken_symb_idx],
+                        visualize_field=None,
+                        layer_name="6. Statistieken",
+                        params_idx=self.statistieken_symb_idx,
+                        has_symbology=True,
+                    )
+                )
+
             # 7. add symbology field for calculation parameters
-            layers_to_gdb(input_dataset=os.path.join(gpkg_file, "main.7_Rekeninstellingen"), output_gdb=out_gdb)
-            parameters[self.rekeninstellingen_symb_idx].value = os.path.join(gpkg_file, "main.7_Rekeninstellingen")
-            layers_to_visualize.append(VisualizeLayer(symbology_param=parameters[self.rekeninstellingen_symb_idx],
-                                                      visualize_field=None, 
-                                                      layer_name="7. Rekeninstellingen",
-                                                      params_idx=self.rekeninstellingen_symb_idx, has_symbology=False))
+            layers_to_gdb(
+                input_dataset=os.path.join(gpkg_file, "main.7_Rekeninstellingen"),
+                output_gdb=out_gdb,
+            )
+            parameters[self.rekeninstellingen_symb_idx].value = os.path.join(
+                gpkg_file, "main.7_Rekeninstellingen"
+            )
+            layers_to_visualize.append(
+                VisualizeLayer(
+                    symbology_param=parameters[self.rekeninstellingen_symb_idx],
+                    visualize_field=None,
+                    layer_name="7. Rekeninstellingen",
+                    params_idx=self.rekeninstellingen_symb_idx,
+                    has_symbology=False,
+                )
+            )
 
             visualize_layers = VisualizeLayers()
             layers_to_visualize.reverse()
@@ -531,12 +709,10 @@ class BGTInloopToolArcGIS(BaseTool):
                 arcpy.AddMessage(f"Adding layer: {layer_parameter.layer_name}")
                 layer = visualize_layers.add_layer_to_map(layer_parameter)
                 if layer_parameter.has_symbology:
-                    arcpy.AddMessage("- Applying symbology" )
+                    arcpy.AddMessage("- Applying symbology")
                     visualize_layers.apply_symbology(layer_parameter, layer)
 
-            
             visualize_layers.save()
-
 
         except Exception:
             self.arcgis_com.Traceback()
@@ -561,9 +737,13 @@ if __name__ == "__main__":
         # bag_file
         params[3].value = os.path.join(main_path, "BAG_Akersloot.gpkg")
         # kolken_file
-        params[4].value = os.path.join(main_path, "kolken_Castricum_Limmen_Akersloot.shp")
+        params[4].value = os.path.join(
+            main_path, "kolken_Castricum_Limmen_Akersloot.shp"
+        )
         # area_file
-        params[5].value = os.path.join(main_path, "extent_Akersloot.shp")  #os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
+        params[5].value = os.path.join(
+            main_path, "extent_Akersloot.shp"
+        )  # os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
         # statistics area
         params[6].value = os.path.join(main_path, "statistiek_gebieden_buurten.shp")
         # output_location

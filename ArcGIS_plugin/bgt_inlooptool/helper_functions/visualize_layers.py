@@ -1,6 +1,8 @@
-import arcpy
-from .cls_general_use import GeneralUse
 from typing import Union
+
+import arcpy
+
+from .cls_general_use import GeneralUse
 from .constants import VisualizeLayer
 
 
@@ -20,19 +22,21 @@ class VisualizeLayers:
         self.arcgis_project.save()
 
     def add_layer_to_map(
-        self, visualize_settings: VisualizeLayer, 
+        self,
+        visualize_settings: VisualizeLayer,
     ):
         """
         Add layers to map with symbology if a symbology layer is specified
         """
         try:
             # add data to the map
-            output_layer = self.map.addDataFromPath(visualize_settings.symbology_param.valueAsText)
+            output_layer = self.map.addDataFromPath(
+                visualize_settings.symbology_param.valueAsText
+            )
             output_layer.name = visualize_settings.layer_name
             return output_layer
         except Exception:
             self.arcgis_com.Traceback()
-
 
     def apply_symbology(self, visualize_settings: VisualizeLayer, added_layer):
         """
@@ -40,7 +44,9 @@ class VisualizeLayers:
         """
         try:
             # add symbology if it is available
-            layer_file = arcpy.mp.LayerFile(visualize_settings.symbology_param.symbology)
+            layer_file = arcpy.mp.LayerFile(
+                visualize_settings.symbology_param.symbology
+            )
             for layer in layer_file.listLayers():
                 sym_layer = layer
                 break
@@ -53,4 +59,3 @@ class VisualizeLayers:
 
         except Exception:
             self.arcgis_com.Traceback()
-

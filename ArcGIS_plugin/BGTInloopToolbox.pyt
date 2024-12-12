@@ -12,11 +12,9 @@ from bgt_inlooptool.pyt_download_basis_data import DownloadBasisData
 class Toolbox(object):
 
     def __init__(self):
-        self.label = 'BGT Inloop Toolbox voor ArcGIS'
-        self.alias = 'Toolbox'
-        self.description = 'BGT Inloop Toolbox voor ArcGIS'
+        self.label = "BGT Inloop Toolbox voor ArcGIS"
+        self.alias = "Toolbox"
+        self.description = "BGT Inloop Toolbox voor ArcGIS"
 
         # Explicitly define tools here.
         self.tools = [BGTInloopToolArcGIS, DownloadBasisData]
-
-

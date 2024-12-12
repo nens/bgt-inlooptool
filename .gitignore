@@ -12,8 +12,6 @@ ArcGIS_plugin/bgt_inlooptool/rtree/finder.py
 ArcGIS_plugin/bgt_inlooptool/rtree/index.py
 ArcGIS_plugin/bgt_inlooptool/rtree/lib/spatialindex-64.dll
 ArcGIS_plugin/bgt_inlooptool/rtree/lib/spatialindex_c-64.dll
-.vscode/launch.json
-.vscode/settings.json
 .spyproject
 .bak
 plugin/bgtinlooptool/bgtinlooptool.zip
