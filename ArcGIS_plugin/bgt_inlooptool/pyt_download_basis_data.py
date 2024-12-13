@@ -25,7 +25,9 @@ from helper_functions.download_apis import (
 )
 
 
-def enable_disable_options(parameters: list[arcpy.Parameter], bool_idx: int, input_field_idx: int):
+def enable_disable_options(
+    parameters: list[arcpy.Parameter], bool_idx: int, input_field_idx: int
+):
     """Enable or disable options based on another boolean field
 
     Args:
@@ -35,13 +37,15 @@ def enable_disable_options(parameters: list[arcpy.Parameter], bool_idx: int, inp
     """
     if parameters[bool_idx].value is True:
         parameters[input_field_idx].enabled = True
-        parameters[input_field_idx].parameterType = "Required"
+        # parameters[input_field_idx].parameterType = "Required"
     else:
         parameters[input_field_idx].enabled = False
-        parameters[input_field_idx].parameterType = None
+        # parameters[input_field_idx].parameterType = None
 
 
-def add_extension_to_path(parameters: list[arcpy.Parameter], input_field_idx: int, extension: str):
+def add_extension_to_path(
+    parameters: list[arcpy.Parameter], input_field_idx: int, extension: str
+):
     """Update and file input with the correct extension
 
     Args:
@@ -60,7 +64,9 @@ def add_extension_to_path(parameters: list[arcpy.Parameter], input_field_idx: in
             )
 
 
-def check_if_file_already_exists(parameters: list[arcpy.Parameter], input_field_idx: int):
+def check_if_file_already_exists(
+    parameters: list[arcpy.Parameter], input_field_idx: int
+):
     """Check if the indicated output file already exists and give an error
 
     Args:
@@ -132,7 +138,7 @@ class DownloadBasisData(BaseTool):
             displayName="BGT download als zipfile van PDOK",
             name="bgt_zip_path",
             datatype="DEFile",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Output",
         )
 
@@ -149,7 +155,7 @@ class DownloadBasisData(BaseTool):
             displayName="GWSW download als .gpkg van PDOK",
             name="gwsw_zip_path",
             datatype="DEFile",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Output",
         )
 
@@ -163,10 +169,10 @@ class DownloadBasisData(BaseTool):
         bag_download_bool.value = True
 
         bag_storage_path = parameter(
-            displayName="BAG panden download als .pgkg van PDOK",
+            displayName="BAG panden download als .gpkg van PDOK",
             name="bag_zip_path",
             datatype="DEFile",
-            parameterType="Required",
+            parameterType="Optional",
             direction="Output",
         )
 
