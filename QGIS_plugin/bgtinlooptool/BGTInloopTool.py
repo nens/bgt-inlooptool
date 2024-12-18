@@ -373,13 +373,39 @@ class NetworkTask(QgsTask):
         self.nam = QNetworkAccessManager()  # Create a network access manager
         
     def run(self):
-        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt)
+        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt).Buffer(-0.5) # Give the extent geometry a negative buffer of 0.5m, so that the intersect function works properly (when equal, no neighbouring geometries are used)
+        shrunk_extent_geometry_wkt = extent_geometry.ExportToWkt()
+        shrunk_extent_geometry_coordinates = shrunk_extent_geometry_wkt[shrunk_extent_geometry_wkt.find('((')+2:shrunk_extent_geometry_wkt.find('))')]
         bbox = self.wkt_to_bbox()
-        all_features = self.fetch_all_features(bbox)
+        if self.layer_name != "bag_panden": #GWSW download: looks for names of municipalities first. Then uses these to download the right data. 
+            all_features = self.fetch_all_features_gwsw(shrunk_extent_geometry_coordinates)
+        else:
+            all_features = self.fetch_all_features_bag(bbox)
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
     
-    def fetch_all_features(self, bbox):
+    def fetch_all_features_gwsw(self, extent_geometry): # to do: deze functie nog mooier maken/samenvoegen met onderstaande??
+        not_all_features_found = True
+        index = 0
+        all_features = []
+    
+        print("Fetching features within extent")
+        while not_all_features_found:
+            request_url = self.url + f"&startIndex={index}" + f"&Intersects={extent_geometry}"
+            print(request_url)
+            response_text = self.load_api_data(request_url, "")
+            data = json.loads(response_text)
+            
+            all_features.extend(data['features'])
+            
+            if len(data['features']) < 1000:
+                not_all_features_found = False
+            else:
+                index += 1000
+        
+        return all_features
+    
+    def fetch_all_features_bag(self, bbox):
         not_all_features_found = True
         index = 0
         all_features = []

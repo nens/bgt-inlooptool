@@ -1876,7 +1876,8 @@ class Database:
             max_run_id = 1
         
         # Set the initial output name
-        output_name = f"v{max_run_id}_BGT_inlooptabel.gpkg"
+        current_date = datetime.now().strftime("%Y%m%d")
+        output_name = f"v{max_run_id}_BGT_inlooptabel_{current_date}.gpkg"
         file_path = os.path.join(file_folder, output_name)
         
         # Check if file already exists
