@@ -29,7 +29,7 @@ import json
 
 from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+#from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication #To do: mag later verwijderd worden
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import (
@@ -38,6 +38,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsBlockingNetworkRequest,
+    QgsWkbTypes,
 )
 
 from qgis.core import (
@@ -66,7 +67,6 @@ from bgtinlooptool.constants import (
     MESSAGE_CATEGORY,
     BGT_API_URL,
     BAG_API_URL,
-    GWSW_API_URL,
     CBS_GEMEENTES_API_URL,
     INLOOPTABEL_STYLE,
     INLOOPTABEL_STYLE_HIDDEN,
@@ -454,6 +454,7 @@ class NetworkTask(QgsTask):
         if self.layer_name != "bag_panden":
             all_features = self.filter_features_by_extent(all_features, extent_geometry)
             all_features = self.fetch_gwsw_data(all_features)
+            all_features = self.remove_duplicate_gwsw_features(all_features)
     
         layer_out = self.create_layer(datasource, srs)
         self.add_features_to_layer(layer_out, all_features, extent_geometry)
@@ -476,6 +477,7 @@ class NetworkTask(QgsTask):
         
         for gemeente_name in selection_gemeentes:
             gemeente_name = gemeente_name.title().replace(" ", "").replace("-", "")
+            gemeente_name = gemeente_name[0].upper() + gemeente_name[1:].lower()
             not_all_features_found = True
             index = 0
             print(f"Extracting data for gemeente {gemeente_name}")
@@ -483,7 +485,6 @@ class NetworkTask(QgsTask):
             while not_all_features_found:
                 request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
                 response_text = self.load_api_data(request_url,gemeente_name)
-                
                 if response_text is None:
                     NOT_FOUND_GEMEENTES.append(gemeente_name)
                     break
@@ -497,6 +498,21 @@ class NetworkTask(QgsTask):
                     index += 1000
         
         return all_features
+    
+    def remove_duplicate_gwsw_features(self, gwsw_features):
+        seen = set()  # Set to keep track of already encountered (uri, name) pairs
+        unique_features = []
+        
+        for feature in gwsw_features:
+            uri = feature['properties'].get('uri')  # Extract URI
+            name = feature['properties'].get('naam')  # Extract name
+            
+            # Check if both 'uri' and 'name' exist and are unique
+            if uri and name and (uri, name) not in seen:
+                seen.add((uri, name))  # Mark this (uri, name) as seen
+                unique_features.append(feature)  # Keep the feature
+                
+        return unique_features
     
     def create_layer(self, datasource, srs):
         if self.layer_name == "bag_panden":
@@ -754,7 +770,15 @@ class BGTInloopTool:
                 level=Qgis.Warning,
             )
             return False
-
+        
+        if QgsWkbTypes.hasZ(extent_geometry.wkbType()):
+            self.iface.messageBar().pushMessage(
+                MESSAGE_CATEGORY,
+                "Laag voor gebiedsselectie is een 3D geometrie (MultipolygonZ). "
+                "Converteer het naar een 2D geometrie en probeer opnieuw.",
+                level=Qgis.Warning,
+            )
+        
         if reproject:
             out_crs = QgsCoordinateReferenceSystem("EPSG:28992")
             transform = QgsCoordinateTransform(
@@ -766,6 +790,135 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
 
         return extent_geometry_wkt
+    
+    def validate_extent_layer_new(self, extent_layer):
+        extent_feature_count = extent_layer.featureCount()
+        QgsMessageLog.logMessage(
+            f"Found {extent_feature_count} features in extent layer",
+            MESSAGE_CATEGORY,
+            level=Qgis.Info,
+        )
+    
+        selected_feature_count = extent_layer.selectedFeatureCount()
+        QgsMessageLog.logMessage(
+            f"Found {selected_feature_count} selected features in extent layer",
+            MESSAGE_CATEGORY,
+            level=Qgis.Info,
+        )
+    
+        extent_layer_crs = extent_layer.crs()
+        reproject = extent_layer_crs != "EPSG:28992"
+    
+        if extent_feature_count == 1:
+            for feat in extent_layer.getFeatures():
+                extent_feature = feat
+            extent_geometry = extent_feature.geometry()
+        elif selected_feature_count == 1:
+            selected_feature = extent_layer.selectedFeatures()[0]
+            extent_geometry = selected_feature.geometry()
+        elif extent_feature_count > 1:
+            geometries = [feat.geometry() for feat in extent_layer.getFeatures()]
+            if geometries:
+                dissolved_geometry = QgsGeometry.unaryUnion(geometries)
+                extent_geometry = dissolved_geometry
+                QgsMessageLog.logMessage(
+                    f"Dissolved {extent_feature_count} features into one multipolygon.",
+                    MESSAGE_CATEGORY,
+                    level=Qgis.Info,
+                )
+        elif extent_feature_count == 0:
+            self.iface.messageBar().pushMessage(
+                MESSAGE_CATEGORY,
+                "Laag voor gebiedsselectie bevat geen features",
+                level=Qgis.Warning,
+            )
+            return False
+        else:
+            self.iface.messageBar().pushMessage(
+                MESSAGE_CATEGORY,
+                "Laag voor gebiedsselectie is niet geschikt",
+                level=Qgis.Warning,
+            )
+            return False
+    
+        if extent_geometry.isNull():
+            self.iface.messageBar().pushMessage(
+                MESSAGE_CATEGORY,
+                "Geselecteerde laag of feature heeft geen geometrie. "
+                "Sla wijzigingen aan de laag eerst op en probeer opnieuw",
+                level=Qgis.Warning,
+            )
+            return False
+    
+        # Handle 3D geometries by manually removing the Z component
+        if QgsWkbTypes.hasZ(extent_geometry.wkbType()):
+            QgsMessageLog.logMessage(
+                "Detected 3D geometry. Converting to 2D.",
+                MESSAGE_CATEGORY,
+                level=Qgis.Info,
+            )
+    
+            # Extract 2D coordinates by removing the Z value
+            new_geometry = QgsGeometry()
+            if extent_geometry.type() == QgsWkbTypes.MultiPolygon:
+                # If it's a MultiPolygon, process each polygon
+                polygons = extent_geometry.asMultiPolygon()
+                for poly in polygons:
+                    # Check each polygon for proper coordinates
+                    QgsMessageLog.logMessage(f"Processing Polygon with {len(poly)} rings.", MESSAGE_CATEGORY, level=Qgis.Debug)
+                    new_poly = []
+                    for ring in poly:
+                        new_ring = [(point[0], point[1]) for point in ring]
+                        new_poly.append(new_ring)
+                    new_geometry.addPolygon(new_poly)
+            elif extent_geometry.type() == QgsWkbTypes.Polygon:
+                # If it's a single Polygon, remove the Z value
+                ring = extent_geometry.asPolygon()
+                new_ring = [(point[0], point[1]) for point in ring[0]]
+                new_geometry.addPolygon([new_ring])
+    
+            extent_geometry = new_geometry
+    
+        # Check if the geometry is valid after conversion
+        if not extent_geometry.isGeosValid():
+            QgsMessageLog.logMessage(
+                "Geometry is invalid after converting to 2D.",
+                MESSAGE_CATEGORY,
+                level=Qgis.Critical,
+            )
+            return False
+    
+        if extent_geometry.isEmpty():
+            QgsMessageLog.logMessage(
+                "Geometry is empty after converting to 2D.",
+                MESSAGE_CATEGORY,
+                level=Qgis.Warning,
+            )
+            return False
+    
+        if reproject:
+            QgsMessageLog.logMessage(
+                f"Reprojecting geometry from {extent_layer_crs.authid()} to EPSG:28992.",
+                MESSAGE_CATEGORY,
+                level=Qgis.Info,
+            )
+            out_crs = QgsCoordinateReferenceSystem("EPSG:28992")
+            transform = QgsCoordinateTransform(
+                extent_layer_crs, out_crs, QgsProject.instance()
+            )
+            extent_geometry.transform(transform)
+    
+        # Log the final WKT for debugging
+        extent_geometry_wkt = extent_geometry.asWkt()
+        QgsMessageLog.logMessage(
+            f"Final Extent Geometry WKT: {extent_geometry_wkt}",
+            MESSAGE_CATEGORY,
+            level=Qgis.Info,
+        )
+    
+        return extent_geometry_wkt
+
+
 
     def get_bounding_box_from_wkt(self,wkt_string):
         # Create a QgsGeometry from the WKT
