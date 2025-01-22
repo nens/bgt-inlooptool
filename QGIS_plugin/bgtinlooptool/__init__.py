@@ -22,10 +22,54 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
+import logging
+import sys
 
+from pathlib import Path
 
 from .utils.qlogging import setup_logging
 
+
+logger = logging.getLogger(__name__)
+
+
+def ensure_rtree_install():
+    current_dir = Path(__file__).parent
+    custom_lib_dir = current_dir / "custom_libs"
+    custom_lib_dir.mkdir(exist_ok=True)
+    logger.info("Using %s for custom library installs (=rtree)", custom_lib_dir)
+    if not str(custom_lib_dir) in sys.path:
+        sys.path.insert(0, str(custom_lib_dir))  # Note: prepend, not append!
+    logger.debug("sys.path: %s", sys.path)
+
+    try:
+        import rtree
+        logger.info("Rtree is importable at %s", rtree.__file__)
+        return
+    except ImportError:
+        logger.info("Rtree is not importable, we're installing it")
+        from .core import rtree_installer
+        search_path = current_dir / "core" / "whls"
+        wheel_filename = rtree_installer.get_wheel_filename(
+            search_path=search_path,
+            distribution="Rtree",
+            python_tag_prefix="cp",
+            abi_tag_suffix="m",
+        )
+        logger.info("Found %s to be the best matching package file", wheel_filename)
+        rtree_installer.unpack_whl(
+            wheel_filename,
+            package_name="rtree",
+            extract_dir=custom_lib_dir
+        )
+    # Re-try import
+    try:
+        import rtree
+        logger.info("Rtree is now importable at %s", rtree.__file__)
+        return
+    except ImportError:
+        logger.info("Rtree is not importable, our install failed sadly")
+        raise
 
 
 # noinspection PyPep8Naming
@@ -37,5 +81,6 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     setup_logging()
+    ensure_rtree_install()
     from .BGTInloopTool import BGTInloopTool
     return BGTInloopTool(iface)
