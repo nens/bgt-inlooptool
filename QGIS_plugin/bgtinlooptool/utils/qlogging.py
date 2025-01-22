@@ -115,7 +115,7 @@ def setup_logging():
         logger.info("Started logfile: %s", FileHandler.get_filename())
 
     # QGIS handler for all "__name__" loggers in the plugin package
-    our_plugin_logger = logging.getLogger("threedi_results_analysis")
+    our_plugin_logger = logging.getLogger("bgtinlooptool")
     if not has_handler(root_logger, QgisHandler):
         our_plugin_logger.addHandler(QgisHandler())
 
