@@ -46,6 +46,7 @@ from qgis.core import (
     Qgis,
     QgsApplication,
     QgsMessageLog,
+    QgsLayerTreeLayer,
 )
 from qgis.utils import iface
 from osgeo import ogr, osr
@@ -161,7 +162,7 @@ class InloopToolTask(QgsTask):
             self.it.import_surfaces(self.bgt_file,self.input_extent_mask_wkt)
             self.increase_progress()
 
-            #print("alleen nog opslaan")
+            #print("alleen nog opslaan") #TO DO: kan weg!
             #output_path =r"C:\Users\ruben.vanderzaag\Documents\Z0141_BGT_inlooptool\Test data Soest warnings (klein)\test_bgt_inputs_relatieve_hoogteligging.gpkg"
             #self.it._database._save_to_gpkg_test(output_path)
 
@@ -274,7 +275,6 @@ class InloopToolTask(QgsTask):
 
     def finished(self, result):
         if result:
-
             if self.temp_QGIS_layers: 
                 file_name = "BGT_inlooptabel"
                 layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name)
@@ -286,11 +286,17 @@ class InloopToolTask(QgsTask):
                 else: 
                     self.temp_to_layer_group(db_layer_name=RESULT_TABLE_NAME, layer_tree_layer_name="BGT Inlooptabel",qml=INLOOPTABEL_STYLE_HIDDEN,layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=PIPES_TABLE_NAME,layer_tree_layer_name="GWSW Leidingen", qml=PIPES_STYLE,layer_group=layer_group)
-                self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Controles", qml=CHECKS_STYLE,layer_group=layer_group)
+                self.temp_to_layer_group(db_layer_name=CHECKS_TABLE_NAME,layer_tree_layer_name="Te_controleren", qml=CHECKS_STYLE,layer_group=layer_group)
+                
+                # Turn off visibility for "Statistieken" and "Te_controleren" layers
+                for child in layer_group.children():
+                    if isinstance(child, QgsLayerTreeLayer):
+                        if child.name() in ["Te_controleren","Statistieken"]:
+                            child.setItemVisibilityChecked(False)
 
             else: # Load from file
                 gpkg_files = [f for f in os.listdir(self.output_folder) if f.endswith(".gpkg")]
-                gpkg_paths = [os.path.join(self.output_folder, f) for f in gpkg_files]
+                #gpkg_paths = [os.path.join(self.output_folder, f) for f in gpkg_files] #TO DO: kan weg!
                 file_name = max(gpkg_files, key=lambda f: os.path.getmtime(os.path.join(self.output_folder, f)))
                 #file_name = latest gpkg file in self.output_folder
                 layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
@@ -300,8 +306,14 @@ class InloopToolTask(QgsTask):
                 self.gpkg_to_layer_group(gpkg_path, "5_BGT_oppervlakken", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "4_BGT_inlooptabel", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "3_GWSW_leidingen", layer_group)
-                self.gpkg_to_layer_group(gpkg_path, "2_Controles", layer_group)
+                self.gpkg_to_layer_group(gpkg_path, "2_Te_controleren", layer_group)
                 self.gpkg_to_layer_group(gpkg_path, "1_Waterpasserende_verharding_en_groene_daken", layer_group)
+                
+                # Turn off visibility for "Statistieken" and "Te_controleren" layers
+                for child in layer_group.children():
+                    if isinstance(child, QgsLayerTreeLayer):
+                        if child.name() in ["1_Waterpasserende_verharding_en_groene_daken","2_Te_controleren","6_Statistieken"]:
+                            child.setItemVisibilityChecked(False)
             
             iface.messageBar().pushMessage(
                 MESSAGE_CATEGORY,

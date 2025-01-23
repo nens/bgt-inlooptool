@@ -1,18 +1,18 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis simplifyDrawingHints="1" labelsEnabled="0" readOnly="0" symbologyReferenceScale="-1" version="3.34.4-Prizren" minScale="100000000" styleCategories="AllStyleCategories" maxScale="0" simplifyMaxScale="1" simplifyLocal="1" hasScaleBasedVisibilityFlag="0" simplifyDrawingTol="1" simplifyAlgorithm="0">
+<qgis hasScaleBasedVisibilityFlag="0" simplifyAlgorithm="0" simplifyDrawingHints="1" symbologyReferenceScale="-1" version="3.34.4-Prizren" simplifyMaxScale="1" maxScale="0" styleCategories="AllStyleCategories" simplifyLocal="1" minScale="100000000" readOnly="0" simplifyDrawingTol="1" labelsEnabled="0">
   <flags>
     <Identifiable>1</Identifiable>
     <Removable>1</Removable>
     <Searchable>1</Searchable>
     <Private>0</Private>
   </flags>
-  <temporal enabled="0" startField="" startExpression="" mode="0" endField="" durationField="id" limitMode="0" durationUnit="min" endExpression="" fixedDuration="0" accumulate="0">
+  <temporal durationField="id" endField="" fixedDuration="0" limitMode="0" endExpression="" accumulate="0" startField="" enabled="0" startExpression="" mode="0" durationUnit="min">
     <fixedRange>
       <start></start>
       <end></end>
     </fixedRange>
   </temporal>
-  <elevation symbology="Line" zscale="1" clamping="Terrain" zoffset="0" showMarkerSymbolInSurfacePlots="0" type="IndividualFeatures" respectLayerSymbol="1" extrusion="0" binding="Centroid" extrusionEnabled="0">
+  <elevation extrusionEnabled="0" respectLayerSymbol="1" extrusion="0" showMarkerSymbolInSurfacePlots="0" binding="Centroid" zoffset="0" type="IndividualFeatures" symbology="Line" clamping="Terrain" zscale="1">
     <data-defined-properties>
       <Option type="Map">
         <Option name="name" type="QString" value=""/>
@@ -21,7 +21,7 @@
       </Option>
     </data-defined-properties>
     <profileLineSymbol>
-      <symbol name="" type="line" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="" force_rhr="0" alpha="1" type="line" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -29,7 +29,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleLine" id="{37f865dd-1379-4e8f-a036-2516d4b2ff9e}" pass="0">
+        <layer class="SimpleLine" pass="0" locked="0" id="{37f865dd-1379-4e8f-a036-2516d4b2ff9e}" enabled="1">
           <Option type="Map">
             <Option name="align_dash_pattern" type="QString" value="0"/>
             <Option name="capstyle" type="QString" value="square"/>
@@ -70,7 +70,7 @@
       </symbol>
     </profileLineSymbol>
     <profileFillSymbol>
-      <symbol name="" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -78,7 +78,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{8709cb86-2779-4d24-b81f-19953aa403cc}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{8709cb86-2779-4d24-b81f-19953aa403cc}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="164,113,88,255"/>
@@ -103,7 +103,7 @@
       </symbol>
     </profileFillSymbol>
     <profileMarkerSymbol>
-      <symbol name="" type="marker" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="" force_rhr="0" alpha="1" type="marker" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -111,7 +111,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleMarker" id="{64c37160-76e6-43f6-957e-30ffcb72196e}" pass="0">
+        <layer class="SimpleMarker" pass="0" locked="0" id="{64c37160-76e6-43f6-957e-30ffcb72196e}" enabled="1">
           <Option type="Map">
             <Option name="angle" type="QString" value="0"/>
             <Option name="cap_style" type="QString" value="square"/>
@@ -144,20 +144,20 @@
       </symbol>
     </profileMarkerSymbol>
   </elevation>
-  <renderer-v2 referencescale="-1" type="RuleRenderer" symbollevels="0" enableorderby="0" forceraster="0">
+  <renderer-v2 forceraster="0" referencescale="-1" symbollevels="0" type="RuleRenderer" enableorderby="0">
     <rules key="{8fb4d7a1-7882-4763-87b4-dee4f8293479}">
-      <rule key="{3d699272-0068-470d-9f70-267f42da6774}" filter="hemelwaterriool = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="0" label="Hemelwaterriool 100%"/>
-      <rule key="{2b7bdd75-adc3-44bd-b723-31ccdeed9254}" filter="vgs_hemelwaterriool = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="1" label="VGS Hemelwaterriool 100%"/>
-      <rule key="{34f8e7af-d736-473e-b6df-9cc56b667f1f}" filter="gemengd_riool = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="2" label="Gemengd 100%"/>
-      <rule key="{7dfd2e56-103a-4e20-bd6c-fbafd26c08af}" filter="hemelwaterriool > 0 AND hemelwaterriool &lt; 100 AND gemengd_riool > 0 AND gemengd_riool &lt; 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="3" label="Hemelwaterriool en Gemengd"/>
-      <rule key="{0c3c72e0-edbe-4108-993c-1ec5b3bb41b1}" filter="infiltratievoorziening = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="4" label="Infiltratievoorziening 100%"/>
-      <rule key="{5d4082e9-4689-4ce4-bea3-480dc9c4e438}" filter="maaiveld = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="5" label="Maaiveld 100%"/>
-      <rule key="{957edd0a-2729-4307-b8e1-82bdf95e2e6b}" filter="open_water = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" symbol="6" label="Open water 100%"/>
-      <rule key="{7a26ae42-88da-45e3-a5f9-dbf99a4ad04a}" filter="ELSE" symbol="7" label="Overig (wel valide, totaal = 100)"/>
-      <rule key="{9d8581e4-4de2-44cc-a8e6-895185d72193}" filter="gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld &lt;> 100" symbol="8" label="Overig (niet valide, totaal ≠ 100)"/>
+      <rule key="{3d699272-0068-470d-9f70-267f42da6774}" filter="hemelwaterriool = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="Hemelwaterriool 100%" symbol="0"/>
+      <rule key="{2b7bdd75-adc3-44bd-b723-31ccdeed9254}" filter="vgs_hemelwaterriool = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="VGS Hemelwaterriool 100%" symbol="1"/>
+      <rule key="{34f8e7af-d736-473e-b6df-9cc56b667f1f}" filter="gemengd_riool = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="Gemengd 100%" symbol="2"/>
+      <rule key="{7dfd2e56-103a-4e20-bd6c-fbafd26c08af}" filter="hemelwaterriool > 0 AND hemelwaterriool &lt; 100 AND gemengd_riool > 0 AND gemengd_riool &lt; 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="Hemelwaterriool en Gemengd" symbol="3"/>
+      <rule key="{0c3c72e0-edbe-4108-993c-1ec5b3bb41b1}" filter="infiltratievoorziening = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="Infiltratievoorziening 100%" symbol="4"/>
+      <rule key="{5d4082e9-4689-4ce4-bea3-480dc9c4e438}" filter="maaiveld = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="Maaiveld 100%" symbol="5"/>
+      <rule key="{957edd0a-2729-4307-b8e1-82bdf95e2e6b}" filter="open_water = 100 AND gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld = 100" label="Open water 100%" symbol="6"/>
+      <rule key="{7a26ae42-88da-45e3-a5f9-dbf99a4ad04a}" filter="ELSE" label="Overig (wel valide, totaal = 100)" symbol="7"/>
+      <rule key="{9d8581e4-4de2-44cc-a8e6-895185d72193}" filter="(gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld &lt; 99) OR (gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld > 101)" label="Overig (niet valide, totaal ≠ 100)" symbol="8"/>
     </rules>
     <symbols>
-      <symbol name="0" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="0" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -165,7 +165,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{d135d722-89a4-4084-85e7-b50c481ac4c1}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{d135d722-89a4-4084-85e7-b50c481ac4c1}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="165,183,255,255"/>
@@ -188,7 +188,7 @@
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="1" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="1" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -196,7 +196,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{2ec25cbc-f7ba-4dab-96bc-4330740654f0}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{2ec25cbc-f7ba-4dab-96bc-4330740654f0}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="165,183,255,255"/>
@@ -218,7 +218,7 @@
             </Option>
           </data_defined_properties>
         </layer>
-        <layer enabled="1" locked="0" class="PointPatternFill" id="{c9d29dbf-5542-4c14-bd48-f7f3b110b73f}" pass="0">
+        <layer class="PointPatternFill" pass="0" locked="0" id="{c9d29dbf-5542-4c14-bd48-f7f3b110b73f}" enabled="1">
           <Option type="Map">
             <Option name="angle" type="double" value="0"/>
             <Option name="clip_mode" type="QString" value="shape"/>
@@ -258,7 +258,7 @@
               <Option name="type" type="QString" value="collection"/>
             </Option>
           </data_defined_properties>
-          <symbol name="@1@1" type="marker" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+          <symbol is_animated="0" name="@1@1" force_rhr="0" alpha="1" type="marker" frame_rate="10" clip_to_extent="1">
             <data_defined_properties>
               <Option type="Map">
                 <Option name="name" type="QString" value=""/>
@@ -266,7 +266,7 @@
                 <Option name="type" type="QString" value="collection"/>
               </Option>
             </data_defined_properties>
-            <layer enabled="1" locked="0" class="SimpleMarker" id="{84c993e5-52e1-4eeb-b75f-6262406a7c1d}" pass="0">
+            <layer class="SimpleMarker" pass="0" locked="0" id="{84c993e5-52e1-4eeb-b75f-6262406a7c1d}" enabled="1">
               <Option type="Map">
                 <Option name="angle" type="QString" value="0"/>
                 <Option name="cap_style" type="QString" value="square"/>
@@ -299,7 +299,7 @@
           </symbol>
         </layer>
       </symbol>
-      <symbol name="2" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="2" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -307,7 +307,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{e32ab609-d243-4321-b111-94a5907dc8e2}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{e32ab609-d243-4321-b111-94a5907dc8e2}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="255,213,181,255"/>
@@ -330,7 +330,7 @@
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="3" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="3" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -338,7 +338,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{209e110f-b19a-4f81-8a2d-cc8be371ad19}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{209e110f-b19a-4f81-8a2d-cc8be371ad19}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="255,213,181,255"/>
@@ -360,7 +360,7 @@
             </Option>
           </data_defined_properties>
         </layer>
-        <layer enabled="1" locked="0" class="LinePatternFill" id="{dfa23100-daa7-4bae-8ce7-e21e3082c2eb}" pass="0">
+        <layer class="LinePatternFill" pass="0" locked="0" id="{dfa23100-daa7-4bae-8ce7-e21e3082c2eb}" enabled="1">
           <Option type="Map">
             <Option name="angle" type="QString" value="45"/>
             <Option name="clip_mode" type="QString" value="during_render"/>
@@ -385,7 +385,7 @@
               <Option name="type" type="QString" value="collection"/>
             </Option>
           </data_defined_properties>
-          <symbol name="@3@1" type="line" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+          <symbol is_animated="0" name="@3@1" force_rhr="0" alpha="1" type="line" frame_rate="10" clip_to_extent="1">
             <data_defined_properties>
               <Option type="Map">
                 <Option name="name" type="QString" value=""/>
@@ -393,7 +393,7 @@
                 <Option name="type" type="QString" value="collection"/>
               </Option>
             </data_defined_properties>
-            <layer enabled="1" locked="0" class="SimpleLine" id="{ccb62635-d1ce-4948-b7a0-9bd78dc5be40}" pass="0">
+            <layer class="SimpleLine" pass="0" locked="0" id="{ccb62635-d1ce-4948-b7a0-9bd78dc5be40}" enabled="1">
               <Option type="Map">
                 <Option name="align_dash_pattern" type="QString" value="0"/>
                 <Option name="capstyle" type="QString" value="square"/>
@@ -434,7 +434,7 @@
           </symbol>
         </layer>
       </symbol>
-      <symbol name="4" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="4" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -442,7 +442,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{1419473e-165e-4f79-90fb-7ec175cc8176}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{1419473e-165e-4f79-90fb-7ec175cc8176}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="163,205,185,255"/>
@@ -465,7 +465,7 @@
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="5" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="5" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -473,7 +473,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{255cedc4-24e8-445c-95fc-cb9ef81aac67}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{255cedc4-24e8-445c-95fc-cb9ef81aac67}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="167,255,159,255"/>
@@ -496,7 +496,7 @@
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="6" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="6" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -504,7 +504,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{8fc10470-446f-46a1-a632-84d09b15a305}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{8fc10470-446f-46a1-a632-84d09b15a305}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="67,162,209,255"/>
@@ -527,7 +527,7 @@
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="7" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="7" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -535,7 +535,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{62eab7a2-6db8-4235-baec-b0975d42a305}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{62eab7a2-6db8-4235-baec-b0975d42a305}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="201,201,201,255"/>
@@ -558,7 +558,7 @@
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol name="8" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="8" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -566,7 +566,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{5c519dc4-c2a3-4011-a716-692f561e5a3b}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{5c519dc4-c2a3-4011-a716-692f561e5a3b}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="255,1,1,255"/>
@@ -594,7 +594,7 @@
   <selection mode="Default">
     <selectionColor invalid="1"/>
     <selectionSymbol>
-      <symbol name="" type="fill" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+      <symbol is_animated="0" name="" force_rhr="0" alpha="1" type="fill" frame_rate="10" clip_to_extent="1">
         <data_defined_properties>
           <Option type="Map">
             <Option name="name" type="QString" value=""/>
@@ -602,7 +602,7 @@
             <Option name="type" type="QString" value="collection"/>
           </Option>
         </data_defined_properties>
-        <layer enabled="1" locked="0" class="SimpleFill" id="{67378c4e-58dc-4600-b89b-c84e9f333f11}" pass="0">
+        <layer class="SimpleFill" pass="0" locked="0" id="{67378c4e-58dc-4600-b89b-c84e9f333f11}" enabled="1">
           <Option type="Map">
             <Option name="border_width_map_unit_scale" type="QString" value="3x:0,0,0,0,0,0"/>
             <Option name="color" type="QString" value="0,0,255,255"/>
@@ -640,12 +640,12 @@
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerOpacity>1</layerOpacity>
-  <SingleCategoryDiagramRenderer diagramType="Histogram" attributeLegend="1">
-    <DiagramCategory minScaleDenominator="0" barWidth="5" lineSizeType="MM" enabled="0" scaleDependency="Area" diagramOrientation="Up" penWidth="0" maxScaleDenominator="1e+08" width="15" sizeScale="3x:0,0,0,0,0,0" minimumSize="0" height="15" penColor="#000000" spacingUnitScale="3x:0,0,0,0,0,0" scaleBasedVisibility="0" penAlpha="255" backgroundColor="#ffffff" labelPlacementMethod="XHeight" opacity="1" backgroundAlpha="255" lineSizeScale="3x:0,0,0,0,0,0" direction="0" sizeType="MM" rotationOffset="270" spacing="5" spacingUnit="MM" showAxis="1">
-      <fontProperties italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
-      <attribute colorOpacity="1" field="" color="#000000" label=""/>
+  <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
+    <DiagramCategory diagramOrientation="Up" width="15" lineSizeType="MM" penWidth="0" labelPlacementMethod="XHeight" direction="0" spacingUnit="MM" minimumSize="0" spacing="5" enabled="0" lineSizeScale="3x:0,0,0,0,0,0" spacingUnitScale="3x:0,0,0,0,0,0" barWidth="5" backgroundAlpha="255" sizeType="MM" penColor="#000000" maxScaleDenominator="1e+08" backgroundColor="#ffffff" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" showAxis="1" rotationOffset="270" minScaleDenominator="0" opacity="1" scaleBasedVisibility="0" height="15" penAlpha="255">
+      <fontProperties bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
+      <attribute color="#000000" colorOpacity="1" field="" label=""/>
       <axisSymbol>
-        <symbol name="" type="line" clip_to_extent="1" is_animated="0" alpha="1" force_rhr="0" frame_rate="10">
+        <symbol is_animated="0" name="" force_rhr="0" alpha="1" type="line" frame_rate="10" clip_to_extent="1">
           <data_defined_properties>
             <Option type="Map">
               <Option name="name" type="QString" value=""/>
@@ -653,7 +653,7 @@
               <Option name="type" type="QString" value="collection"/>
             </Option>
           </data_defined_properties>
-          <layer enabled="1" locked="0" class="SimpleLine" id="{2783b586-d718-4bb4-afa0-511e7a675092}" pass="0">
+          <layer class="SimpleLine" pass="0" locked="0" id="{2783b586-d718-4bb4-afa0-511e7a675092}" enabled="1">
             <Option type="Map">
               <Option name="align_dash_pattern" type="QString" value="0"/>
               <Option name="capstyle" type="QString" value="square"/>
@@ -695,7 +695,7 @@
       </axisSymbol>
     </DiagramCategory>
   </SingleCategoryDiagramRenderer>
-  <DiagramLayerSettings placement="1" dist="0" showAll="1" zIndex="0" obstacle="0" priority="0" linePlacementFlags="18">
+  <DiagramLayerSettings zIndex="0" dist="0" obstacle="0" showAll="1" placement="1" priority="0" linePlacementFlags="18">
     <properties>
       <Option type="Map">
         <Option name="name" type="QString" value=""/>
@@ -704,7 +704,7 @@
       </Option>
     </properties>
   </DiagramLayerSettings>
-  <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
+  <geometryOptions removeDuplicateNodes="0" geometryPrecision="0">
     <activeChecks/>
     <checkConfiguration type="Map">
       <Option name="QgsGeometryGapCheck" type="Map">
@@ -714,7 +714,7 @@
       </Option>
     </checkConfiguration>
   </geometryOptions>
-  <legend type="default-vector" showLabelLegend="0"/>
+  <legend showLabelLegend="0" type="default-vector"/>
   <referencedLayers/>
   <fieldConfiguration>
     <field name="id" configurationFlags="NoFlag">
@@ -1017,114 +1017,114 @@
     <policy field="leidingcode_infiltratie" policy="Duplicate"/>
   </splitPolicies>
   <defaults>
-    <default field="id" applyOnUpdate="0" expression=""/>
-    <default field="laatste_wijziging" applyOnUpdate="0" expression=""/>
-    <default field="wijziging" applyOnUpdate="0" expression=""/>
-    <default field="bgt_identificatie" applyOnUpdate="0" expression=""/>
-    <default field="surface_type" applyOnUpdate="0" expression=""/>
-    <default field="bgt_fysiek_voorkomen" applyOnUpdate="0" expression=""/>
-    <default field="type_verharding" applyOnUpdate="0" expression=""/>
-    <default field="graad_verharding" applyOnUpdate="0" expression=""/>
-    <default field="hellingstype" applyOnUpdate="0" expression=""/>
-    <default field="hellingspercentage" applyOnUpdate="0" expression=""/>
-    <default field="type_private_voorziening" applyOnUpdate="0" expression=""/>
-    <default field="berging_private_voorziening" applyOnUpdate="0" expression=""/>
-    <default field="build_year" applyOnUpdate="0" expression=""/>
-    <default field="gemengd_riool" applyOnUpdate="0" expression=""/>
-    <default field="hemelwaterriool" applyOnUpdate="0" expression=""/>
-    <default field="vgs_hemelwaterriool" applyOnUpdate="0" expression=""/>
-    <default field="vuilwaterriool" applyOnUpdate="0" expression=""/>
-    <default field="infiltratievoorziening" applyOnUpdate="0" expression=""/>
-    <default field="open_water" applyOnUpdate="0" expression=""/>
-    <default field="maaiveld" applyOnUpdate="0" expression=""/>
-    <default field="leidingcode_gemengd" applyOnUpdate="0" expression=""/>
-    <default field="leidingcode_hwa" applyOnUpdate="0" expression=""/>
-    <default field="leidingcode_dwa" applyOnUpdate="0" expression=""/>
-    <default field="leidingcode_infiltratie" applyOnUpdate="0" expression=""/>
+    <default expression="" applyOnUpdate="0" field="id"/>
+    <default expression="" applyOnUpdate="0" field="laatste_wijziging"/>
+    <default expression="" applyOnUpdate="0" field="wijziging"/>
+    <default expression="" applyOnUpdate="0" field="bgt_identificatie"/>
+    <default expression="" applyOnUpdate="0" field="surface_type"/>
+    <default expression="" applyOnUpdate="0" field="bgt_fysiek_voorkomen"/>
+    <default expression="" applyOnUpdate="0" field="type_verharding"/>
+    <default expression="" applyOnUpdate="0" field="graad_verharding"/>
+    <default expression="" applyOnUpdate="0" field="hellingstype"/>
+    <default expression="" applyOnUpdate="0" field="hellingspercentage"/>
+    <default expression="" applyOnUpdate="0" field="type_private_voorziening"/>
+    <default expression="" applyOnUpdate="0" field="berging_private_voorziening"/>
+    <default expression="" applyOnUpdate="0" field="build_year"/>
+    <default expression="" applyOnUpdate="0" field="gemengd_riool"/>
+    <default expression="" applyOnUpdate="0" field="hemelwaterriool"/>
+    <default expression="" applyOnUpdate="0" field="vgs_hemelwaterriool"/>
+    <default expression="" applyOnUpdate="0" field="vuilwaterriool"/>
+    <default expression="" applyOnUpdate="0" field="infiltratievoorziening"/>
+    <default expression="" applyOnUpdate="0" field="open_water"/>
+    <default expression="" applyOnUpdate="0" field="maaiveld"/>
+    <default expression="" applyOnUpdate="0" field="leidingcode_gemengd"/>
+    <default expression="" applyOnUpdate="0" field="leidingcode_hwa"/>
+    <default expression="" applyOnUpdate="0" field="leidingcode_dwa"/>
+    <default expression="" applyOnUpdate="0" field="leidingcode_infiltratie"/>
   </defaults>
   <constraints>
-    <constraint field="id" unique_strength="1" notnull_strength="1" exp_strength="0" constraints="3"/>
-    <constraint field="laatste_wijziging" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="wijziging" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="bgt_identificatie" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="surface_type" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="bgt_fysiek_voorkomen" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="type_verharding" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="graad_verharding" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="hellingstype" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="hellingspercentage" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="type_private_voorziening" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="berging_private_voorziening" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="build_year" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="gemengd_riool" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="hemelwaterriool" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="vgs_hemelwaterriool" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="vuilwaterriool" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="infiltratievoorziening" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="open_water" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="maaiveld" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="leidingcode_gemengd" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="leidingcode_hwa" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="leidingcode_dwa" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
-    <constraint field="leidingcode_infiltratie" unique_strength="0" notnull_strength="0" exp_strength="0" constraints="0"/>
+    <constraint constraints="3" notnull_strength="1" exp_strength="0" field="id" unique_strength="1"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="laatste_wijziging" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="wijziging" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="bgt_identificatie" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="surface_type" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="bgt_fysiek_voorkomen" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="type_verharding" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="graad_verharding" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="hellingstype" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="hellingspercentage" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="type_private_voorziening" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="berging_private_voorziening" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="build_year" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="gemengd_riool" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="hemelwaterriool" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="vgs_hemelwaterriool" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="vuilwaterriool" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="infiltratievoorziening" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="open_water" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="maaiveld" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="leidingcode_gemengd" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="leidingcode_hwa" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="leidingcode_dwa" unique_strength="0"/>
+    <constraint constraints="0" notnull_strength="0" exp_strength="0" field="leidingcode_infiltratie" unique_strength="0"/>
   </constraints>
   <constraintExpressions>
-    <constraint field="id" exp="" desc=""/>
-    <constraint field="laatste_wijziging" exp="" desc=""/>
-    <constraint field="wijziging" exp="" desc=""/>
-    <constraint field="bgt_identificatie" exp="" desc=""/>
-    <constraint field="surface_type" exp="" desc=""/>
-    <constraint field="bgt_fysiek_voorkomen" exp="" desc=""/>
-    <constraint field="type_verharding" exp="" desc=""/>
-    <constraint field="graad_verharding" exp="" desc=""/>
-    <constraint field="hellingstype" exp="" desc=""/>
-    <constraint field="hellingspercentage" exp="" desc=""/>
-    <constraint field="type_private_voorziening" exp="" desc=""/>
-    <constraint field="berging_private_voorziening" exp="" desc=""/>
-    <constraint field="build_year" exp="" desc=""/>
-    <constraint field="gemengd_riool" exp="" desc=""/>
-    <constraint field="hemelwaterriool" exp="" desc=""/>
-    <constraint field="vgs_hemelwaterriool" exp="" desc=""/>
-    <constraint field="vuilwaterriool" exp="" desc=""/>
-    <constraint field="infiltratievoorziening" exp="" desc=""/>
-    <constraint field="open_water" exp="" desc=""/>
-    <constraint field="maaiveld" exp="" desc=""/>
-    <constraint field="leidingcode_gemengd" exp="" desc=""/>
-    <constraint field="leidingcode_hwa" exp="" desc=""/>
-    <constraint field="leidingcode_dwa" exp="" desc=""/>
-    <constraint field="leidingcode_infiltratie" exp="" desc=""/>
+    <constraint exp="" desc="" field="id"/>
+    <constraint exp="" desc="" field="laatste_wijziging"/>
+    <constraint exp="" desc="" field="wijziging"/>
+    <constraint exp="" desc="" field="bgt_identificatie"/>
+    <constraint exp="" desc="" field="surface_type"/>
+    <constraint exp="" desc="" field="bgt_fysiek_voorkomen"/>
+    <constraint exp="" desc="" field="type_verharding"/>
+    <constraint exp="" desc="" field="graad_verharding"/>
+    <constraint exp="" desc="" field="hellingstype"/>
+    <constraint exp="" desc="" field="hellingspercentage"/>
+    <constraint exp="" desc="" field="type_private_voorziening"/>
+    <constraint exp="" desc="" field="berging_private_voorziening"/>
+    <constraint exp="" desc="" field="build_year"/>
+    <constraint exp="" desc="" field="gemengd_riool"/>
+    <constraint exp="" desc="" field="hemelwaterriool"/>
+    <constraint exp="" desc="" field="vgs_hemelwaterriool"/>
+    <constraint exp="" desc="" field="vuilwaterriool"/>
+    <constraint exp="" desc="" field="infiltratievoorziening"/>
+    <constraint exp="" desc="" field="open_water"/>
+    <constraint exp="" desc="" field="maaiveld"/>
+    <constraint exp="" desc="" field="leidingcode_gemengd"/>
+    <constraint exp="" desc="" field="leidingcode_hwa"/>
+    <constraint exp="" desc="" field="leidingcode_dwa"/>
+    <constraint exp="" desc="" field="leidingcode_infiltratie"/>
   </constraintExpressions>
   <expressionfields/>
   <attributeactions>
     <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
   </attributeactions>
-  <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
+  <attributetableconfig sortExpression="" actionWidgetStyle="dropDown" sortOrder="0">
     <columns>
-      <column name="id" width="-1" type="field" hidden="0"/>
-      <column name="laatste_wijziging" width="-1" type="field" hidden="0"/>
-      <column name="wijziging" width="-1" type="field" hidden="0"/>
-      <column name="bgt_identificatie" width="-1" type="field" hidden="0"/>
-      <column name="surface_type" width="-1" type="field" hidden="0"/>
-      <column name="bgt_fysiek_voorkomen" width="-1" type="field" hidden="0"/>
-      <column name="type_verharding" width="-1" type="field" hidden="0"/>
-      <column name="graad_verharding" width="-1" type="field" hidden="0"/>
-      <column name="hellingstype" width="-1" type="field" hidden="0"/>
-      <column name="hellingspercentage" width="-1" type="field" hidden="0"/>
-      <column name="type_private_voorziening" width="-1" type="field" hidden="0"/>
-      <column name="berging_private_voorziening" width="-1" type="field" hidden="0"/>
-      <column name="build_year" width="-1" type="field" hidden="0"/>
-      <column name="gemengd_riool" width="-1" type="field" hidden="0"/>
-      <column name="hemelwaterriool" width="-1" type="field" hidden="0"/>
-      <column name="vgs_hemelwaterriool" width="-1" type="field" hidden="0"/>
-      <column name="vuilwaterriool" width="-1" type="field" hidden="0"/>
-      <column name="infiltratievoorziening" width="-1" type="field" hidden="0"/>
-      <column name="open_water" width="-1" type="field" hidden="0"/>
-      <column name="maaiveld" width="-1" type="field" hidden="0"/>
-      <column name="leidingcode_gemengd" width="-1" type="field" hidden="1"/>
-      <column name="leidingcode_hwa" width="-1" type="field" hidden="1"/>
-      <column name="leidingcode_dwa" width="-1" type="field" hidden="1"/>
-      <column name="leidingcode_infiltratie" width="-1" type="field" hidden="1"/>
-      <column width="-1" type="actions" hidden="1"/>
+      <column name="id" type="field" hidden="0" width="-1"/>
+      <column name="laatste_wijziging" type="field" hidden="0" width="-1"/>
+      <column name="wijziging" type="field" hidden="0" width="-1"/>
+      <column name="bgt_identificatie" type="field" hidden="0" width="-1"/>
+      <column name="surface_type" type="field" hidden="0" width="-1"/>
+      <column name="bgt_fysiek_voorkomen" type="field" hidden="0" width="-1"/>
+      <column name="type_verharding" type="field" hidden="0" width="-1"/>
+      <column name="graad_verharding" type="field" hidden="0" width="-1"/>
+      <column name="hellingstype" type="field" hidden="0" width="-1"/>
+      <column name="hellingspercentage" type="field" hidden="0" width="-1"/>
+      <column name="type_private_voorziening" type="field" hidden="0" width="-1"/>
+      <column name="berging_private_voorziening" type="field" hidden="0" width="-1"/>
+      <column name="build_year" type="field" hidden="0" width="-1"/>
+      <column name="gemengd_riool" type="field" hidden="0" width="-1"/>
+      <column name="hemelwaterriool" type="field" hidden="0" width="-1"/>
+      <column name="vgs_hemelwaterriool" type="field" hidden="0" width="-1"/>
+      <column name="vuilwaterriool" type="field" hidden="0" width="-1"/>
+      <column name="infiltratievoorziening" type="field" hidden="0" width="-1"/>
+      <column name="open_water" type="field" hidden="0" width="-1"/>
+      <column name="maaiveld" type="field" hidden="0" width="-1"/>
+      <column name="leidingcode_gemengd" type="field" hidden="1" width="-1"/>
+      <column name="leidingcode_hwa" type="field" hidden="1" width="-1"/>
+      <column name="leidingcode_dwa" type="field" hidden="1" width="-1"/>
+      <column name="leidingcode_infiltratie" type="field" hidden="1" width="-1"/>
+      <column type="actions" hidden="1" width="-1"/>
     </columns>
   </attributetableconfig>
   <conditionalstyles>
@@ -1156,126 +1156,126 @@ def my_form_open(dialog, layer, feature):
   <featformsuppress>0</featformsuppress>
   <editorlayout>tablayout</editorlayout>
   <attributeEditorForm>
-    <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-      <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+    <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+      <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
     </labelStyle>
-    <attributeEditorContainer name="Vlakeigenschappen" columnCount="1" visibilityExpressionEnabled="0" collapsedExpression="" horizontalStretch="0" type="GroupBox" verticalStretch="0" groupBox="1" visibilityExpression="" collapsedExpressionEnabled="0" collapsed="0" showLabel="1">
-      <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-        <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+    <attributeEditorContainer horizontalStretch="0" groupBox="1" name="Vlakeigenschappen" visibilityExpressionEnabled="0" collapsed="0" verticalStretch="0" type="GroupBox" columnCount="1" collapsedExpressionEnabled="0" visibilityExpression="" showLabel="1" collapsedExpression="">
+      <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+        <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
       </labelStyle>
-      <attributeEditorField name="id" horizontalStretch="0" verticalStretch="0" index="0" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="id" verticalStretch="0" showLabel="1" index="0">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="laatste_wijziging" horizontalStretch="0" verticalStretch="0" index="1" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="laatste_wijziging" verticalStretch="0" showLabel="1" index="1">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="wijziging" horizontalStretch="0" verticalStretch="0" index="2" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="wijziging" verticalStretch="0" showLabel="1" index="2">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="bgt_identificatie" horizontalStretch="0" verticalStretch="0" index="3" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="bgt_identificatie" verticalStretch="0" showLabel="1" index="3">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="surface_type" horizontalStretch="0" verticalStretch="0" index="4" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="surface_type" verticalStretch="0" showLabel="1" index="4">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="bgt_fysiek_voorkomen" horizontalStretch="0" verticalStretch="0" index="5" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="bgt_fysiek_voorkomen" verticalStretch="0" showLabel="1" index="5">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="type_verharding" horizontalStretch="0" verticalStretch="0" index="6" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="type_verharding" verticalStretch="0" showLabel="1" index="6">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="graad_verharding" horizontalStretch="0" verticalStretch="0" index="7" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="graad_verharding" verticalStretch="0" showLabel="1" index="7">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="hellingstype" horizontalStretch="0" verticalStretch="0" index="8" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="hellingstype" verticalStretch="0" showLabel="1" index="8">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="hellingspercentage" horizontalStretch="0" verticalStretch="0" index="9" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="hellingspercentage" verticalStretch="0" showLabel="1" index="9">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="type_private_voorziening" horizontalStretch="0" verticalStretch="0" index="10" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="type_private_voorziening" verticalStretch="0" showLabel="1" index="10">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="berging_private_voorziening" horizontalStretch="0" verticalStretch="0" index="11" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="berging_private_voorziening" verticalStretch="0" showLabel="1" index="11">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="build_year" horizontalStretch="0" verticalStretch="0" index="12" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="build_year" verticalStretch="0" showLabel="1" index="12">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
     </attributeEditorContainer>
-    <attributeEditorContainer name="Voert af naar..." columnCount="1" visibilityExpressionEnabled="0" collapsedExpression="" horizontalStretch="0" type="GroupBox" verticalStretch="0" groupBox="1" visibilityExpression="" collapsedExpressionEnabled="0" collapsed="0" showLabel="1">
-      <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-        <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+    <attributeEditorContainer horizontalStretch="0" groupBox="1" name="Voert af naar..." visibilityExpressionEnabled="0" collapsed="0" verticalStretch="0" type="GroupBox" columnCount="1" collapsedExpressionEnabled="0" visibilityExpression="" showLabel="1" collapsedExpression="">
+      <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+        <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
       </labelStyle>
-      <attributeEditorField name="gemengd_riool" horizontalStretch="0" verticalStretch="0" index="13" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="gemengd_riool" verticalStretch="0" showLabel="1" index="13">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="hemelwaterriool" horizontalStretch="0" verticalStretch="0" index="14" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="hemelwaterriool" verticalStretch="0" showLabel="1" index="14">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="vgs_hemelwaterriool" horizontalStretch="0" verticalStretch="0" index="15" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="vgs_hemelwaterriool" verticalStretch="0" showLabel="1" index="15">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="vuilwaterriool" horizontalStretch="0" verticalStretch="0" index="16" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="vuilwaterriool" verticalStretch="0" showLabel="1" index="16">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="infiltratievoorziening" horizontalStretch="0" verticalStretch="0" index="17" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="infiltratievoorziening" verticalStretch="0" showLabel="1" index="17">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="open_water" horizontalStretch="0" verticalStretch="0" index="18" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="open_water" verticalStretch="0" showLabel="1" index="18">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
-      <attributeEditorField name="maaiveld" horizontalStretch="0" verticalStretch="0" index="19" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorField horizontalStretch="0" name="maaiveld" verticalStretch="0" showLabel="1" index="19">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>
       </attributeEditorField>
     </attributeEditorContainer>
-    <attributeEditorContainer name="Overzicht" columnCount="1" visibilityExpressionEnabled="0" collapsedExpression="" horizontalStretch="0" type="GroupBox" verticalStretch="0" groupBox="1" visibilityExpression="" collapsedExpressionEnabled="0" collapsed="0" showLabel="1">
-      <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-        <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+    <attributeEditorContainer horizontalStretch="0" groupBox="1" name="Overzicht" visibilityExpressionEnabled="0" collapsed="0" verticalStretch="0" type="GroupBox" columnCount="1" collapsedExpressionEnabled="0" visibilityExpression="" showLabel="1" collapsedExpression="">
+      <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+        <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
       </labelStyle>
-      <attributeEditorHtmlElement name="Oppervlakken en afvoerpercentages" horizontalStretch="0" verticalStretch="0" showLabel="1">
-        <labelStyle overrideLabelColor="0" labelColor="0,0,0,255" overrideLabelFont="0">
-          <labelFont italic="0" style="" strikethrough="0" underline="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" bold="0"/>
+      <attributeEditorHtmlElement horizontalStretch="0" name="Oppervlakken en afvoerpercentages" verticalStretch="0" showLabel="1">
+        <labelStyle labelColor="0,0,0,255" overrideLabelFont="0" overrideLabelColor="0">
+          <labelFont bold="0" italic="0" strikethrough="0" description="MS Shell Dlg 2,8,-1,5,50,0,0,0,0,0" underline="0" style=""/>
         </labelStyle>&lt;p style="font-family:'MS Shell Dlg 2';font-size:10px">    &lt;b>        Totaal oppervlak:         &lt;script>            document.write(                expression.evaluate(                    "format_number($area,2)"                )            );        &lt;/script>         m&lt;sup>2&lt;/sup>     &lt;/b>    &lt;br>    &lt;br>&lt;table style="width:100%; font-size:10px">  &lt;tr>    &lt;td>&lt;b>Voert af naar&lt;/b>&lt;/td>    &lt;td>&lt;b>m&lt;sup>2&lt;/sup>&lt;/b>&lt;/td>    &lt;td>&lt;b>%&lt;/b>&lt;/td>  &lt;/tr>  &lt;tr>    &lt;td>Gemengd riool&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"gemengd_riool\"/100*$area,2)"                )            );        &lt;/script>    &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"gemengd_riool\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>  &lt;tr>    &lt;td>Hemelwaterriool&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"hemelwaterriool\"/100*$area,2)"                )            );        &lt;/script>        &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"hemelwaterriool\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>  &lt;tr>    &lt;td>VGS Hemelwaterriool&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"vgs_hemelwaterriool\"/100*$area,2)"                )            );        &lt;/script>        &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"vgs_hemelwaterriool\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>    &lt;tr>    &lt;td>Vuilwaterriool&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"vuilwaterriool\"/100*$area,2)"                )            );        &lt;/script>        &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"vuilwaterriool\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>  &lt;tr>    &lt;td>Infiltratievoorziening&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"infiltratievoorziening\"/100*$area,2)"                )            );        &lt;/script>        &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"infiltratievoorziening\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>  &lt;tr>    &lt;td>Open water&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"open_water\"/100*$area,2)"                )            );        &lt;/script>        &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"open_water\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>    &lt;tr>    &lt;td>Maaiveld&lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "format_number(\"maaiveld\"/100*$area,2)"                )            );        &lt;/script>        &lt;/td>    &lt;td>        &lt;script>            document.write(                expression.evaluate(                    "\"maaiveld\""                )            );        &lt;/script>    &lt;/td>  &lt;/tr>   &lt;tr>    &lt;td>&lt;b>TOTAAL&lt;/b>&lt;/td>    &lt;td>        &lt;b>&lt;script>            document.write(                expression.evaluate(                    "format_number((gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld) /100*$area,2)"                )            );        &lt;/script>&lt;/b>    &lt;/td>    &lt;td>        &lt;b>&lt;script>            document.write(                expression.evaluate(                    "(gemengd_riool + hemelwaterriool + vgs_hemelwaterriool + infiltratievoorziening + vuilwaterriool + open_water + maaiveld)"                )            );        &lt;/script>&lt;/b>    &lt;/td>  &lt;/tr> &lt;/table>        &lt;/p></attributeEditorHtmlElement>
     </attributeEditorContainer>
   </attributeEditorForm>

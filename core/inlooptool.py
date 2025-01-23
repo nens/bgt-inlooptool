@@ -8,6 +8,14 @@ from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
 
+#Onderstaande mag weg als uitgecommende weer terugkomt. To do: Rtree fixen.
+import subprocess
+#command = [sys.executable, "-m", "pip", "install", "rtree"]
+command = ["python", "-m", "pip", "install", "rtree"] #To do: rtree pakketje fixen
+result = subprocess.run(command, capture_output=True, text=True)
+print(result.stdout,result.stderr)
+import rtree
+"""
 try:  # Rtree should be installed by the plugin for QGIS
     import rtree  
 except ImportError:  # For ArcGIS Pro the following is needed
@@ -17,7 +25,8 @@ except ImportError:  # For ArcGIS Pro the following is needed
         import subprocess
         #command = [sys.executable, "-m", "pip", "install", "rtree"]
         command = ["python", "-m", "pip", "install", "rtree"] #To do: rtree pakketje fixen
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, check=True, text=True)
+        print(result.stdout,result.stderr)
         import rtree
     except Exception:  # For ArcGIS Pro the following is needed
         from pathlib import Path
@@ -28,7 +37,7 @@ except ImportError:  # For ArcGIS Pro the following is needed
                 sys.path.append(str(rtree_path))
         except ImportError:
             print("The 'rtree' package installation failed.")
-    
+"""    
 # Local imports
 from bgtinlooptool.core.constants import (
     PSEUDO_INFINITE, SURFACE_TYPE_PAND, SURFACE_TYPE_WEGDEEL, SURFACE_TYPE_ONDERSTEUNENDWEGDEEL,  
@@ -1843,7 +1852,7 @@ class Database:
         print("Saving layers to gpkg")
         # Initialize layers with common elements
         layers = [
-            (CHECKS_TABLE_NAME, "2_Controles"),
+            (CHECKS_TABLE_NAME, "2_Te_controleren"),
             (PIPES_TABLE_NAME, "3_GWSW_leidingen"),
             (RESULT_TABLE_NAME, "4_BGT_inlooptabel"),
             (SURFACES_TABLE_NAME, "5_BGT_oppervlakken"),
