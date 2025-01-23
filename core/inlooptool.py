@@ -9,11 +9,11 @@ from osgeo import ogr
 from datetime import datetime
 
 #Onderstaande mag weg als uitgecommende weer terugkomt. To do: Rtree fixen.
-import subprocess
+#import subprocess
 #command = [sys.executable, "-m", "pip", "install", "rtree"]
-command = ["python", "-m", "pip", "install", "rtree"] #To do: rtree pakketje fixen
-result = subprocess.run(command, capture_output=True, text=True)
-print(result.stdout,result.stderr)
+#command = ["python", "-m", "pip", "install", "rtree"] #To do: rtree pakketje fixen
+#result = subprocess.run(command, capture_output=True, text=True)
+#print(result.stdout,result.stderr)
 import rtree
 """
 try:  # Rtree should be installed by the plugin for QGIS
@@ -1124,7 +1124,7 @@ class InloopTool:
                 check_feature = None  # Cleanup after creating the feature
                 
         #Check 2: buildings that are in the BGT but not in the BAG
-        warning_bgt_bag_mismatch = "Dit pand komt wel voor in de BGT, maar niet in de BAG. Er is daarom geen bouwjaar toegewezen aan het pand."
+        warning_bgt_bag_mismatch = "Dit pand ontbreekt in de BAG. Er is daarom geen bouwjaar toegewezen aan het pand."
         
         for building in self._database.non_matching_buildings:
             fid += 1
@@ -1143,7 +1143,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 3: surface which intersect with green roofs or infiltrating pavement
-        warning_infiltrating_surfaces = "Dit vlak is waterpasserende verharding of een groen dak. Het type verharding is daarop aangepast, maar de percentuele afwatering nog niet."
+        warning_infiltrating_surfaces = "Dit vlak is waterpasserende verharding of een groen dak. Alleen het type verharding is daarop aangepast. Ga na of er nog meer aangepast moet worden."
         
         for surface in self.inf_pavements_green_roof_surfaces:
             fid += 1
@@ -1162,7 +1162,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 4: relatieve hoogteligging 
-        warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Neerslag valt op het vlak met de hoogste relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
+        warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en dat alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
         
         for surface in self.relative_hoogteligging_surfaces:
             fid += 1
@@ -1786,7 +1786,10 @@ class Database:
         # create dict from buildings
         building_dict = {}
         for building in buildings:
-            building_dict[building["identificatie"][1:]] = building[field_name]
+            if building["identificatie"][0] == "0":
+                building_dict[building["identificatie"][1:]] = building[field_name]
+            else:
+                building_dict[building["identificatie"]] = building[field_name]
             building = None
         
         # List to track bui;ding-surfaces that are in the BGT but not in the BAG
