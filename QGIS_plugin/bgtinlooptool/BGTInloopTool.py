@@ -23,13 +23,12 @@
 """
 
 import os.path
-import sys
+#import sys
 import json
 
 
 from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
-from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
-#from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication #To do: mag later verwijderd worden
+from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager#, QNetworkReply
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import (
@@ -39,15 +38,13 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsBlockingNetworkRequest,
     QgsWkbTypes,
-)
-
-from qgis.core import (
     QgsTask,
     Qgis,
     QgsApplication,
     QgsMessageLog,
     QgsLayerTreeLayer,
 )
+
 from qgis.utils import iface
 from osgeo import ogr, osr
 
@@ -61,7 +58,19 @@ from bgtinlooptool.processing.provider import BGTInloopToolProcessingProvider
 
 # Import the BGT Inlooptool core
 from bgtinlooptool.core.inlooptool import *
-from bgtinlooptool.core.defaults import *
+from bgtinlooptool.core.defaults import (
+    MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
+    MAX_AFSTAND_VLAK_OPPWATER,
+    MAX_AFSTAND_PAND_OPPWATER,
+    MAX_AFSTAND_VLAK_KOLK,
+    MAX_AFSTAND_AFGEKOPPELD,
+    MAX_AFSTAND_DRIEVOUDIG,
+    AFKOPPELEN_HELLENDE_DAKEN,
+    KOPPEL_LEIDINGCODES,
+    BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING,
+    VERHARDINGSGRAAD_ERF,
+    VERHARDINGSGRAAD_HALF_VERHARD,
+    )
 from bgtinlooptool.ogr2qgis import *
 
 from bgtinlooptool.constants import (
@@ -162,10 +171,6 @@ class InloopToolTask(QgsTask):
             self.it.import_surfaces(self.bgt_file,self.input_extent_mask_wkt)
             self.increase_progress()
 
-            #print("alleen nog opslaan") #TO DO: kan weg!
-            #output_path =r"C:\Users\ruben.vanderzaag\Documents\Z0141_BGT_inlooptool\Test data Soest warnings (klein)\test_bgt_inputs_relatieve_hoogteligging.gpkg"
-            #self.it._database._save_to_gpkg_test(output_path)
-
 
             QgsMessageLog.logMessage(
                 "Importing pipes", MESSAGE_CATEGORY, level=Qgis.Info
@@ -224,12 +229,12 @@ class InloopToolTask(QgsTask):
             QgsMessageLog.logMessage(
                 "Calculating runoff targets", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.calculate_runoff_targets(self.parameters.leidingcodes_koppelen)
+            self.it.calculate_runoff_targets()
             
             QgsMessageLog.logMessage(
                 "Keeping manual edit on BGT ID", MESSAGE_CATEGORY, level=Qgis.Info
             )
-            self.it.overwrite_by_manual_edits(self.parameters.leidingcodes_koppelen)
+            self.it.overwrite_by_manual_edits()
             
             QgsMessageLog.logMessage(
                 "Updating type verharding for infiltrating pavement and green roofs if provided", MESSAGE_CATEGORY, level=Qgis.Info
@@ -278,7 +283,6 @@ class InloopToolTask(QgsTask):
             if self.temp_QGIS_layers: 
                 file_name = "BGT_inlooptabel"
                 layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name)
-                #self.temp_to_layer_group(db_layer_name=SETTINGS_TABLE_NAME,layer_tree_layer_name="Rekeninstellingen", qml="",layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=STATISTICS_TABLE_NAME,layer_tree_layer_name="Statistieken", qml=STATS_STYLE,layer_group=layer_group)
                 self.temp_to_layer_group(db_layer_name=SURFACES_TABLE_NAME, layer_tree_layer_name="BGT Oppervlakken",qml=BGT_STYLE,layer_group=layer_group)
                 if self.parameters.leidingcodes_koppelen:
@@ -296,9 +300,7 @@ class InloopToolTask(QgsTask):
 
             else: # Load from file
                 gpkg_files = [f for f in os.listdir(self.output_folder) if f.endswith(".gpkg")]
-                #gpkg_paths = [os.path.join(self.output_folder, f) for f in gpkg_files] #TO DO: kan weg!
                 file_name = max(gpkg_files, key=lambda f: os.path.getmtime(os.path.join(self.output_folder, f)))
-                #file_name = latest gpkg file in self.output_folder
                 layer_group = QgsProject.instance().layerTreeRoot().addGroup(file_name[:-5])
                 gpkg_path = os.path.join(self.output_folder, file_name)
                 self.gpkg_to_layer_group(gpkg_path, "7_Rekeninstellingen", layer_group)
@@ -396,7 +398,7 @@ class NetworkTask(QgsTask):
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
     
-    def fetch_all_features_gwsw(self, extent_geometry): # to do: deze functie nog mooier maken/samenvoegen met onderstaande??
+    def fetch_all_features_gwsw(self, extent_geometry):
         not_all_features_found = True
         index = 0
         all_features = []
@@ -1045,7 +1047,7 @@ class BGTInloopTool:
             duration=5,
         )
     
-        # Perform download
+        # Perform download: first lookup the municipality name(s) based on the location, then download the GWSW dataset based on the municipality name(s)
         task = NetworkTask(CBS_GEMEENTES_API_URL, output_gpkg, extent_bbox, extent_geometry_wkt, "default_lijn")
     
         # Connect the task's finished signal to a custom slot to handle completion

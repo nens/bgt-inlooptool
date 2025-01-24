@@ -7,37 +7,8 @@ from osgeo import osr
 from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
+import rtree #rtree is installed using a wheel (0.9.7 in python 3.9)
 
-#Onderstaande mag weg als uitgecommende weer terugkomt. To do: Rtree fixen.
-#import subprocess
-#command = [sys.executable, "-m", "pip", "install", "rtree"]
-#command = ["python", "-m", "pip", "install", "rtree"] #To do: rtree pakketje fixen
-#result = subprocess.run(command, capture_output=True, text=True)
-#print(result.stdout,result.stderr)
-import rtree
-"""
-try:  # Rtree should be installed by the plugin for QGIS
-    import rtree  
-except ImportError:  # For ArcGIS Pro the following is needed
-    import sys
-    from pathlib import Path
-    try:
-        import subprocess
-        #command = [sys.executable, "-m", "pip", "install", "rtree"]
-        command = ["python", "-m", "pip", "install", "rtree"] #To do: rtree pakketje fixen
-        result = subprocess.run(command, capture_output=True, check=True, text=True)
-        print(result.stdout,result.stderr)
-        import rtree
-    except Exception:  # For ArcGIS Pro the following is needed
-        from pathlib import Path
-        try:
-            from .rtree_installer import unpack_rtree
-            if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
-                rtree_path = unpack_rtree()
-                sys.path.append(str(rtree_path))
-        except ImportError:
-            print("The 'rtree' package installation failed.")
-"""    
 # Local imports
 from bgtinlooptool.core.constants import (
     PSEUDO_INFINITE, SURFACE_TYPE_PAND, SURFACE_TYPE_WEGDEEL, SURFACE_TYPE_ONDERSTEUNENDWEGDEEL,  
@@ -93,7 +64,7 @@ from bgtinlooptool.core.constants import (
     STATISTICS_TABLE_FIELD_PERC_WATERPAS_VERH, STATISTICS_TABLE_FIELD_PERC_WATER,CHECKS_TABLE_NAME,CHECKS_TABLE_FIELD_ID,CHECKS_TABLE_FIELD_LEVEL,
     CHECKS_TABLE_FIELD_CODE,CHECKS_TABLE_FIELD_TABLE,CHECKS_TABLE_FIELD_COLUMN,CHECKS_TABLE_FIELD_VALUE,CHECKS_TABLE_FIELD_DESCRIPTION,CHECKS_LARGE_AREA
 )
-#from bgtinlooptool.core.constants import * #To do: weghalen
+
 from bgtinlooptool.core.defaults import (
     MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
     MAX_AFSTAND_VLAK_OPPWATER,
@@ -337,6 +308,7 @@ class InloopTool:
         """
         Import BGT Surfaces to _database
         :param file_path: path to bgt zip file
+        :param extent_wkt: exent of study area
         :return: None
         """
         self._database.import_surfaces_raw(file_path, extent_wkt)
@@ -716,7 +688,7 @@ class InloopTool:
         self._database.bgt_surfaces.ResetReading()
         self._database.bgt_surfaces.SetSpatialFilter(None)
 
-    def calculate_runoff_targets(self,leidingcode_koppelen):
+    def calculate_runoff_targets(self):
         """
         Fill the 'target type' columns of the result table
         Import BGT Surfaces and Pipes to _database first
@@ -770,7 +742,7 @@ class InloopTool:
             # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
             for tt in TARGET_TYPES:
                 feature.SetField(tt, afwatering[tt])
-            if leidingcode_koppelen:
+            if self.parameters.leidingcodes_koppelen:
                 if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
                     feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, surface["code_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL])
                 if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
@@ -817,7 +789,7 @@ class InloopTool:
         pipe = None
         return distances                    
     
-    def overwrite_by_manual_edits(self,leidingcodes_koppelen):
+    def overwrite_by_manual_edits(self):
         result_table = self._database.result_table
         manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
         bgt_surfaces = self._database.bgt_surfaces
@@ -831,7 +803,7 @@ class InloopTool:
     
         # Iterate over each feature in manual_results_prev
         for count, prev_feat in enumerate(manual_results_prev, 1):
-            if leidingcodes_koppelen:
+            if self.parameters.leidingcodes_koppelen:
                 distances = self.get_nearest_pipe_code(prev_feat)
         
                 # Assign the correct code based on the type of the pipe
@@ -1848,7 +1820,7 @@ class Database:
     
     def _save_to_gpkg(self,file_folder,template_gpkg):
         print("Preparing template gpkg")
-        file_name = self.set_output_name(file_folder)
+        file_name = self.output_name(file_folder)
         file_path = os.path.join(file_folder, file_name)
         self.copy_and_rename_file(template_gpkg, file_path)
         
@@ -1875,8 +1847,9 @@ class Database:
                     self.track_changes(dst_gpkg)
            
         print("All layers saved successfully.")
+        return str(file_path)
     
-    def set_output_name(self, file_folder):
+    def output_name(self, file_folder):
         # Determine max. run_id
         max_run_id = -1
         for feature in self.settings_table: 
@@ -1918,11 +1891,11 @@ class Database:
 
             print(f"Template gpkg copied to {new_file_path}")
         except FileNotFoundError:
-            print(f"The file {original_file_path} does not exist.")
+            print(f"The template {original_file_path} does not exist.")
         except PermissionError:
-            print(f"Permission denied. Unable to copy {original_file_path} to {new_file_path}.")
+            print(f"Permission denied. Unable to copy the template {original_file_path} to {new_file_path}.")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"An error occurred when copying the template: {e}")
           
     
     def _write_to_disk(self, dst_gpkg, db_layer_name, dst_layer_name):
@@ -1982,7 +1955,7 @@ class Database:
         ON "4_BGT_inlooptabel"
         FOR EACH ROW
         BEGIN
-        UPDATE "4_BGT_inlooptabel" SET laatste_wijziging = CURRENT_TIMESTAMP WHERE id = old.id;
+        UPDATE "4_BGT_inlooptabel" SET laatste_wijziging = datetime('now', '+1 hour') WHERE id = old.id;
         END 
         """
         
