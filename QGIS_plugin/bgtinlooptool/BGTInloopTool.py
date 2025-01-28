@@ -27,7 +27,7 @@ import os.path
 import json
 
 
-from PyQt5.QtCore import QUrl, QByteArray, QEventLoop
+from PyQt5.QtCore import Qt, QUrl, QByteArray, QEventLoop
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager#, QNetworkReply
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
@@ -589,6 +589,81 @@ class NetworkTask(QgsTask):
         return geom.ExportToWkt()
 
 
+class DownloadBGTTask(QgsTask):
+    def __init__(self, dlg, extent_layer, output_zip, extent_geometry_wkt):
+        super().__init__("Download BGT Data")
+        self.dlg = dlg
+        self.total_progress = 3
+        self.setProgress(0)
+        self.extent_layer = extent_layer
+        self.output_zip = output_zip
+        self.extent_geometry_wkt = extent_geometry_wkt
+
+    def increase_progress(self):
+        self.setProgress(self.progress() + 100 / self.total_progress)
+
+    def run(self):
+        nam = QgsBlockingNetworkRequest()
+        networkrequest = QNetworkRequest(QUrl.fromUserInput(BGT_API_URL))
+        networkrequest.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
+
+        data = {
+            "featuretypes": list(ALL_USED_SURFACE_TYPES),
+            "format": "gmllight",
+            "geofilter": self.extent_geometry_wkt,
+        }
+
+        data_array = QByteArray()
+        data_array.append(json.dumps(data))
+
+        # Step 1: Send initial API request
+        response = nam.post(networkrequest, data_array)
+        
+        if response > 0:  # In case of a response error (0 = valid response)
+            self.extent_geometry_wkt = self.get_bounding_box_from_wkt(self.extent_geometry_wkt)
+            data["geofilter"] = self.extent_geometry_wkt  # Update the data with the new geometry
+
+            data_array.clear()  # Clear previous data
+            data_array.append(json.dumps(data))  # Append new data with the bounding box
+
+            # Send the new request
+            response = nam.post(networkrequest, data_array)
+
+        # Update progress
+        self.increase_progress()
+
+        # Step 2: Poll for download status
+        response_bytes = bytes(nam.reply().content())
+        response_json = json.loads(response_bytes.decode("ascii"))
+        download_id = response_json["downloadRequestId"]
+        status_link = BGT_API_URL + "/" + download_id + "/status"
+
+        status = "PENDING"
+        while status != "COMPLETED":
+            status_request = QNetworkRequest(QUrl.fromUserInput(status_link))
+            status_response = nam.get(status_request)
+            status_response_bytes = bytes(nam.reply().content())
+            status_response_json = json.loads(status_response_bytes.decode("ascii"))
+            status = status_response_json["status"]
+            time.sleep(5)
+
+        # Update progress 
+        self.increase_progress()
+
+        # Step 3: Download the data
+        download_url_extract = status_response_json["_links"]["download"]["href"]
+        download_url = "https://api.pdok.nl" + download_url_extract
+
+        download_request = QNetworkRequest(QUrl.fromUserInput(download_url))
+        download_response = nam.get(download_request)
+        with open(self.output_zip, "wb") as f:
+            f.write(nam.reply().content())
+
+        # Update progress
+        self.increase_progress()
+
+        return True
+
 
 class BGTInloopTool:
     """QGIS Plugin Implementation."""
@@ -821,7 +896,7 @@ class BGTInloopTool:
 
         return extent_geometry_wkt
     
-    def validate_extent_layer_new(self, extent_layer):
+    def validate_extent_layer_new(self, extent_layer): #To do: kan weg!
         extent_feature_count = extent_layer.featureCount()
         QgsMessageLog.logMessage(
             f"Found {extent_feature_count} features in extent layer",
@@ -948,8 +1023,6 @@ class BGTInloopTool:
     
         return extent_geometry_wkt
 
-
-
     def get_bounding_box_from_wkt(self,wkt_string):
         # Create a QgsGeometry from the WKT
         geometry = QgsGeometry.fromWkt(wkt_string)
@@ -967,84 +1040,39 @@ class BGTInloopTool:
             return wkt_string  # If it's not a MultiPolygon, return the original WKT
     
     def download_bgt_from_api(self):
-
+        # Step 1: Validate extent layer
         extent_layer = self.dlg.BGTExtentCombobox.currentLayer()
         output_zip = self.dlg.bgtApiOutput.filePath()
 
         extent_geometry_wkt = self.validate_extent_layer(extent_layer)
         if not extent_geometry_wkt:
-            return
-
+            return False
+        
+        # Notify user and initialize network request
         self.iface.messageBar().pushMessage(
             MESSAGE_CATEGORY,
             f"Begonnen met downloaden van BGT lagen naar {output_zip}",
             level=Qgis.Info,
             duration=5,
         )
-        self.iface.mainWindow().repaint()  # to show the message before the task starts
-
-        # Use the extent geometry to extract surfaces for the given extent
-        nam = QgsBlockingNetworkRequest()
         
-        networkrequest = QNetworkRequest(QUrl.fromUserInput(BGT_API_URL))
-        networkrequest.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
-
-        data = {
-            "featuretypes": list(ALL_USED_SURFACE_TYPES),
-            "format": "gmllight",
-            "geofilter": extent_geometry_wkt,
-        }
-
-        data_array = QByteArray()
-        data_array.append(json.dumps(data))
-
-        response = nam.post(networkrequest, data_array)
+        download_task = DownloadBGTTask(self.dlg, extent_layer, output_zip, extent_geometry_wkt)
         
-        if response > 0: # in case a response error arises (0 = valid response)
-            #Convert extent_geometry_wkt to its bounding box
-            extent_geometry_wkt = self.get_bounding_box_from_wkt(extent_geometry_wkt)
-            # Retry the request with the bounding box geometry
-            data["geofilter"] = extent_geometry_wkt  # Update the data with the new geometry
+        # Add the task to the task manager
+        QgsApplication.taskManager().addTask(download_task)
         
-            data_array.clear()  # Clear previous data
-            data_array.append(json.dumps(data))  # Append new data with the bounding box
-        
-            # Send the new request
-            response = nam.post(networkrequest, data_array)
-        
-        response_bytes = bytes(nam.reply().content())
-        response_json = json.loads(response_bytes.decode("ascii"))
-        download_id = response_json["downloadRequestId"]
-        status_link = BGT_API_URL + "/" + download_id + "/status"
-
-        status = "PENDING"
-        while status != "COMPLETED":
-            status_request = QNetworkRequest(QUrl.fromUserInput(status_link))
-            status_response = nam.get(status_request)
-            status_response_bytes = bytes(nam.reply().content())
-            status_response_json = json.loads(status_response_bytes.decode("ascii"))
-            status = status_response_json["status"]
-            time.sleep(5)
-
-        download_url_extract = status_response_json["_links"]["download"]["href"]
-        download_url = "https://api.pdok.nl" + download_url_extract
-
-        download_request = QNetworkRequest(QUrl.fromUserInput(download_url))
-        download_response = nam.get(download_request)
-        with open(output_zip, "wb") as f:
-            f.write(nam.reply().content())
-        
+        # Update UI
         self.iface.messageBar().pushMessage(
             MESSAGE_CATEGORY,
             f'BGT lagen gedownload naar <a href="{output_zip}">{output_zip}</a>',
             level=Qgis.Info,
-            duration=20,  # wat langer zodat gebruiker tijd heeft om op linkje te klikken
+            duration=20,  # Longer duration so the user has time to click the link
         )
         self.dlg.bgt_file.setFilePath(output_zip)
         self.dlg.inputExtentComboBox.setLayer(extent_layer)
         self.dlg.inputExtentComboBox.setEnabled(True)
         self.dlg.inputExtentGroupBox.setChecked(True)
-        
+
         self.download_bgt = True
 
     
