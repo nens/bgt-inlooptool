@@ -1,3 +1,9 @@
+"""
+Last update on Tue Jan 28 11:47:10 2025
+By: Ruben van der Zaag
+Email: bgtinlooptool@nelen-schuurmans.nl
+"""
+
 # System imports
 import os
 import contextlib
@@ -1171,7 +1177,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 6: handmatig gewijzigd BGT vlak heeft een eindregistratie gekregen
-        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak bestaat niet meer in de BGT data. Controleer of het nog steeds bestaat." 
+        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak zit niet meer in de BGT data. Controleer of het nog steeds bestaat." 
         for it_feature in self.outdated_changed_surfaces:
             fid += 1
             geom = it_feature.GetGeometryRef()
