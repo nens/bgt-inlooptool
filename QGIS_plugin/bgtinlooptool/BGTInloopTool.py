@@ -385,6 +385,11 @@ class NetworkTask(QgsTask):
         self.extent_geometry_wkt = extent_geometry_wkt
         self.layer_name = layer_name
         self.nam = QNetworkAccessManager()  # Create a network access manager
+        self.setProgress(0)
+        self.total_progress = 10
+        
+    def increase_progress(self):
+        self.setProgress(self.progress() + 100 / self.total_progress)
         
     def run(self):
         extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt).Buffer(-0.5) # Give the extent geometry a negative buffer of 0.5m, so that the intersect function works properly (when equal, no neighbouring geometries are used)
@@ -395,6 +400,8 @@ class NetworkTask(QgsTask):
             all_features = self.fetch_all_features_gwsw(shrunk_extent_geometry_coordinates)
         else:
             all_features = self.fetch_all_features_bag(bbox)
+        self.increase_progress()
+        self.num_features_per_step = round(len(all_features)/(self.total_progress-1),0)
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
     
@@ -472,7 +479,6 @@ class NetworkTask(QgsTask):
     
         layer_out = self.create_layer(datasource, srs)
         self.add_features_to_layer(layer_out, all_features, extent_geometry)
-        
         datasource = None
     
     def filter_features_by_extent(self, all_features, extent_geometry):
@@ -548,7 +554,12 @@ class NetworkTask(QgsTask):
         layer_defn = layer_out.GetLayerDefn()
         
         print("Writing features to GeoPackage")
+        feature_count = 0
         for feature_data in all_features:
+            feature_count += 1
+            if feature_count == self.num_features_per_step:
+                self.increase_progress()
+                feature_count = 0
             geometry_wkt = self.geojson_to_wkt(feature_data['geometry'])
             geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
             if extent_geometry.Intersects(geojson_geom):

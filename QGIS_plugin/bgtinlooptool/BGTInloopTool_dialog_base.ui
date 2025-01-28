@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>954</width>
-    <height>642</height>
+    <width>952</width>
+    <height>635</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,7 +45,7 @@
     </sizepolicy>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="import_data_tab">
     <attribute name="title">
@@ -469,7 +469,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="title">
-      <string>Resultaten opslaan</string>
+      <string>Resultaten opslaan (optioneel)</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
@@ -622,7 +622,7 @@ p, li { white-space: pre-wrap; }
       <item row="5" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Max. afstand drievoudig stelsel [m]</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Max. afstand drievoudig stelsel [m]&lt;br/&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(nog niet functioneel)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
@@ -659,7 +659,7 @@ p, li { white-space: pre-wrap; }
       <item row="8" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
-         <string>Afkoppelen hellende daken [ja/nee]</string>
+         <string>Koppeling daken [ja/nee]</string>
         </property>
        </widget>
       </item>
