@@ -386,7 +386,10 @@ class NetworkTask(QgsTask):
         self.layer_name = layer_name
         self.nam = QNetworkAccessManager()  # Create a network access manager
         self.setProgress(0)
-        self.total_progress = 10
+        if layer_name != "bag_panden":
+            self.total_progress = 4
+        else:
+            self.total_progress = 10
         
     def increase_progress(self):
         self.setProgress(self.progress() + 100 / self.total_progress)
@@ -396,12 +399,14 @@ class NetworkTask(QgsTask):
         shrunk_extent_geometry_wkt = extent_geometry.ExportToWkt()
         shrunk_extent_geometry_coordinates = shrunk_extent_geometry_wkt[shrunk_extent_geometry_wkt.find('((')+2:shrunk_extent_geometry_wkt.find('))')]
         bbox = self.wkt_to_bbox()
-        if self.layer_name != "bag_panden": #GWSW download: looks for names of municipalities first. Then uses these to download the right data. 
+        if self.layer_name != "bag_panden": #GWSW download: looks for names of municipalities first. Then uses these to download the right data.
+            self.increase_progress()
             all_features = self.fetch_all_features_gwsw(shrunk_extent_geometry_coordinates)
+            self.num_features_per_step = round(len(all_features)/(self.total_progress-2),0)
         else:
             all_features = self.fetch_all_features_bag(bbox)
+            self.num_features_per_step = round(len(all_features)/(self.total_progress-1),0)
         self.increase_progress()
-        self.num_features_per_step = round(len(all_features)/(self.total_progress-1),0)
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
     
