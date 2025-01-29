@@ -545,9 +545,7 @@ class BGTInloopToolArcGIS(BaseTool):
             self.arcgis_com.AddMessage("Afstanden aan het berekenen")
             inlooptool.calculate_distances(parameters=core_parameters)
             self.arcgis_com.AddMessage("Bereken Runoff targets")
-            inlooptool.calculate_runoff_targets(
-                parameters[self.copy_pipe_codes_idx].value
-            )
+            inlooptool.calculate_runoff_targets()
             if statistics_area is not None:
                 self.arcgis_com.AddMessage("Berekenen statistiek")
                 inlooptool.calculate_statistics(stats_path=statistics_area)
@@ -592,11 +590,11 @@ class BGTInloopToolArcGIS(BaseTool):
 
             # 2. controles
             layers_to_gdb(
-                input_dataset=os.path.join(gpkg_file, "main.2_Controles"),
+                input_dataset=os.path.join(gpkg_file, "main.2_Te_controleren"),
                 output_gdb=out_gdb,
             )
             parameters[self.controles_symb_idx].value = os.path.join(
-                gpkg_file, "main.2_Controles"
+                gpkg_file, "main.2_Te_controleren"
             )
             layers_to_visualize.append(
                 VisualizeLayer(
@@ -747,7 +745,7 @@ if __name__ == "__main__":
         # statistics area
         params[6].value = os.path.join(main_path, "statistiek_gebieden_buurten.shp")
         # output_location
-        params[7].value = r"C:\Users\vdi\Downloads\inlooptool_test"
+        params[7].value = r"C:\Users\vdi\Downloads\test_inlooptool"
 
         # # maximale afstand vlak afwateringsvoorziening
         # params[6].value = 40

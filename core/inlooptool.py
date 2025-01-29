@@ -1,3 +1,9 @@
+"""
+Last update on Tue Jan 28 11:47:10 2025
+By: Ruben van der Zaag
+Email: bgtinlooptool@nelen-schuurmans.nl
+"""
+
 # System imports
 import os
 import contextlib
@@ -7,93 +13,64 @@ from osgeo import osr
 from osgeo import gdal
 from osgeo import ogr
 from datetime import datetime
+import rtree #rtree is installed using a wheel (0.9.7 in python 3.9)
 
-try:  # Rtree should be installed by the plugin for QGIS
-    import rtree  
-except ImportError:  # For ArcGIS Pro the following is needed
-    import sys
-    from pathlib import Path
-    try:
-        import subprocess
-        command = ["python", "-m", "pip", "install", "rtree"]
-        result = subprocess.run(command, capture_output=True, text=True)
-        import rtree
-    except Exception:  # For ArcGIS Pro the following is needed
-        from pathlib import Path
-        try:
-            from .rtree_installer import unpack_rtree
-            if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
-                rtree_path = unpack_rtree()
-                sys.path.append(str(rtree_path))
-        except ImportError:
-            print("The 'rtree' package installation failed.")
-    
 # Local imports
 from bgtinlooptool.core.constants import (
-    ALL_USED_SURFACE_TYPES,
-    BUILDINGS_TABLE_NAME,
-    DISTANCE_TYPES,
-    GWSW_PIPE_TYPE_FIELD,
-    GWSW_STELSEL_TYPE_FIELD,
-    GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL,
-    INTERNAL_PIPE_TYPE_FIELD,
-    INTERNAL_PIPE_TYPE_GEMENGD_RIOOL,
-    INTERNAL_PIPE_TYPE_HEMELWATERRIOOL,
-    INTERNAL_PIPE_TYPE_IGNORE,
-    INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING,
-    INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL,
-    KOLK,
-    KOLK_CONNECTABLE_SURFACE_TYPES,
-    KOLKEN_TABLE_NAME,
-    MULTIPLE_GEOMETRY_SURFACE_TYPES,
-    NON_CONNECTABLE_SURFACE_TYPES,
-    OPEN_WATER,
-    PIPE_MAP,
-    PIPES_TABLE_NAME,
-    PSEUDO_INFINITE,
-    RESULT_TABLE_FIELD_BGT_IDENTIFICATIE,
-    RESULT_TABLE_FIELD_GRAAD_VERHARDING,
-    RESULT_TABLE_FIELD_ID,
-    RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
-    RESULT_TABLE_FIELD_TYPE_VERHARDING,
-    RESULT_TABLE_NAME,
-    SOURCE_PIPES_TABLE_NAME,
-    SURFACE_TYPE_GEBOUWINSTALLATIE,
-    SURFACE_TYPE_ONDERSTEUNENDWATERDEEL,
-    SURFACE_TYPE_PAND,
-    SURFACE_TYPE_WATERDEEL,
-    SURFACE_TYPES_MET_FYSIEK_VOORKOMEN,
-    SURFACES_TABLE_NAME,
-    TARGET_TYPE_GEMENGD_RIOOL,
-    TARGET_TYPE_HEMELWATERRIOOL,
-    TARGET_TYPE_INFILTRATIEVOORZIENING,
-    TARGET_TYPE_MAAIVELD,
-    TARGET_TYPE_OPEN_WATER,
-    TARGET_TYPE_VGS_HEMELWATERRIOOL,
-    TARGET_TYPE_VUILWATERRIOOL,
-    TARGET_TYPES,
-    VERHARDINGSTYPE_GESLOTEN_VERHARD,
-    VERHARDINGSTYPE_ONVERHARD,
-    VERHARDINGSTYPE_OPEN_VERHARD,
-    VERHARDINGSTYPE_PAND,
-    VERHARDINGSTYPE_WATER, SETTINGS_TABLE_NAME_PREV, SETTINGS_TABLE_FIELD_ID, SETTINGS_TABLE_FIELD_TIJD_START,
-    SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, SETTINGS_TABLE_FIELD_DOWNLOAD_BAG,
-    SETTINGS_TABLE_FIELD_PAD_BGT, SETTINGS_TABLE_FIELD_PAD_GWSW, SETTINGS_TABLE_FIELD_PAD_BAG,
-    SETTINGS_TABLE_FIELD_PAD_KOLKEN, SETTINGS_TABLE_FIELD_AFSTAND_AFWATERINGSVOORZIENING,
-    SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_OPP_WATER, SETTINGS_TABLE_FIELD_AFSTAND_PAND_OPP_WATER,
-    SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_KOLK, SETTINGS_TABLE_FIELD_AFSTAND_AFKOPPELD,
-    SETTINGS_TABLE_FIELD_AFSTAND_DRIEVOUDIG, SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_ERF,
-    SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_HALF_VERHARD, SETTINGS_TABLE_FIELD_AFKOPPELEN_HELLEND,
-    SETTINGS_TABLE_FIELD_BOUWJAAR_GESCHEIDEN_BINNENHUIS, SETTINGS_TABLE_FIELD_LEIDINGCODES_KOPPELEN,
-    SETTINGS_TABLE_FIELD_TIJD_EIND, RESULT_TABLE_FIELD_CODE_GEMENGD, RESULT_TABLE_FIELD_CODE_HWA,
-    RESULT_TABLE_FIELD_CODE_DWA, RESULT_TABLE_FIELD_CODE_INFILTRATIE, INTERNAL_PIPE_TYPE_VUILWATERRIOOL,
-    RESULT_TABLE_FIELD_WIJZIGING, RESULT_TABLE_NAME_PREV, STATISTICS_TABLE_FIELD_ID, VERHARDINGSTYPE_GROEN_DAK,
-    VERHARDINGSTYPE_WATERPASSEREND_VERHARD, CHECKS_LARGE_AREA, CHECKS_TABLE_FIELD_ID, CHECKS_TABLE_FIELD_LEVEL,
-    CHECKS_TABLE_FIELD_CODE, CHECKS_TABLE_FIELD_TABLE, CHECKS_TABLE_FIELD_COLUMN, CHECKS_TABLE_FIELD_VALUE,
-    CHECKS_TABLE_FIELD_DESCRIPTION, SETTINGS_TABLE_NAME, STATISTICS_TABLE_NAME, CHECKS_TABLE_NAME,
-    INF_PAVEMENT_TABLE_NAME_PREV,
+    PSEUDO_INFINITE, SURFACE_TYPE_PAND, SURFACE_TYPE_WEGDEEL, SURFACE_TYPE_ONDERSTEUNENDWEGDEEL,  
+    SURFACE_TYPE_BEGROEIDTERREINDEEL, SURFACE_TYPE_ONBEGROEIDTERREINDEEL, SURFACE_TYPE_WATERDEEL, SURFACE_TYPE_ONDERSTEUNENDWATERDEEL,  
+    SURFACE_TYPE_OVERIGBOUWWERK, SURFACE_TYPE_GEBOUWINSTALLATIE, SURFACE_TYPE_OVERBRUGGINGSDEEL, ALL_USED_SURFACE_TYPES,  
+    CONNECTABLE_SURFACE_TYPES, NON_CONNECTABLE_SURFACE_TYPES, KOLK_CONNECTABLE_SURFACE_TYPES, SURFACE_TYPES_MET_FYSIEK_VOORKOMEN,  
+    MULTIPLE_GEOMETRY_SURFACE_TYPES, VERHARDINGSTYPE_PAND, VERHARDINGSTYPE_WATER, VERHARDINGSTYPE_ONVERHARD,  
+    VERHARDINGSTYPE_OPEN_VERHARD, VERHARDINGSTYPE_GESLOTEN_VERHARD, VERHARDINGSTYPE_WATERPASSEREND_VERHARD, VERHARDINGSTYPE_GROEN_DAK,  
+    SOURCE_PIPES_TABLE_NAME, SURFACES_TABLE_NAME, PIPES_TABLE_NAME, GWSW_PIPE_TYPE_FIELD,  
+    GWSW_PIPE_TYPE_AANSLUITLEIDING, GWSW_PIPE_TYPE_BERGINGSLEIDING, GWSW_PIPE_TYPE_DRAIN, GWSW_PIPE_TYPE_DRUKLEIDING,  
+    GWSW_PIPE_TYPE_DUIKER, GWSW_PIPE_TYPE_DWAPERCEELAANSLUITLEIDING, GWSW_PIPE_TYPE_GEMENGDEPERCEELAANSLUITLEIDING, GWSW_PIPE_TYPE_GEMENGDRIOOL,  
+    GWSW_PIPE_TYPE_HEMELWATERRIOOL, GWSW_PIPE_TYPE_HWAPERCEELAANSLUITLEIDING, GWSW_PIPE_TYPE_INFILTRATIERIOOL, GWSW_PIPE_TYPE_LOZELEIDING,  
+    GWSW_PIPE_TYPE_LUCHTPERSLEIDING, GWSW_PIPE_TYPE_MANTELBUIS, GWSW_PIPE_TYPE_OVERSTORTLEIDING, GWSW_PIPE_TYPE_PERCEELAANSLUITLEIDING,  
+    GWSW_PIPE_TYPE_PERSLEIDING, GWSW_PIPE_TYPE_TRANSPORTRIOOLLEIDING, GWSW_PIPE_TYPE_VUILWATERRIOOL, GWSW_PIPE_TYPE_DITRIOOL,  
+    GWSW_STELSEL_TYPE_FIELD, GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL, INTERNAL_PIPE_TYPE_FIELD, INTERNAL_PIPE_TYPE_IGNORE,  
+    INTERNAL_PIPE_TYPE_GEMENGD_RIOOL, INTERNAL_PIPE_TYPE_HEMELWATERRIOOL, INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL, INTERNAL_PIPE_TYPE_VUILWATERRIOOL,  
+    INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING, PIPE_MAP, KOLK, OPEN_WATER,  
+    BUILDINGS_TABLE_NAME, KOLKEN_TABLE_NAME, RESULT_TABLE_NAME, RESULT_TABLE_NAME_PREV,  
+    RESULT_TABLE_FIELD_ID, RESULT_TABLE_FIELD_LAATSTE_WIJZIGING, RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, RESULT_TABLE_FIELD_TYPE_VERHARDING,  
+    RESULT_TABLE_FIELD_GRAAD_VERHARDING, RESULT_TABLE_FIELD_HELLINGSTYPE, RESULT_TABLE_FIELD_HELLINGSPERCENTAGE, RESULT_TABLE_FIELD_TYPE_PRIVATE_VOORZIENING,  
+    RESULT_TABLE_FIELD_BERGING_PRIVATE_VOORZIENING, RESULT_TABLE_FIELD_CODE_GEMENGD, RESULT_TABLE_FIELD_CODE_HWA, RESULT_TABLE_FIELD_CODE_DWA,  
+    RESULT_TABLE_FIELD_CODE_INFILTRATIE, RESULT_TABLE_FIELD_WIJZIGING, TARGET_TYPE_GEMENGD_RIOOL, TARGET_TYPE_HEMELWATERRIOOL,  
+    TARGET_TYPE_VGS_HEMELWATERRIOOL, TARGET_TYPE_VUILWATERRIOOL, TARGET_TYPE_INFILTRATIEVOORZIENING, TARGET_TYPE_OPEN_WATER,  
+    TARGET_TYPE_MAAIVELD, TARGET_TYPES, DISTANCE_TYPES, SETTINGS_TABLE_NAME,  
+    SETTINGS_TABLE_NAME_PREV, INF_PAVEMENT_TABLE_NAME_PREV, SETTINGS_TABLE_FIELD_ID, SETTINGS_TABLE_FIELD_TIJD_START,  
+    SETTINGS_TABLE_FIELD_TIJD_EIND, SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, SETTINGS_TABLE_FIELD_DOWNLOAD_BAG,  
+    SETTINGS_TABLE_FIELD_PAD_BGT, SETTINGS_TABLE_FIELD_PAD_GWSW, SETTINGS_TABLE_FIELD_PAD_BAG, SETTINGS_TABLE_FIELD_PAD_KOLKEN,  
+    SETTINGS_TABLE_FIELD_AFSTAND_AFWATERINGSVOORZIENING, SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_OPP_WATER, SETTINGS_TABLE_FIELD_AFSTAND_PAND_OPP_WATER, SETTINGS_TABLE_FIELD_AFSTAND_VERHARD_KOLK,  
+    SETTINGS_TABLE_FIELD_AFSTAND_AFKOPPELD, SETTINGS_TABLE_FIELD_AFSTAND_DRIEVOUDIG, SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_ERF, SETTINGS_TABLE_FIELD_VERHARDINGSGRAAD_HALF_VERHARD,  
+    SETTINGS_TABLE_FIELD_AFKOPPELEN_HELLEND, SETTINGS_TABLE_FIELD_BOUWJAAR_GESCHEIDEN_BINNENHUIS, SETTINGS_TABLE_FIELD_LEIDINGCODES_KOPPELEN, STATISTICS_TABLE_NAME,  
+    STATISTICS_TABLE_FIELD_ID, STATISTICS_TABLE_FIELD_OPP_TOTAAL, STATISTICS_TABLE_FIELD_OPP_GEMENGD, STATISTICS_TABLE_FIELD_OPP_HWA,  
+    STATISTICS_TABLE_FIELD_OPP_VGS, STATISTICS_TABLE_FIELD_OPP_DWA, STATISTICS_TABLE_FIELD_OPP_INFILTRATIEVOORZIENING, STATISTICS_TABLE_FIELD_OPP_OPEN_WATER,  
+    STATISTICS_TABLE_FIELD_OPP_MAAIVELD, STATISTICS_TABLE_FIELD_PERC_GEMENGD, STATISTICS_TABLE_FIELD_PERC_HWA, STATISTICS_TABLE_FIELD_PERC_VGS,  
+    STATISTICS_TABLE_FIELD_PERC_DWA, STATISTICS_TABLE_FIELD_PERC_INFILTRATIEVOORZIENING, STATISTICS_TABLE_FIELD_PERC_OPEN_WATER, STATISTICS_TABLE_FIELD_PERC_MAAIVELD,  
+    STATISTICS_TABLE_FIELD_OPP_TOTAAL_DAK, STATISTICS_TABLE_FIELD_OPP_TOTAAL_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_TOTAAL_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_TOTAAL_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_GEMENGD_DAK, STATISTICS_TABLE_FIELD_OPP_GEMENGD_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_GEMENGD_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_GEMENGD_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_HWA_DAK, STATISTICS_TABLE_FIELD_OPP_HWA_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_HWA_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_HWA_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_VGS_DAK, STATISTICS_TABLE_FIELD_OPP_VGS_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_VGS_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_VGS_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_DWA_DAK, STATISTICS_TABLE_FIELD_OPP_DWA_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_DWA_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_DWA_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_INFILTRATIEVOORZIENING_DAK, STATISTICS_TABLE_FIELD_OPP_INFILTRATIEVOORZIENING_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_INFILTRATIEVOORZIENING_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_INFILTRATIEVOORZIENING_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_OPEN_WATER_DAK, STATISTICS_TABLE_FIELD_OPP_OPEN_WATER_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_OPEN_WATER_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_OPEN_WATER_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_OPP_MAAIVELD_DAK, STATISTICS_TABLE_FIELD_OPP_MAAIVELD_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_MAAIVELD_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_MAAIVELD_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_GEMENGD_DAK, STATISTICS_TABLE_FIELD_PERC_GEMENGD_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_GEMENGD_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_GEMENGD_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_HWA_DAK, STATISTICS_TABLE_FIELD_PERC_HWA_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_HWA_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_HWA_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_VGS_DAK, STATISTICS_TABLE_FIELD_PERC_VGS_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_VGS_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_VGS_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_DWA_DAK, STATISTICS_TABLE_FIELD_PERC_DWA_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_DWA_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_DWA_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_INFILTRATIEVOORZIENING_DAK, STATISTICS_TABLE_FIELD_PERC_INFILTRATIEVOORZIENING_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_INFILTRATIEVOORZIENING_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_INFILTRATIEVOORZIENING_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_OPEN_WATER_DAK, STATISTICS_TABLE_FIELD_PERC_OPEN_WATER_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_OPEN_WATER_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_OPEN_WATER_ONVERHARD,  
+    STATISTICS_TABLE_FIELD_PERC_MAAIVELD_DAK, STATISTICS_TABLE_FIELD_PERC_MAAIVELD_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_MAAIVELD_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_MAAIVELD_ONVERHARD,
+    STATISTICS_TABLE_FIELD_OPP_DAK, STATISTICS_TABLE_FIELD_OPP_GESL_VERH, STATISTICS_TABLE_FIELD_OPP_OPEN_VERH, STATISTICS_TABLE_FIELD_OPP_ONVERHARD,
+    STATISTICS_TABLE_FIELD_OPP_GROEN_DAK, STATISTICS_TABLE_FIELD_OPP_WATERPAS_VERH, STATISTICS_TABLE_FIELD_OPP_WATER, STATISTICS_TABLE_FIELD_PERC_DAK,
+    STATISTICS_TABLE_FIELD_PERC_GESL_VERH, STATISTICS_TABLE_FIELD_PERC_OPEN_VERH, STATISTICS_TABLE_FIELD_PERC_ONVERHARD, STATISTICS_TABLE_FIELD_PERC_GROEN_DAK,
+    STATISTICS_TABLE_FIELD_PERC_WATERPAS_VERH, STATISTICS_TABLE_FIELD_PERC_WATER,CHECKS_TABLE_NAME,CHECKS_TABLE_FIELD_ID,CHECKS_TABLE_FIELD_LEVEL,
+    CHECKS_TABLE_FIELD_CODE,CHECKS_TABLE_FIELD_TABLE,CHECKS_TABLE_FIELD_COLUMN,CHECKS_TABLE_FIELD_VALUE,CHECKS_TABLE_FIELD_DESCRIPTION,CHECKS_LARGE_AREA
 )
-from bgtinlooptool.core.constants import *
+
 from bgtinlooptool.core.defaults import (
     MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING,
     MAX_AFSTAND_VLAK_OPPWATER,
@@ -337,6 +314,7 @@ class InloopTool:
         """
         Import BGT Surfaces to _database
         :param file_path: path to bgt zip file
+        :param extent_wkt: exent of study area
         :return: None
         """
         self._database.import_surfaces_raw(file_path, extent_wkt)
@@ -716,7 +694,7 @@ class InloopTool:
         self._database.bgt_surfaces.ResetReading()
         self._database.bgt_surfaces.SetSpatialFilter(None)
 
-    def calculate_runoff_targets(self,leidingcode_koppelen):
+    def calculate_runoff_targets(self):
         """
         Fill the 'target type' columns of the result table
         Import BGT Surfaces and Pipes to _database first
@@ -770,7 +748,7 @@ class InloopTool:
             # feature.SetField(RESULT_TABLE_FIELD_LEIDINGCODE, val) # not yet implemented
             for tt in TARGET_TYPES:
                 feature.SetField(tt, afwatering[tt])
-            if leidingcode_koppelen:
+            if self.parameters.leidingcodes_koppelen:
                 if feature.GetField(TARGET_TYPE_GEMENGD_RIOOL) > 0:
                     feature.SetField(RESULT_TABLE_FIELD_CODE_GEMENGD, surface["code_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL])
                 if feature.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0 or feature.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0:
@@ -817,7 +795,7 @@ class InloopTool:
         pipe = None
         return distances                    
     
-    def overwrite_by_manual_edits(self,leidingcodes_koppelen):
+    def overwrite_by_manual_edits(self):
         result_table = self._database.result_table
         manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
         bgt_surfaces = self._database.bgt_surfaces
@@ -831,7 +809,7 @@ class InloopTool:
     
         # Iterate over each feature in manual_results_prev
         for count, prev_feat in enumerate(manual_results_prev, 1):
-            if leidingcodes_koppelen:
+            if self.parameters.leidingcodes_koppelen:
                 distances = self.get_nearest_pipe_code(prev_feat)
         
                 # Assign the correct code based on the type of the pipe
@@ -1124,7 +1102,7 @@ class InloopTool:
                 check_feature = None  # Cleanup after creating the feature
                 
         #Check 2: buildings that are in the BGT but not in the BAG
-        warning_bgt_bag_mismatch = "Dit pand komt wel voor in de BGT, maar niet in de BAG. Er is daarom geen bouwjaar toegewezen aan het pand."
+        warning_bgt_bag_mismatch = "Dit pand ontbreekt in de BAG. Er is daarom geen bouwjaar toegewezen aan het pand."
         
         for building in self._database.non_matching_buildings:
             fid += 1
@@ -1143,7 +1121,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 3: surface which intersect with green roofs or infiltrating pavement
-        warning_infiltrating_surfaces = "Dit vlak is waterpasserende verharding of een groen dak. Het type verharding is daarop aangepast, maar de percentuele afwatering nog niet."
+        warning_infiltrating_surfaces = "Dit vlak is waterpasserende verharding of een groen dak. Alleen het type verharding is daarop aangepast. Ga na of er nog meer aangepast moet worden."
         
         for surface in self.inf_pavements_green_roof_surfaces:
             fid += 1
@@ -1162,7 +1140,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 4: relatieve hoogteligging 
-        warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Neerslag valt op het vlak met de hoogste relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
+        warning_relatieve_hoogteligging = "Dit vlak overlapt met een ander BGT vlak en heeft een hogere relatieve hoogteligging. Zorg dat er geen overlap is tussen de vlakken en dat alleen de vlakken met hoogste relatieve hoogteligging in de dataset zitten."
         
         for surface in self.relative_hoogteligging_surfaces:
             fid += 1
@@ -1199,7 +1177,7 @@ class InloopTool:
             check_feature = None  # Cleanup after creating the feature
         
         #Check 6: handmatig gewijzigd BGT vlak heeft een eindregistratie gekregen
-        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak bestaat niet meer in de BGT data. Controleer of het nog steeds bestaat." 
+        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak zit niet meer in de BGT data. Controleer of het nog steeds bestaat." 
         for it_feature in self.outdated_changed_surfaces:
             fid += 1
             geom = it_feature.GetGeometryRef()
@@ -1786,7 +1764,10 @@ class Database:
         # create dict from buildings
         building_dict = {}
         for building in buildings:
-            building_dict[building["identificatie"][1:]] = building[field_name]
+            if building["identificatie"][0] == "0":
+                building_dict[building["identificatie"][1:]] = building[field_name]
+            else:
+                building_dict[building["identificatie"]] = building[field_name]
             building = None
         
         # List to track bui;ding-surfaces that are in the BGT but not in the BAG
@@ -1843,16 +1824,16 @@ class Database:
         # Sync the data to disk
         dst_layer.SyncToDisk()
     
-    def _save_to_gpkg(self,file_folder,template_gpkg) -> str:
+    def _save_to_gpkg(self,file_folder,template_gpkg):
         print("Preparing template gpkg")
-        file_name = self.set_output_name(file_folder)
+        file_name = self.output_name(file_folder)
         file_path = os.path.join(file_folder, file_name)
         self.copy_and_rename_file(template_gpkg, file_path)
         
         print("Saving layers to gpkg")
         # Initialize layers with common elements
         layers = [
-            (CHECKS_TABLE_NAME, "2_Controles"),
+            (CHECKS_TABLE_NAME, "2_Te_controleren"),
             (PIPES_TABLE_NAME, "3_GWSW_leidingen"),
             (RESULT_TABLE_NAME, "4_BGT_inlooptabel"),
             (SURFACES_TABLE_NAME, "5_BGT_oppervlakken"),
@@ -1874,7 +1855,7 @@ class Database:
         print("All layers saved successfully.")
         return str(file_path)
     
-    def set_output_name(self, file_folder):
+    def output_name(self, file_folder):
         # Determine max. run_id
         max_run_id = -1
         for feature in self.settings_table: 
@@ -1886,7 +1867,8 @@ class Database:
             max_run_id = 1
         
         # Set the initial output name
-        output_name = f"v{max_run_id}_BGT_inlooptabel.gpkg"
+        current_date = datetime.now().strftime("%Y%m%d")
+        output_name = f"v{max_run_id}_BGT_inlooptabel_{current_date}.gpkg"
         file_path = os.path.join(file_folder, output_name)
         
         # Check if file already exists
@@ -1915,11 +1897,11 @@ class Database:
 
             print(f"Template gpkg copied to {new_file_path}")
         except FileNotFoundError:
-            print(f"The file {original_file_path} does not exist.")
+            print(f"The template {original_file_path} does not exist.")
         except PermissionError:
-            print(f"Permission denied. Unable to copy {original_file_path} to {new_file_path}.")
+            print(f"Permission denied. Unable to copy the template {original_file_path} to {new_file_path}.")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"An error occurred when copying the template: {e}")
           
     
     def _write_to_disk(self, dst_gpkg, db_layer_name, dst_layer_name):
@@ -1979,7 +1961,7 @@ class Database:
         ON "4_BGT_inlooptabel"
         FOR EACH ROW
         BEGIN
-        UPDATE "4_BGT_inlooptabel" SET laatste_wijziging = CURRENT_TIMESTAMP WHERE id = old.id;
+        UPDATE "4_BGT_inlooptabel" SET laatste_wijziging = datetime('now', '+1 hour') WHERE id = old.id;
         END 
         """
         
