@@ -286,19 +286,19 @@ if __name__ == "__main__":
         tool = DownloadBasisData()
         params = tool.getParameterInfo()
 
-        params[0].value = r"C:\Users\vdi\Downloads\inlooptool_test\testdata.gdb\extent"
+        params[0].value = r"C:\Users\vdi\Downloads\test_inlooptool\testdata.gdb\extent"
 
         # BGT
-        params[1].value = False
-        params[2].value = r"C:\Users\vdi\Downloads\inlooptool_test\brondata\bgt.zip"
+        params[1].value = True
+        params[2].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\bgt.zip"
 
         # GWSW
-        params[3].value = True
-        params[4].value = r"C:\Users\vdi\Downloads\inlooptool_test\brondata\gwsw.gpkg"
+        params[3].value = False
+        params[4].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\gwsw.gpkg"
 
         # BAG
         params[5].value = False
-        params[6].value = r"C:\Users\vdi\Downloads\inlooptool_test\brondata\bag.gpkg"
+        params[6].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\bag.gpkg"
 
         tool.execute(parameters=params, messages=None)
 

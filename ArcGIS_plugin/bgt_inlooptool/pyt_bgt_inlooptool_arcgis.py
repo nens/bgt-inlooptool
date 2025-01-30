@@ -27,6 +27,9 @@ from helper_functions.common import (
 )
 from helper_functions.constants import VisualizeLayer
 from helper_functions.visualize_layers import VisualizeLayers
+from bgt_inlooptool.rtree_installer import ensure_rtree_install
+
+ensure_rtree_install()
 
 from core.defaults import (
     AFKOPPELEN_HELLENDE_DAKEN,
