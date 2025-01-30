@@ -9,6 +9,7 @@ import os
 import sys
 
 import arcpy
+from typing import List
 
 # Relative imports don't work well in arcgis, therefore paths are appended to sys
 bgt_inlooptool_dir = os.path.dirname(__file__)
@@ -26,12 +27,12 @@ from helper_functions.download_apis import (
 
 
 def enable_disable_options(
-    parameters: list[arcpy.Parameter], bool_idx: int, input_field_idx: int
+    parameters: List[arcpy.Parameter], bool_idx: int, input_field_idx: int
 ):
     """Enable or disable options based on another boolean field
 
     Args:
-        parameters (list[arcpy.Parameter]): A list of all parameters used in the tool
+        parameters (List[arcpy.Parameter]): A list of all parameters used in the tool
         bool_idx (int): The index of the bool field in the parameters list
         input_field_idx (int): The index of the field to update in the parameters list
     """
@@ -44,12 +45,12 @@ def enable_disable_options(
 
 
 def add_extension_to_path(
-    parameters: list[arcpy.Parameter], input_field_idx: int, extension: str
+    parameters: List[arcpy.Parameter], input_field_idx: int, extension: str
 ):
     """Update and file input with the correct extension
 
     Args:
-        parameters (list[arcpy.Parameter]): A list of all parameters used in the tool
+        parameters (List[arcpy.Parameter]): A list of all parameters used in the tool
         input_field_idx (int): The index of the parameter to update
         extension (str): the expected extension
     """
@@ -65,12 +66,12 @@ def add_extension_to_path(
 
 
 def check_if_file_already_exists(
-    parameters: list[arcpy.Parameter], input_field_idx: int
+    parameters: List[arcpy.Parameter], input_field_idx: int
 ):
     """Check if the indicated output file already exists and give an error
 
     Args:
-        parameters (list[arcpy.Parameter]): A list of all parameters used in the tool
+        parameters (List[arcpy.Parameter]): A list of all parameters used in the tool
         input_field_idx (int): The index of the parameter to check
     """
     if parameters[input_field_idx].altered:
