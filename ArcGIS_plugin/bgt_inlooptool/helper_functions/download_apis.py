@@ -57,7 +57,7 @@ def get_bgt_features(extent_wkt, output_zip):
         while status != "COMPLETED":
             request = requests.get(status_link)
             status = request.json()["status"]
-            arcpy.AddMessage("- BGT download wordt voorbereid")
+            arcpy.AddMessage("- BGT download wordt voorbereid. De download wordt zo gestart")
 
             # if request.status_code >= 500:
             # 	# TODO of restricties vanuit Wifi! netwerk!
@@ -79,8 +79,8 @@ def get_bgt_features(extent_wkt, output_zip):
         with open(output_zip, "wb") as f:
             for data in download_request.iter_content(block_size):
                 f.write(data)
-                processed_bytes += block_size
-                arcpy.AddMessage(f"- {round((processed_bytes / total_size) * 100, 0)}% Gedownload")
+                processed_bytes += len(data)
+                arcpy.AddMessage(f"- {int((processed_bytes / total_size) * 100)}% Gedownload")
 
     except Exception:
         import sys
@@ -150,13 +150,13 @@ class NetworkTask:
         Function mock the QGIS progress function. Return the stored progress
 
         Returns:
-            int: return the progress 
+            int: return the progress
         """
         return self.download_progress
 
     def increase_progress(self):
         """
-        Increase the progress with 1 unit. This is a percentage of the total progress. 
+        Increase the progress with 1 unit. This is a percentage of the total progress.
         The total progress is the number of steps an analysis has. This is set in the init
         """
         self.setProgress(self.progress() + 100 / self.total_progress)
