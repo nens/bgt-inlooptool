@@ -1,6 +1,6 @@
 [general]
 name=BGT Inlooptool
-qgisMinimumVersion=3.10
+qgisMinimumVersion=3.28
 description=BGT Inlooptool
 version=2.0
 author=Emile de Badts, Leendert van Wolfswinkel, Chris Kerklaan, Ruben van der Zaag, Sjon van Dijk, Reinout van Rees
@@ -9,7 +9,7 @@ email=bgtinlooptool@nelen-schuurmans.nl
 about=Bereken afwateringskenmerken BGT vlakken.
 
 tracker=https://github.com/nens/bgt-inlooptool/issues
-repository=https://github.com/nens/bgt-inlooptool/plugin
+repository=https://github.com/nens/bgt-inlooptool/
 # End of mandatory metadata
 
 # Recommended items:
@@ -21,7 +21,7 @@ hasProcessingProvider=yes
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
+homepage=https://plugins.qgis.org/plugins/bgtinlooptool/#plugin-about
 category=Plugins
 icon=icon.png
 # experimental flag
