@@ -11,12 +11,13 @@ ROOT_DIR_FILES = [
     "constants.py",
     "icon.png",
     "metadata.txt",
+    "LICENSE"
     "ogr2qgis.py",
     "resources.py",
     "resources.qrc",
 ]
 
-DIRECTORIES = ["core", "style", "processing"]
+DIRECTORIES = ["core", "style", "processing", "utils"]
 
 IGNORE = ["core/__pycache__", "core/.gitignore"]
 
