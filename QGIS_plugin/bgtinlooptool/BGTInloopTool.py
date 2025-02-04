@@ -403,7 +403,6 @@ class NetworkTask(QgsTask):
         if self.layer_name != "bag_panden": #GWSW download: looks for names of municipalities first. Then uses these to download the right data.
             self.increase_progress()
             all_features = self.fetch_all_features_gwsw(shrunk_extent_geometry_coordinates)
-            
         else:
             all_features = self.fetch_all_features_bag(bbox)
         self.increase_progress()
@@ -482,9 +481,8 @@ class NetworkTask(QgsTask):
             all_features = self.fetch_gwsw_data(all_features)
             all_features = self.remove_duplicate_gwsw_features(all_features)
             self.num_features_per_step = round(len(all_features)/(self.total_progress-2),0)
-        else:
+        else: 
             self.num_features_per_step = round(len(all_features)/(self.total_progress-1),0)
-
     
         layer_out = self.create_layer(datasource, srs)
         self.add_features_to_layer(layer_out, all_features, extent_geometry)
