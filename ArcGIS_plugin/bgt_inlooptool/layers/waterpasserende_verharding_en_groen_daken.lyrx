@@ -1,0 +1,396 @@
+{
+  "type": "CIMLayerDocument",
+  "build": 15850,
+  "version": "2.3.0",
+  "layerDefinitions": [
+    {
+      "type": "CIMFeatureLayer",
+      "useSourceMetadata": false,
+      "sourceModifiedTime": {
+        "type": "TimeInstant"
+      },
+      "uRI": "CIMPATH=1__Waterpasserende_verharding_en_groene_daken__optionele_input__fd50ac41_c4e2_4a7d_94ed_54a246d1d12a.xml",
+      "name": "v1_BGT_inlooptabel \u2014 1. Waterpasserende verharding en groene daken [optionele input]",
+      "enableLayerEffects": false,
+      "useVisibilityTimeExtent": false,
+      "rasterizeOnExport": false,
+      "layerScaleVisibilityOptions": {
+        "type": "CIMLayerScaleVisibilityOptions",
+        "showLayerAtAllScales": true,
+        "savedMinScale": 100000000.0,
+        "savedMaxScale": 0.0
+      },
+      "allowDrapingOnIntegratedMesh": false,
+      "blendingMode": "Alpha",
+      "showMapTips": false,
+      "refreshRateUnit": "esriTimeUnitsSeconds",
+      "refreshRate": -1,
+      "searchable": false,
+      "serviceLayerID": -1,
+      "showPopups": false,
+      "maxDisplayCacheAge": 5,
+      "displayCacheType": "Permanent",
+      "visibility": true,
+      "transparency": 0.0,
+      "showLegends": true,
+      "layerType": "Operational",
+      "expanded": true,
+      "description": "",
+      "attribution": "",
+      "layerEffectsMode": "Layer",
+      "featureBlendingMode": "Alpha",
+      "displayFiltersType": "ByChoice",
+      "enableDisplayFilters": false,
+      "featureCacheType": "None",
+      "useSelectionSymbol": false,
+      "selectable": true,
+      "isFlattened": true,
+      "htmlPopupEnabled": false,
+      "featureTable": {
+        "type": "CIMFeatureTable",
+        "isLicensedDataSource": false,
+        "searchOrder": "esriSearchOrderSpatial",
+        "studyAreaSpatialRel": "esriSpatialRelUndefined",
+        "dataConnection": {
+          "type": "CIMSqlQueryDataConnection",
+          "datasetType": "esriDTFeatureClass",
+          "dataset": "main.%\"1. Waterpasserende verharding en groene daken [optionele input]\"",
+          "workspaceFactory": "Sql",
+          "workspaceConnectionString": "AUTHENTICATION_MODE=OSA;DATABASE=..\\inlooptool_test\\v1_BGT_inlooptabel.gpkg",
+          "mappedOIDFieldLength": "OID64Bit",
+          "isTableBased": true,
+          "spatialStorageType": 11,
+          "queryFields": [
+            {
+              "name": "fid",
+              "type": "esriFieldTypeBigInteger",
+              "isNullable": false,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "required": true,
+              "editable": false,
+              "dbmsType": 11
+            },
+            {
+              "name": "geom",
+              "type": "esriFieldTypeGeometry",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "geometryDef": {
+                "avgNumPoints": 0,
+                "geometryType": "esriGeometryPoint",
+                "hasM": false,
+                "hasZ": false,
+                "spatialReference": {
+                  "latestWkid": 28992,
+                  "wkid": 28992
+                }
+              },
+              "dbmsType": 8
+            },
+            {
+              "name": "type",
+              "type": "esriFieldTypeString",
+              "isNullable": true,
+              "length": 2147483647,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 13
+            },
+            {
+              "name": "jaar_aanleg",
+              "type": "esriFieldTypeBigInteger",
+              "isNullable": true,
+              "length": 8,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 11
+            },
+            {
+              "name": "omschrijving",
+              "type": "esriFieldTypeString",
+              "isNullable": true,
+              "length": 2147483647,
+              "precision": 0,
+              "scale": 0,
+              "dbmsType": 13
+            }
+          ],
+          "geometryType": "esriGeometryPoint",
+          "oIDFields": "fid",
+          "spatialReference": {
+            "latestWkid": 28992,
+            "wkid": 28992
+          },
+          "srid": "28992",
+          "sqlQuery": "select fid,geom,\"type\",\"jaar_aanleg\",\"omschrijving\" from main.\"1. Waterpasserende verharding en groene daken [optionele input]\""
+        },
+        "useSubtypeValue": false,
+        "selectRelatedData": false,
+        "timeDisplayDefinition": {
+          "type": "CIMTimeDisplayDefinition",
+          "timeOffsetUnits": "esriTimeUnitsYears",
+          "timeIntervalUnits": "esriTimeUnitsHours",
+          "timeInterval": 0,
+          "cumulative": false
+        },
+        "timeDefinition": {
+          "type": "CIMTimeDataDefinition",
+          "timeExtentCanChange": false,
+          "hasLiveData": true,
+          "useTime": false
+        },
+        "timeFields": {
+          "type": "CIMTimeTableDefinition"
+        },
+        "editable": true
+      },
+      "autoGenerateFeatureTemplates": true,
+      "showTracks": false,
+      "showPreviousObservations": false,
+      "useRealWorldSymbolSizes": false,
+      "snappable": true,
+      "scaleSymbols": true,
+      "renderer": {
+        "type": "CIMSimpleRenderer",
+        "symbol": {
+          "type": "CIMSymbolReference",
+          "symbol": {
+            "type": "CIMPointSymbol",
+            "useRealWorldSymbolSizes": false,
+            "symbolLayers": [
+              {
+                "type": "CIMVectorMarker",
+                "overprint": false,
+                "colorLocked": false,
+                "enable": true,
+                "billboardMode3D": "None",
+                "size": 1.9842507185822245,
+                "rotation": -0.0,
+                "rotateClockwise": false,
+                "offsetY": 0,
+                "offsetX": 0,
+                "dominantSizeAxis3D": "Z",
+                "anchorPointUnits": "Relative",
+                "anchorPoint": {
+                  "KnownSimple": false,
+                  "hasM": false,
+                  "hasZ": false,
+                  "hasId": false,
+                  "y": 0,
+                  "x": 0
+                },
+                "scaleStrokesAndFills": false,
+                "respectFrame": true,
+                "scaleSymbolsProportionally": false,
+                "verticalOrientation3D": false,
+                "markerGraphics": [
+                  {
+                    "type": "CIMMarkerGraphic",
+                    "symbol": {
+                      "type": "CIMPolygonSymbol",
+                      "useRealWorldSymbolSizes": false,
+                      "symbolLayers": [
+                        {
+                          "type": "CIMSolidStroke",
+                          "overprint": false,
+                          "colorLocked": false,
+                          "enable": true,
+                          "anchor3D": "Center",
+                          "closeCaps3D": false,
+                          "width": 1.133857553475557,
+                          "miterLimit": 10,
+                          "lineStyle3D": "Tube",
+                          "joinStyle": "Bevel",
+                          "capStyle": "Butt",
+                          "color": {
+                            "type": "CIMRGBColor",
+                            "values": [
+                              0,
+                              0,
+                              0,
+                              100.0
+                            ]
+                          }
+                        },
+                        {
+                          "type": "CIMSolidFill",
+                          "overprint": false,
+                          "colorLocked": false,
+                          "enable": true,
+                          "color": {
+                            "type": "CIMRGBColor",
+                            "values": [
+                              0,
+                              0,
+                              0,
+                              100.0
+                            ]
+                          }
+                        }
+                      ],
+                      "angleAlignment": "Display"
+                    },
+                    "geometry": {
+                      "KnownSimple": false,
+                      "hasM": false,
+                      "hasZ": false,
+                      "hasId": false,
+                      "curveRings": [
+                        [
+                          [
+                            -1,
+                            1
+                          ],
+                          {
+                            "a": [
+                              [
+                                -1,
+                                1
+                              ],
+                              [
+                                0.0,
+                                0.0
+                              ],
+                              0,
+                              1
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  }
+                ],
+                "frame": {
+                  "ymin": -1,
+                  "ymax": 1,
+                  "xmin": -1,
+                  "xmax": 1
+                }
+              },
+              {
+                "type": "CIMVectorMarker",
+                "overprint": false,
+                "colorLocked": false,
+                "enable": true,
+                "billboardMode3D": "None",
+                "size": 9.070860427804456,
+                "rotation": -0.0,
+                "rotateClockwise": false,
+                "offsetY": 0,
+                "offsetX": 0,
+                "dominantSizeAxis3D": "Z",
+                "anchorPointUnits": "Relative",
+                "anchorPoint": {
+                  "KnownSimple": false,
+                  "hasM": false,
+                  "hasZ": false,
+                  "hasId": false,
+                  "y": 0,
+                  "x": 0
+                },
+                "scaleStrokesAndFills": false,
+                "respectFrame": true,
+                "scaleSymbolsProportionally": false,
+                "verticalOrientation3D": false,
+                "markerGraphics": [
+                  {
+                    "type": "CIMMarkerGraphic",
+                    "symbol": {
+                      "type": "CIMPolygonSymbol",
+                      "useRealWorldSymbolSizes": false,
+                      "symbolLayers": [
+                        {
+                          "type": "CIMSolidStroke",
+                          "overprint": false,
+                          "colorLocked": false,
+                          "enable": true,
+                          "anchor3D": "Center",
+                          "closeCaps3D": false,
+                          "width": 0.5669287767377785,
+                          "miterLimit": 10,
+                          "lineStyle3D": "Tube",
+                          "joinStyle": "Bevel",
+                          "capStyle": "Butt",
+                          "color": {
+                            "type": "CIMRGBColor",
+                            "values": [
+                              0,
+                              0,
+                              0,
+                              100.0
+                            ]
+                          }
+                        },
+                        {
+                          "type": "CIMSolidFill",
+                          "overprint": false,
+                          "colorLocked": false,
+                          "enable": true,
+                          "color": {
+                            "type": "CIMRGBColor",
+                            "values": [
+                              255,
+                              255,
+                              255,
+                              100.0
+                            ]
+                          }
+                        }
+                      ],
+                      "angleAlignment": "Display"
+                    },
+                    "geometry": {
+                      "KnownSimple": false,
+                      "hasM": false,
+                      "hasZ": false,
+                      "hasId": false,
+                      "curveRings": [
+                        [
+                          [
+                            -1,
+                            1
+                          ],
+                          {
+                            "a": [
+                              [
+                                -1,
+                                1
+                              ],
+                              [
+                                0.0,
+                                0.0
+                              ],
+                              0,
+                              1
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  }
+                ],
+                "frame": {
+                  "ymin": -1,
+                  "ymax": 1,
+                  "xmin": -1,
+                  "xmax": 1
+                }
+              }
+            ],
+            "angleAlignment": "Display",
+            "scaleX": 1
+          }
+        },
+        "patch": "Default"
+      },
+      "labelVisibility": false
+    }
+  ],
+  "layers": [
+    "CIMPATH=1__Waterpasserende_verharding_en_groene_daken__optionele_input__fd50ac41_c4e2_4a7d_94ed_54a246d1d12a.xml"
+  ]
+}
