@@ -16,4 +16,4 @@ ArcGIS_plugin/bgt_inlooptool/rtree/lib/spatialindex_c-64.dll
 .bak
 plugin/bgtinlooptool/bgtinlooptool.zip
 plugin/bgtinlooptool/bgtinlooptool/
-plugin/bgtinlooptool/custom_libs/
+custom_libs
