@@ -1,9 +1,11 @@
-import arcpy
+import json
 import os
 import sys
-import json
-from cls_general_use import GeneralUse
 from collections import namedtuple
+
+import arcpy
+
+from .cls_general_use import GeneralUse
 
 arcgis_com = GeneralUse(sys, arcpy)
 
@@ -22,12 +24,21 @@ def layers_to_gdb(input_dataset, output_gdb):
         arcpy.env.workspace = output_gdb
         arcpy.env.overwriteOutput = True
 
+        desc = arcpy.Describe(input_dataset)
+
         fc_name = os.path.basename(input_dataset).replace(".", "_")
-        out_dataset = str(
-            arcpy.FeatureClassToFeatureClass_conversion(
-                input_dataset, output_gdb, fc_name
+        if not hasattr(
+            desc, "featureType"
+        ):  # providing a gpkg table to describe returns an empty describe object
+            out_dataset = str(
+                arcpy.conversion.TableToTable(input_dataset, output_gdb, fc_name)
             )
-        )
+        else:
+            out_dataset = str(
+                arcpy.FeatureClassToFeatureClass_conversion(
+                    input_dataset, output_gdb, fc_name
+                )
+            )
 
         return out_dataset
     except Exception:

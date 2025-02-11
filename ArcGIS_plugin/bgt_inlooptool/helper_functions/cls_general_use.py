@@ -1,4 +1,5 @@
 import sys
+
 import arcpy
 
 
@@ -52,7 +53,7 @@ class GeneralUse:
 
         strTime = (
             "Elapsed time from start "
-            + str(round(time.perf_counter()- self.startTime))
+            + str(round(time.perf_counter() - self.startTime))
             + " seconds on "
             + time.strftime("%H:%M:%S")
             + "."

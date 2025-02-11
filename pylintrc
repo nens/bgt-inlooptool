@@ -1,0 +1,36 @@
+[MESSAGES CONTROL]
+# DEFINITELY INCOMPATIBLE WITH VIKTOR
+# POSSIBLY NOT NEEDED FOR VIKTOR
+# R0903 Too few public methods
+# C0103 Invalid name                    Variables in Viktor (lowercase) look like constants to pylint (uppercase)
+#                                       Single-letter names are banned (m for model, d for designer)
+#                                       ! Should be set only for parametrization modules
+# E0611: No name 'SetParametersResult' in module 'viktor.result' (no-name-in-module)
+# R1705 Unnecessary elif after return   Pylint seems to prefer the ternary operator over if-else statements.
+# R0914 Too many local variables
+# W0702 No exception type(s) specified
+# W0511 No TODOs allowed
+# R0912 Too many branches
+# R0913 Too many arguments
+# E0012 Bad option value
+disable= C0111,
+         C0411,
+         E0611,
+         R0801,
+         R0201,
+         C0301,
+         C0103,
+         R0903,
+         R1705,
+         E0401,
+         R0914,
+         W0511,
+         R0913,
+         R0912,
+         E0012,
+         R0902,
+         W0703,
+         W0613,
+         R0915,
+         C0302,
+         R1702
