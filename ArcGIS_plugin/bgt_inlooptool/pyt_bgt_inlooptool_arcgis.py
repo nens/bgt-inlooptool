@@ -512,6 +512,8 @@ class BGTInloopToolArcGIS(BaseTool):
             if input_area is not None:
                 # get the input extent as wkt from the input_area
                 input_extent_mask_wkt = get_wkt_extent(input_area)
+            else:
+                input_extent_mask_wkt = None
 
             # start of the core
             inlooptool = InloopTool(core_parameters)
@@ -738,15 +740,15 @@ if __name__ == "__main__":
         # bag_file
         params[3].value = os.path.join(main_path, "BAG_Akersloot.gpkg")
         # kolken_file
-        params[4].value = os.path.join(
-            main_path, "kolken_Castricum_Limmen_Akersloot.shp"
-        )
+        # params[4].value = os.path.join(
+        #     main_path, "kolken_Castricum_Limmen_Akersloot.shp"
+        # )
         # area_file
-        params[5].value = os.path.join(
-            main_path, "extent_Akersloot.shp"
-        )  # os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
+        # params[5].value = os.path.join(
+        #     main_path, "extent_Akersloot.shp"
+        # )  # os.path.join(main_path, r"polyoon_centrum.gdb\Polygoon_centrum")
         # statistics area
-        params[6].value = os.path.join(main_path, "statistiek_gebieden_buurten.shp")
+        # params[6].value = os.path.join(main_path, "statistiek_gebieden_buurten.shp")
         # output_location
         params[7].value = r"C:\Users\vdi\Downloads\test_inlooptool"
 
