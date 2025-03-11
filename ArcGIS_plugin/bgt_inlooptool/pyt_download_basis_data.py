@@ -73,8 +73,8 @@ class DownloadBasisData(BaseTool):
         Initialization.
 
         """
-        self.label = "1. Download de basis data"
-        self.description = """Download de basis data benodigd voor de tool"""
+        self.label = "1. Download de basisdata"
+        self.description = """Download de basisdata benodigd voor de tool"""
         self.canRunInBackground = True
 
         parameter_names = [
@@ -284,10 +284,10 @@ if __name__ == "__main__":
         tool = DownloadBasisData()
         params = tool.getParameterInfo()
 
-        params[0].value = r"C:\Users\vdi\Downloads\test_inlooptool\testdata.gdb\extent"
+        params[0].value = r"C:\Github\bgt-inlooptool\test-data\akersloot\extent_Akersloot.shp"
 
         # BGT
-        params[1].value = True
+        params[1].value = False
         params[2].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\bgt.zip"
 
         # GWSW
@@ -295,8 +295,8 @@ if __name__ == "__main__":
         params[4].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\gwsw.gpkg"
 
         # BAG
-        params[5].value = False
-        params[6].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\bag.gpkg"
+        params[5].value = True
+        params[6].value = r"C:\Users\vdi\Downloads\bag_test.gpkg"
 
         tool.execute(parameters=params, messages=None)
 
