@@ -88,6 +88,7 @@ from bgtinlooptool.constants import (
     GPKG_TEMPLATE,
     GPKG_TEMPLATE_HIDDEN,
     NOT_FOUND_GEMEENTES,
+    WFS_FEATURE_LIMIT,
 )
 
 
@@ -409,6 +410,21 @@ class NetworkTask(QgsTask):
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
     
+    def get_bag_feature_count(self) -> int:
+        """
+        Get the feature count of BAG objects in the request area from the WFS
+
+        :return: The feature count
+        """
+        bbox = self.wkt_to_bbox()
+
+        url = self.url.replace("&outputFormat=application/json", "&resultType=hits")
+        request_url = url + f"&BBOX={bbox}"
+        response_text = self.load_api_data(request_url, "")
+        xml_data = etree.fromstring(response_text)
+
+        return int(xml_data.attrib["numberMatched"])
+    
     def fetch_all_features_gwsw(self, extent_geometry):
         not_all_features_found = True
         index = 0
@@ -462,6 +478,9 @@ class NetworkTask(QgsTask):
         if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 404:
             print(f"Error 404: {gemeente} not found.")
             return None
+        
+        if "text/xml" in reply.headers["Content-Type"]:
+            return reply.content
         
         return response_text
     
@@ -545,10 +564,11 @@ class NetworkTask(QgsTask):
             uri = feature['properties'].get('uri')  # Extract URI
             name = feature['properties'].get('naam')  # Extract name
             
-            # Check if both 'uri' and 'name' exist and are unique
-            if uri and name and (uri, name) not in seen:
-                seen.add((uri, name))  # Mark this (uri, name) as seen
-                unique_features.append(feature)  # Keep the feature
+            # Check if 'uri' or 'name' exist and if so, whether the combination is unique
+            if uri or name:  
+                if (uri, name) not in seen:
+                    seen.add((uri, name))  # Mark this (uri, name) as seen
+                    unique_features.append(feature)  # Keep the feature
                 
         return unique_features
     
@@ -1043,10 +1063,22 @@ class BGTInloopTool:
         )
         
         # Perform download
-        task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
-        # Connect the task's finished signal to a custom slot to handle completion
-        task.taskCompleted.connect(self.on_task_finished_bag)
-        QgsApplication.taskManager().addTask(task)
+        try:
+            task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
+            expected_bag_features = task.get_bag_feature_count()
+            if expected_bag_features >= WFS_FEATURE_LIMIT:
+                self.iface.messageBar().pushMessage(
+                    "Warning",
+                    f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de "
+                    "downloaddienst ({WFS_FEATURE_LIMIT}). Gebruik een kleiner zoekgebied.",
+                    level=Qgis.Warning,
+                    duration=15,
+                )
+            # Connect the task's finished signal to a custom slot to handle completion
+            task.taskCompleted.connect(self.on_task_finished_bag)
+            QgsApplication.taskManager().addTask(task)
+        except Exception:
+            print("An error has occurred while downloading the data.")
         
         # Change UI
         output_file = self.dlg.bagApiOutput.filePath()
