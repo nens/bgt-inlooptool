@@ -414,17 +414,29 @@ class NetworkTask(QgsTask):
     def get_bag_feature_count(self) -> int:
         """
         Get the feature count of BAG objects in the request area from the WFS
-
+    
         :return: The feature count
         """
         bbox = self.wkt_to_bbox()
-
+    
         url = self.url.replace("&outputFormat=application/json", "&resultType=hits")
         request_url = url + f"&BBOX={bbox}"
-        response_text = self.load_api_data(request_url, "")
-        xml_data = etree.fromstring(response_text)
+        response_data = self.load_api_data(request_url, "")
 
-        return int(xml_data.attrib["numberMatched"])
+        if not response_data:
+            raise ValueError("Received empty response from WFS service.")
+    
+        # Convert response_data to bytes if it's a string
+        if isinstance(response_data, str):
+            response_data = response_data.encode("utf-8")  
+    
+        try:
+            xml_data = etree.fromstring(response_data)  # Parse as bytes
+            feature_count = int(xml_data.attrib.get("numberMatched", 0))
+            return feature_count
+        except etree.XMLSyntaxError as e:
+            print(f"XML parsing error: {e}")
+            raise ValueError("Invalid XML response received.")
     
     def fetch_all_features_gwsw(self, extent_geometry):
         not_all_features_found = True
@@ -475,18 +487,23 @@ class NetworkTask(QgsTask):
         reply.finished.connect(loop.quit)
         loop.exec_()
         
-        response_text = reply.readAll().data().decode("utf-8")
+        #response_text = reply.readAll().data().decode("utf-8")
         if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 404:
             print(f"Error 404: {gemeente} not found.")
             return None
         
-        # Get the "Content-Type" header correctly
-        content_type = reply.rawHeader(b"Content-Type").data().decode("utf-8") if reply.hasRawHeader(b"Content-Type") else ""
-        
-        if "text/xml" in content_type:
-            return reply.readAll()  # Return raw content if XML
-        
-        return response_text
+        # Get content type
+        content_type = reply.header(QNetworkRequest.ContentTypeHeader)
+        response_data = reply.readAll().data()  # Read once to avoid buffer issues
+    
+        if not response_data:
+            print("Error: Received empty response.")
+            return None
+    
+        if content_type and "text/xml" in content_type.lower():
+            return response_data.decode("utf-8")  # Return XML as a string
+    
+        return response_data.decode("utf-8")  # Default to UTF-8 decoding
     
     def save_features_to_gpkg(self, all_features, extent_geometry):
         print("Saving features to GeoPackage")
@@ -1072,14 +1089,15 @@ class BGTInloopTool:
         if expected_bag_features >= WFS_FEATURE_LIMIT:
             self.iface.messageBar().pushMessage(
                 "Warning",
-                f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de "
-                "downloaddienst ({WFS_FEATURE_LIMIT}). Gebruik een kleiner zoekgebied.",
+                f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de downloaddienst ({WFS_FEATURE_LIMIT}). Gebruik een kleiner zoekgebied.",
                 level=Qgis.Warning,
                 duration=15,
             )
+            return # do not continue the download
         # Connect the task's finished signal to a custom slot to handle completion
         task.taskCompleted.connect(self.on_task_finished_bag)
         QgsApplication.taskManager().addTask(task)
+
         
         # Change UI
         output_file = self.dlg.bagApiOutput.filePath()
@@ -1183,7 +1201,6 @@ class BGTInloopTool:
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start is True:
-            #print(self.first_start)
             self.first_start = False
 
             self.dlg = BGTInloopToolDialog()
