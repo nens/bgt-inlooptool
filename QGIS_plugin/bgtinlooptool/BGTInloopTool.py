@@ -48,6 +48,7 @@ from qgis.core import (
 
 from qgis.utils import iface
 from osgeo import ogr, osr
+from lxml import etree
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -479,8 +480,11 @@ class NetworkTask(QgsTask):
             print(f"Error 404: {gemeente} not found.")
             return None
         
-        if "text/xml" in reply.headers["Content-Type"]:
-            return reply.content
+        # Get the "Content-Type" header correctly
+        content_type = reply.rawHeader(b"Content-Type").data().decode("utf-8") if reply.hasRawHeader(b"Content-Type") else ""
+        
+        if "text/xml" in content_type:
+            return reply.readAll()  # Return raw content if XML
         
         return response_text
     
@@ -1063,22 +1067,19 @@ class BGTInloopTool:
         )
         
         # Perform download
-        try:
-            task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
-            expected_bag_features = task.get_bag_feature_count()
-            if expected_bag_features >= WFS_FEATURE_LIMIT:
-                self.iface.messageBar().pushMessage(
-                    "Warning",
-                    f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de "
-                    "downloaddienst ({WFS_FEATURE_LIMIT}). Gebruik een kleiner zoekgebied.",
-                    level=Qgis.Warning,
-                    duration=15,
-                )
-            # Connect the task's finished signal to a custom slot to handle completion
-            task.taskCompleted.connect(self.on_task_finished_bag)
-            QgsApplication.taskManager().addTask(task)
-        except Exception:
-            print("An error has occurred while downloading the data.")
+        task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
+        expected_bag_features = task.get_bag_feature_count()
+        if expected_bag_features >= WFS_FEATURE_LIMIT:
+            self.iface.messageBar().pushMessage(
+                "Warning",
+                f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de "
+                "downloaddienst ({WFS_FEATURE_LIMIT}). Gebruik een kleiner zoekgebied.",
+                level=Qgis.Warning,
+                duration=15,
+            )
+        # Connect the task's finished signal to a custom slot to handle completion
+        task.taskCompleted.connect(self.on_task_finished_bag)
+        QgsApplication.taskManager().addTask(task)
         
         # Change UI
         output_file = self.dlg.bagApiOutput.filePath()
