@@ -7,9 +7,9 @@ Date: 29/09/2020
 
 import os
 import sys
+from typing import List
 
 import arcpy
-from typing import List
 
 # Relative imports don't work well in arcgis, therefore paths are appended to sys
 bgt_inlooptool_dir = os.path.dirname(__file__)
@@ -19,16 +19,10 @@ sys.path.append(os.path.join(bgt_inlooptool_dir, "core"))
 # Set path to Generic modules
 from helper_functions.cls_general_use import GeneralUse
 from helper_functions.common import BaseTool, get_wkt_extent, parameter
-from helper_functions.download_apis import (
-    get_bag_features,
-    get_bgt_features,
-    get_gwsw_features,
-)
+from helper_functions.download_apis import get_bag_features, get_bgt_features, get_gwsw_features
 
 
-def enable_disable_options(
-    parameters: List[arcpy.Parameter], bool_idx: int, input_field_idx: int
-):
+def enable_disable_options(parameters: List[arcpy.Parameter], bool_idx: int, input_field_idx: int):
     """Enable or disable options based on another boolean field
 
     Args:
@@ -44,9 +38,7 @@ def enable_disable_options(
         # parameters[input_field_idx].parameterType = None
 
 
-def add_extension_to_path(
-    parameters: List[arcpy.Parameter], input_field_idx: int, extension: str
-):
+def add_extension_to_path(parameters: List[arcpy.Parameter], input_field_idx: int, extension: str):
     """Update and file input with the correct extension
 
     Args:
@@ -56,18 +48,12 @@ def add_extension_to_path(
     """
     if parameters[input_field_idx].altered:
         if "." in parameters[input_field_idx].valueAsText:
-            parameters[input_field_idx].value = (
-                parameters[input_field_idx].valueAsText.split(".")[0] + extension
-            )
+            parameters[input_field_idx].value = parameters[input_field_idx].valueAsText.split(".")[0] + extension
         else:
-            parameters[input_field_idx].value = (
-                parameters[input_field_idx].valueAsText + extension
-            )
+            parameters[input_field_idx].value = parameters[input_field_idx].valueAsText + extension
 
 
-def check_if_file_already_exists(
-    parameters: List[arcpy.Parameter], input_field_idx: int
-):
+def check_if_file_already_exists(parameters: List[arcpy.Parameter], input_field_idx: int):
     """Check if the indicated output file already exists and give an error
 
     Args:
@@ -76,9 +62,7 @@ def check_if_file_already_exists(
     """
     if parameters[input_field_idx].altered:
         if os.path.exists(parameters[input_field_idx].valueAsText):
-            parameters[input_field_idx].setWarningMessage(
-                "Het outputbestand bestaat al, kies een nieuwe naam!"
-            )
+            parameters[input_field_idx].setWarningMessage("Het outputbestand bestaat al, kies een nieuwe naam!")
         else:
             parameters[input_field_idx].clearMessage()
 
@@ -89,8 +73,8 @@ class DownloadBasisData(BaseTool):
         Initialization.
 
         """
-        self.label = "1. Download de basis data"
-        self.description = """Download de basis data benodigd voor de tool"""
+        self.label = "1. Download de basisdata"
+        self.description = """Download de basisdata benodigd voor de tool"""
         self.canRunInBackground = True
 
         parameter_names = [
@@ -198,19 +182,13 @@ class DownloadBasisData(BaseTool):
         add_extension_to_path(parameters, self.bag_storage_path_idx, ".gpkg")
 
         # Enable/disable BGT parameters
-        enable_disable_options(
-            parameters, self.bgt_download_bool_idx, self.bgt_storage_path_idx
-        )
+        enable_disable_options(parameters, self.bgt_download_bool_idx, self.bgt_storage_path_idx)
 
         # Enable/disable GWSW parameters
-        enable_disable_options(
-            parameters, self.gwsw_download_bool_idx, self.gwsw_storage_path_idx
-        )
+        enable_disable_options(parameters, self.gwsw_download_bool_idx, self.gwsw_storage_path_idx)
 
         # Enable/disable BAG parameters
-        enable_disable_options(
-            parameters, self.bag_download_bool_idx, self.bag_storage_path_idx
-        )
+        enable_disable_options(parameters, self.bag_download_bool_idx, self.bag_storage_path_idx)
 
         super(DownloadBasisData, self).updateParameters(parameters)
 
@@ -232,14 +210,33 @@ class DownloadBasisData(BaseTool):
                     )
                 else:
                     feature_count = int(
-                        arcpy.management.GetCount(
-                            parameters[self.search_area_idx].valueAsText
-                        ).getOutput(self.search_area_idx)
+                        arcpy.management.GetCount(parameters[self.search_area_idx].valueAsText).getOutput(
+                            self.search_area_idx
+                        )
                     )
                     if feature_count != 1:
                         parameters[self.search_area_idx].setErrorMessage(
                             "Er is meer of minder dan 1 feature aanwezig of geselecteerd!"
                         )
+
+        # Add error messages if the paths have not been set
+        if parameters[self.bag_download_bool_idx].value:
+            if not parameters[self.bag_storage_path_idx].value:
+                parameters[self.bag_storage_path_idx].setErrorMessage("Pad mag niet lege zijn")
+            else:
+                parameters[self.bag_storage_path_idx].clearMessage()
+
+        if parameters[self.bgt_download_bool_idx].value:
+            if not parameters[self.bgt_storage_path_idx].value:
+                parameters[self.bgt_storage_path_idx].setErrorMessage("Pad mag niet lege zijn")
+            else:
+                parameters[self.bgt_storage_path_idx].clearMessage()
+
+        if parameters[self.gwsw_download_bool_idx].value:
+            if not parameters[self.gwsw_storage_path_idx].value:
+                parameters[self.gwsw_storage_path_idx].setErrorMessage("Pad mag niet lege zijn")
+            else:
+                parameters[self.gwsw_storage_path_idx].clearMessage()
 
         # Validate zip files
         check_if_file_already_exists(parameters, self.bgt_storage_path_idx)
@@ -287,10 +284,10 @@ if __name__ == "__main__":
         tool = DownloadBasisData()
         params = tool.getParameterInfo()
 
-        params[0].value = r"C:\Users\vdi\Downloads\test_inlooptool\testdata.gdb\extent"
+        params[0].value = r"C:\Github\bgt-inlooptool\test-data\akersloot\extent_Akersloot.shp"
 
         # BGT
-        params[1].value = True
+        params[1].value = False
         params[2].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\bgt.zip"
 
         # GWSW
@@ -298,8 +295,8 @@ if __name__ == "__main__":
         params[4].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\gwsw.gpkg"
 
         # BAG
-        params[5].value = False
-        params[6].value = r"C:\Users\vdi\Downloads\test_inlooptool\brondata\bag.gpkg"
+        params[5].value = True
+        params[6].value = r"C:\Users\vdi\Downloads\bag_test.gpkg"
 
         tool.execute(parameters=params, messages=None)
 

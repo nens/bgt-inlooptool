@@ -32,9 +32,10 @@ import time
 
 import arcpy
 import requests
+from lxml import etree
 from osgeo import ogr, osr
 
-from .constants import BAG_API_URL, BGT_API_URL, CBS_GEMEENTES_API_URL, NOT_FOUND_GEMEENTES
+from .constants import BAG_API_URL, BGT_API_URL, CBS_GEMEENTES_API_URL, NOT_FOUND_GEMEENTES, WFS_FEATURE_LIMIT
 
 
 def get_bgt_features(extent_wkt, output_zip):
@@ -59,15 +60,6 @@ def get_bgt_features(extent_wkt, output_zip):
             status = request.json()["status"]
             arcpy.AddMessage("- BGT download wordt voorbereid. De download wordt zo gestart")
 
-            # if request.status_code >= 500:
-            # 	# TODO of restricties vanuit Wifi! netwerk!
-            # 	message = f"BGT API Server werkt niet zoals verwacht probeer het later nog eens status_code is {request.status_code}"
-            # 	arcpy.AddError(message)
-            # 	raise ValueError(message)
-            # elif request.status_code >= 400:
-            # 	message = f"Er is iets anders fout gegaan, status_code is {request.status_code}"
-            # 	arcpy.AddError(message)
-            # 	raise ValueError(message)
             time.sleep(5)
 
         download_url_extract = request.json()["_links"]["download"]["href"]
@@ -113,6 +105,12 @@ def get_gwsw_features(extent_wkt, output_gpkg):
 def get_bag_features(extent_wkt, output_gpkg):
     try:
         nwt = NetworkTask(BAG_API_URL, output_gpkg, extent_wkt, "bag_panden")
+        expected_bag_features = nwt.get_bag_feature_count()
+        if expected_bag_features >= WFS_FEATURE_LIMIT:
+            arcpy.AddError(
+                f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de "
+                "downloaddienst. Gebruik een kleiner zoekgebied."
+            )
         nwt.run()
     except Exception:
         import sys
@@ -165,20 +163,32 @@ class NetworkTask:
         extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt).Buffer(
             -0.5
         )  # Give the extent geometry a negative buffer of 0.5m, so that the intersect function works properly (when equal, no neighbouring geometries are used)
-        shrunk_extent_geometry_wkt = extent_geometry.ExportToWkt()
-        shrunk_extent_geometry_coordinates = shrunk_extent_geometry_wkt[
-            shrunk_extent_geometry_wkt.find("((") + 2 : shrunk_extent_geometry_wkt.find("))")
-        ]
         bbox = self.wkt_to_bbox()
         if self.layer_name != "bag_panden":
             # GWSW download: looks for names of municipalities first. Then uses these to download the right data.
             self.increase_progress()
-            all_features = self.fetch_all_features_gwsw(shrunk_extent_geometry_coordinates)
+            all_features = self.fetch_all_features_gwsw(bbox)
+            all_features = self.filter_gemeentes_by_extent(all_features, extent_geometry)
         else:
             all_features = self.fetch_all_features_bag(bbox)
         self.increase_progress()
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
+
+    def get_bag_feature_count(self) -> int:
+        """
+        Get the feature count of BAG objects in the request area from the WFS
+
+        :return: The feature count
+        """
+        bbox = self.wkt_to_bbox()
+
+        url = self.url.replace("&outputFormat=application/json", "&resultType=hits")
+        request_url = url + f"&BBOX={bbox}"
+        response_text = self.load_api_data(request_url, "")
+        xml_data = etree.fromstring(response_text)
+
+        return int(xml_data.attrib["numberMatched"])
 
     def fetch_all_features_gwsw(self, extent_geometry):
         not_all_features_found = True
@@ -227,6 +237,9 @@ class NetworkTask:
             print(f"Error 404: {gemeente} not found.")
             return None
 
+        if "text/xml" in response.headers["Content-Type"]:
+            return response.content
+
         return response.text
 
     def save_features_to_gpkg(self, all_features, extent_geometry):
@@ -251,6 +264,17 @@ class NetworkTask:
         layer_out = self.create_layer(datasource, srs)
         self.add_features_to_layer(layer_out, all_features, extent_geometry)
         datasource = None
+
+    def filter_gemeentes_by_extent(self, all_features, extent_geometry):
+        selection_gemeentes = []
+
+        for feature in all_features:
+            geometry_wkt = self.geojson_to_wkt(feature["geometry"])
+            geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
+            if extent_geometry.Intersects(geojson_geom):
+                selection_gemeentes.append(feature)
+
+        return selection_gemeentes
 
     def filter_features_by_extent(self, all_features, extent_geometry):
         selection_gemeentes = []

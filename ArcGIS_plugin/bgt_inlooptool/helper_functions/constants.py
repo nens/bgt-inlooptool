@@ -8,7 +8,7 @@ GWSW_API_URL = "https://service.pdok.nl/rioned/beheerstedelijkwater/wfs/v1_0?ser
 CBS_GEMEENTES_API_URL = "https://service.pdok.nl/kadaster/bestuurlijkegebieden/wfs/v1_0?service=WFS&version=1.0.0&request=GetFeature&typeName=Gemeentegebied&outputFormat=application/json"
 
 NOT_FOUND_GEMEENTES = []  # Initialize the list for not found gemeentes (GWSW server)
-
+WFS_FEATURE_LIMIT = 50000
 
 class VisualizeLayer(NamedTuple):
     symbology_param: arcpy.Parameter
