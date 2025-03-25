@@ -48,6 +48,7 @@ from qgis.core import (
 
 from qgis.utils import iface
 from osgeo import ogr, osr
+from lxml import etree
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -88,6 +89,7 @@ from bgtinlooptool.constants import (
     GPKG_TEMPLATE,
     GPKG_TEMPLATE_HIDDEN,
     NOT_FOUND_GEMEENTES,
+    WFS_FEATURE_LIMIT,
 )
 
 
@@ -397,17 +399,44 @@ class NetworkTask(QgsTask):
         
     def run(self):
         extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt).Buffer(-0.5) # Give the extent geometry a negative buffer of 0.5m, so that the intersect function works properly (when equal, no neighbouring geometries are used)
-        shrunk_extent_geometry_wkt = extent_geometry.ExportToWkt()
-        shrunk_extent_geometry_coordinates = shrunk_extent_geometry_wkt[shrunk_extent_geometry_wkt.find('((')+2:shrunk_extent_geometry_wkt.find('))')]
         bbox = self.wkt_to_bbox()
         if self.layer_name != "bag_panden": #GWSW download: looks for names of municipalities first. Then uses these to download the right data.
             self.increase_progress()
-            all_features = self.fetch_all_features_gwsw(shrunk_extent_geometry_coordinates)
+            # Due to complex geometries: first use bbox to extract gemeente-names and then filter them on extent geometry
+            all_features = self.fetch_all_features_gwsw(bbox)
+            all_features = self.filter_gemeentes_by_extent(all_features,extent_geometry)
         else:
             all_features = self.fetch_all_features_bag(bbox)
         self.increase_progress()
         self.save_features_to_gpkg(all_features, extent_geometry)
         return True
+    
+    def get_bag_feature_count(self) -> int:
+        """
+        Get the feature count of BAG objects in the request area from the WFS
+    
+        :return: The feature count
+        """
+        bbox = self.wkt_to_bbox()
+    
+        url = self.url.replace("&outputFormat=application/json", "&resultType=hits")
+        request_url = url + f"&BBOX={bbox}"
+        response_data = self.load_api_data(request_url, "")
+
+        if not response_data:
+            raise ValueError("Received empty response from WFS service.")
+    
+        # Convert response_data to bytes if it's a string
+        if isinstance(response_data, str):
+            response_data = response_data.encode("utf-8")  
+    
+        try:
+            xml_data = etree.fromstring(response_data)  # Parse as bytes
+            feature_count = int(xml_data.attrib.get("numberMatched", 0))
+            return feature_count
+        except etree.XMLSyntaxError as e:
+            print(f"XML parsing error: {e}")
+            raise ValueError("Invalid XML response received.")
     
     def fetch_all_features_gwsw(self, extent_geometry):
         not_all_features_found = True
@@ -458,12 +487,23 @@ class NetworkTask(QgsTask):
         reply.finished.connect(loop.quit)
         loop.exec_()
         
-        response_text = reply.readAll().data().decode("utf-8")
+        #response_text = reply.readAll().data().decode("utf-8")
         if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 404:
             print(f"Error 404: {gemeente} not found.")
             return None
         
-        return response_text
+        # Get content type
+        content_type = reply.header(QNetworkRequest.ContentTypeHeader)
+        response_data = reply.readAll().data()  # Read once to avoid buffer issues
+    
+        if not response_data:
+            print("Error: Received empty response.")
+            return None
+    
+        if content_type and "text/xml" in content_type.lower():
+            return response_data.decode("utf-8")  # Return XML as a string
+    
+        return response_data.decode("utf-8")  # Default to UTF-8 decoding
     
     def save_features_to_gpkg(self, all_features, extent_geometry):
         print("Saving features to GeoPackage")
@@ -487,6 +527,17 @@ class NetworkTask(QgsTask):
         layer_out = self.create_layer(datasource, srs)
         self.add_features_to_layer(layer_out, all_features, extent_geometry)
         datasource = None
+    
+    def filter_gemeentes_by_extent(self, all_features, extent_geometry):
+        selection_gemeentes = []
+        
+        for feature in all_features:
+            geometry_wkt = self.geojson_to_wkt(feature['geometry'])
+            geojson_geom = ogr.CreateGeometryFromWkt(geometry_wkt)
+            if extent_geometry.Intersects(geojson_geom):
+                selection_gemeentes.append(feature)
+        
+        return selection_gemeentes
     
     def filter_features_by_extent(self, all_features, extent_geometry):
         selection_gemeentes = []
@@ -534,10 +585,11 @@ class NetworkTask(QgsTask):
             uri = feature['properties'].get('uri')  # Extract URI
             name = feature['properties'].get('naam')  # Extract name
             
-            # Check if both 'uri' and 'name' exist and are unique
-            if uri and name and (uri, name) not in seen:
-                seen.add((uri, name))  # Mark this (uri, name) as seen
-                unique_features.append(feature)  # Keep the feature
+            # Check if 'uri' or 'name' exist and if so, whether the combination is unique
+            if uri or name:  
+                if (uri, name) not in seen:
+                    seen.add((uri, name))  # Mark this (uri, name) as seen
+                    unique_features.append(feature)  # Keep the feature
                 
         return unique_features
     
@@ -1033,9 +1085,19 @@ class BGTInloopTool:
         
         # Perform download
         task = NetworkTask(BAG_API_URL, output_gpkg,extent_bbox,extent_geometry_wkt,"bag_panden")
+        expected_bag_features = task.get_bag_feature_count()
+        if expected_bag_features >= WFS_FEATURE_LIMIT:
+            self.iface.messageBar().pushMessage(
+                "Warning",
+                f"Het aantal panden ({expected_bag_features}) binnen het zoekgebied overschrijdt het maximale aantal van de downloaddienst ({WFS_FEATURE_LIMIT}). Gebruik een kleiner zoekgebied.",
+                level=Qgis.Warning,
+                duration=15,
+            )
+            return # do not continue the download
         # Connect the task's finished signal to a custom slot to handle completion
         task.taskCompleted.connect(self.on_task_finished_bag)
         QgsApplication.taskManager().addTask(task)
+
         
         # Change UI
         output_file = self.dlg.bagApiOutput.filePath()
@@ -1139,7 +1201,6 @@ class BGTInloopTool:
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start is True:
-            #print(self.first_start)
             self.first_start = False
 
             self.dlg = BGTInloopToolDialog()
