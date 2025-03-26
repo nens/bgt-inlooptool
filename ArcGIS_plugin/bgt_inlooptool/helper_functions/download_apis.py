@@ -326,9 +326,14 @@ class NetworkTask:
             name = feature["properties"].get("naam")  # Extract name
 
             # Check if both 'uri' and 'name' exist and are unique
-            if uri and name and (uri, name) not in seen:
-                seen.add((uri, name))  # Mark this (uri, name) as seen
-                unique_features.append(feature)  # Keep the feature
+            if uri:
+                if uri and name and (uri, name) not in seen:
+                    seen.add((uri, name))  # Mark this (uri, name) as seen
+                    unique_features.append(feature)  # Keep the feature
+            else:
+                if (uri, name) not in seen:
+                    seen.add((uri, name))  # Mark this (uri, name) as seen
+                    unique_features.append(feature)  # Keep the feature
 
         return unique_features
 
