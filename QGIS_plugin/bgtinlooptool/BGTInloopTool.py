@@ -555,25 +555,29 @@ class NetworkTask(QgsTask):
         
         for gemeente_name in selection_gemeentes:
             gemeente_name = gemeente_name.title().replace(" ", "").replace("-", "")
-            gemeente_name = gemeente_name[0].upper() + gemeente_name[1:].lower()
+            gemeente_name = gemeente_name[0].upper() + gemeente_name[1:]
             not_all_features_found = True
             index = 0
             print(f"Extracting data for gemeente {gemeente_name}")
             
             while not_all_features_found:
-                request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
-                response_text = self.load_api_data(request_url,gemeente_name)
-                if response_text is None:
-                    NOT_FOUND_GEMEENTES.append(gemeente_name)
-                    break
+                try:
+                    request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
+                    response_text = self.load_api_data(request_url,gemeente_name)
+                    if response_text is None:
+                        NOT_FOUND_GEMEENTES.append(gemeente_name)
+                        break
                 
-                data = json.loads(response_text)
-                all_features.extend(data['features'])
+                    data = json.loads(response_text)
+                    all_features.extend(data['features'])
                 
-                if len(data['features']) < 1000:
-                    not_all_features_found = False
-                else:
-                    index += 1000
+                    if len(data['features']) < 1000:
+                        not_all_features_found = False
+                    else:
+                        index += 1000
+                except:
+                    request_url = f"https://apps.gwsw.nl/report/getgeopackage_{gemeente_name}-default.gpkg"
+                    #nog aanvullen 
         
         return all_features
     
