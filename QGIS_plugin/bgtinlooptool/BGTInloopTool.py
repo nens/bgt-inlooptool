@@ -26,6 +26,7 @@
 import os.path
 #import sys
 import json
+from urllib.parse import quote
 
 
 from PyQt5.QtCore import Qt, QUrl, QByteArray, QEventLoop
@@ -559,26 +560,25 @@ class NetworkTask(QgsTask):
             not_all_features_found = True
             index = 0
             print(f"Extracting data for gemeente {gemeente_name}")
-            
+            filter_string = "type NOT LIKE '%Perceelaansluiting%'"
+            encoded_filter = quote(filter_string, safe='')
+
             while not_all_features_found:
-                try:
-                    request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + (f"&startIndex={index}" if index > 0 else "")
-                    response_text = self.load_api_data(request_url,gemeente_name)
-                    if response_text is None:
-                        NOT_FOUND_GEMEENTES.append(gemeente_name)
-                        break
-                
-                    data = json.loads(response_text)
-                    all_features.extend(data['features'])
-                
-                    if len(data['features']) < 1000:
-                        not_all_features_found = False
-                    else:
-                        index += 1000
-                except:
-                    request_url = f"https://apps.gwsw.nl/report/getgeopackage_{gemeente_name}-default.gpkg"
-                    #nog aanvullen 
-        
+                request_url = f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json" + f"&cql_filter={encoded_filter}" + (f"&startIndex={index}" if index > 0 else "")
+
+                response_text = self.load_api_data(request_url,gemeente_name)
+                if response_text is None:
+                    NOT_FOUND_GEMEENTES.append(gemeente_name)
+                    break
+            
+                data = json.loads(response_text)
+                all_features.extend(data['features'])
+            
+                if len(data['features']) < 1000:
+                    not_all_features_found = False
+                else:
+                    index += 1000
+
         return all_features
     
     def remove_duplicate_gwsw_features(self, gwsw_features):
