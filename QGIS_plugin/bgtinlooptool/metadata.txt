@@ -2,8 +2,8 @@
 name=BGT Inlooptool
 qgisMinimumVersion=3.28
 description=BGT Inlooptool
-version=2.0.3
-author=Emile de Badts, Leendert van Wolfswinkel, Chris Kerklaan, Ruben van der Zaag, Sjon van Dijk, Reinout van Rees
+version=2.0.4
+author=Emile de Badts, Leendert van Wolfswinkel, Chris Kerklaan, Ruben van der Zaag, Sjon van Dijk, Reinout van Rees, Emma Oosterveld
 email=bgtinlooptool@nelen-schuurmans.nl
 
 about=Bereken afwateringskenmerken BGT vlakken.

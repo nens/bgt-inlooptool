@@ -34,6 +34,7 @@ import arcpy
 import requests
 from lxml import etree
 from osgeo import ogr, osr
+from urllib.parse import quote
 
 from .constants import BAG_API_URL, BGT_API_URL, CBS_GEMEENTES_API_URL, NOT_FOUND_GEMEENTES, WFS_FEATURE_LIMIT
 
@@ -292,14 +293,17 @@ class NetworkTask:
 
         for gemeente_name in selection_gemeentes:
             gemeente_name = gemeente_name.title().replace(" ", "").replace("-", "")
-            gemeente_name = gemeente_name[0].upper() + gemeente_name[1:].lower()
+            gemeente_name = gemeente_name[0].upper() + gemeente_name[1:]
             not_all_features_found = True
             index = 0
             print(f"Extracting data for gemeente {gemeente_name}")
+            filter_string = "type NOT LIKE '%Perceelaansluiting%'"
+            encoded_filter = quote(filter_string, safe='')
 
             while not_all_features_found:
                 request_url = (
                     f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"
+                    + f"&cql_filter={encoded_filter}"
                     + (f"&startIndex={index}" if index > 0 else "")
                 )
                 response_text = self.load_api_data(request_url, gemeente_name)

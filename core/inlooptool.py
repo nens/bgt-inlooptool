@@ -1764,16 +1764,13 @@ class Database:
         # create dict from buildings
         building_dict = {}
         for building in buildings:
-            if building["identificatie"][0] == "0":
-                building_dict[building["identificatie"][1:]] = building[field_name]
-            else:
-                building_dict[building["identificatie"]] = building[field_name]
+            building_dict[building["identificatie"]] = building[field_name]
             building = None
         
         # List to track bui;ding-surfaces that are in the BGT but not in the BAG
         for surface in surfaces:
-            if surface["surface_type"] == SURFACE_TYPE_PAND:
-                if surface["identificatiebagpnd"] in building_dict.keys():
+            if surface["surface_type"] == SURFACE_TYPE_PAND:              
+                if surface["identificatiebagpnd"] in building_dict.keys():                   
                     surface["build_year"] = building_dict[
                         surface["identificatiebagpnd"]
                     ]
@@ -1781,7 +1778,7 @@ class Database:
                 else:
                     self.non_matching_buildings.append(surface)
             surface = None
-
+        
         buildings = None
         surfaces = None
         print("... done")
