@@ -7,6 +7,7 @@ Email: bgtinlooptool@nelen-schuurmans.nl
 # System imports
 import os
 import contextlib
+from typing import Optional
 
 # Third-party imports
 from osgeo import osr
@@ -309,8 +310,8 @@ class InloopTool:
         self._database.import_inf_pavement_green_roofs(file_path)
         self._database.import_it_results(file_path)
         self._database.clean_it_results()
-        
-    def import_surfaces(self, file_path, extent_wkt):
+
+    def import_surfaces(self, file_path: str, extent_wkt: Optional[str] = None) -> None:
         """
         Import BGT Surfaces to _database
         :param file_path: path to bgt zip file
@@ -1394,24 +1395,45 @@ class Database:
                 )
             )
 
-    def import_surfaces_raw(self, file_path,extent_wkt):
+    def import_surfaces_raw(self, file_path: str, extent_wkt: Optional[str] = None) -> None:
         """
-        Copy the required contents of the BGT zip file 'as is' to self.mem_database
-        :param file_path:
-        :return: None
+        Import raw surface layers from a zipped BGT dataset into the in-memory database.
+
+        This method reads the relevant GML layers from a zipped BGT file, applies an optional
+        spatial filter based on a WKT geometry, and copies the layers directly into
+        `self.mem_database` without modification.
+
+        Each surface type defined in `ALL_USED_SURFACE_TYPES` is checked within the archive.
+        For types requiring multiple geometry definitions, an associated `.gfs` file is used
+        as a parsing template. Layers without features or missing expected files are skipped
+        with a warning.
+
+        Args:
+            file_path (str): Path to the zipped BGT dataset (e.g., `/path/to/bgt.zip`).
+            extent_wkt (Optional[str]): WKT string defining a spatial extent filter.
+                If provided, only features intersecting this geometry are imported.
+                If `None`, all features are imported.
+
+        Raises:
+            FileNotFoundError: If the provided BGT zip file does not exist.
+            ValueError: If a required `.gfs` file for a surface type is missing.
+            FileInputError: If the zip file is empty, contains no valid layers, or
+                any issue occurs during import of a layer.
+
+        Returns:
+            None
         """
         bgt_zip_file_abspath = os.path.abspath(file_path)
         if not os.path.isfile(bgt_zip_file_abspath):
-            raise FileNotFoundError(
-                "BGT zip niet gevonden: {}".format(bgt_zip_file_abspath)
-            )
+            raise FileNotFoundError(f"BGT zip niet gevonden: {bgt_zip_file_abspath}")
 
         try:
             nr_layers_with_features = 0
             for stype in ALL_USED_SURFACE_TYPES:
                 surface_source_fn = os.path.join(
-                    "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
+                    "/vsizip/" + file_path, f"bgt_{stype}.gml"
                 )
+
                 if stype in MULTIPLE_GEOMETRY_SURFACE_TYPES:
                     surface_source_gfs_fn = os.path.join(GFS_DIR, f"bgt_{stype}.gfs")
                     if not os.path.isfile(surface_source_gfs_fn):
@@ -1422,39 +1444,37 @@ class Database:
                     )
                 else:
                     surface_source = ogr.Open(surface_source_fn)
+
                 if surface_source is None:
-                    continue  # TODO Warning
+                    continue  # TODO: Add warning
                 else:
-                    src_layer = surface_source.GetLayerByName(
-                        "{stype}".format(stype=stype)
-                    )
+                    src_layer = surface_source.GetLayerByName(f"{stype}")
                     if src_layer is None:
-                        continue  # TODO Warning
+                        continue  # TODO: Add warning
                     else:
                         nr_layers_with_features += 1
-                        # Set spatial filter on src_layer to only include features that intersect with the extent
-                        if extent_wkt is not None: 
+                        # Apply spatial filter if extent is provided
+                        if extent_wkt is not None:
                             extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
                             src_layer.SetSpatialFilter(extent_geometry)
                         self.mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
                         print(
-                            f"raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features"
+                            f"raw import of {stype} layer has "
+                            f"{self.mem_database.GetLayerByName(stype).GetFeatureCount()} features"
                         )
+
             if nr_layers_with_features == 0:
                 raise FileInputError(
-                    f"BGT zip file is leeg of bevat alleen lagen zonder features"
+                    "BGT zip file is leeg of bevat alleen lagen zonder features"
                 )
         except FileInputError:
             raise
         except Exception:
-            #self.import_surfaces_raw_alternative(file_path)
             raise FileInputError(f"Probleem met laag {stype}.gml in BGT zip file")
 
     def import_kolken(self, file_path):
-
         """
-        Copy point features from a ogr layer
-
+        Copy point features from an ogr layer
         """
         kolken_abspath = os.path.abspath(file_path)
         if not os.path.isfile(kolken_abspath):
