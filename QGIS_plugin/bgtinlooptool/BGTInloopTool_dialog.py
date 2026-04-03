@@ -24,45 +24,56 @@
 
 import os
 from osgeo import ogr
-
-from qgis.PyQt import uic
-from qgis.PyQt import QtWidgets
-
+from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt.QtCore import QSettings
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsFileWidget
 
-# This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
-FORM_CLASS, _ = uic.loadUiType(
-    os.path.join(os.path.dirname(__file__), "BGTInloopTool_dialog_base.ui")
-)
+from email.message import EmailMessage
+import smtplib
 
+from .PopUp_user_dialog import PopUpUserDialog
 from .core.defaults import *
 
 ogr.UseExceptions()
 
 
+import webbrowser
+import urllib.parse
+
+def open_email_client(subject, body):
+    subject_encoded = urllib.parse.quote(subject)
+    body_encoded = urllib.parse.quote(body)
+
+    mailto_url = f"mailto:bgtinlooptool@nelen-schuurmans.nl?subject={subject_encoded}&body={body_encoded}"
+    webbrowser.open(mailto_url)
+
+
 def is_valid_ogr_file(path: str, optional: bool = False):
-    if path == "":  # optional input
-        if optional:
-            valid = True
-        else:
-            valid = False
-    elif not os.path.isfile(path):
-        valid = False
-    else:
-        valid = isinstance(ogr.Open(path), ogr.DataSource)
-    return valid
+    if path == "":
+        return optional
+    if not os.path.isfile(path):
+        return False
+    return isinstance(ogr.Open(path), ogr.DataSource)
+
+
+# ---------------------------------------------------------------------------
+#                             MAIN TOOL DIALOG
+# ---------------------------------------------------------------------------
+
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "BGTInloopTool_dialog_base.ui")
+)
 
 
 class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
-        """Constructor."""
-        super(BGTInloopToolDialog, self).__init__(parent)
-        # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
+        super().__init__(parent)
+
+        # BEFORE loading the UI → Show popup first
+        self.run_startup_popup()
+
+        # Load the main interface
         self.setupUi(self)
 
         # connect signals
@@ -74,13 +85,13 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.stats_file.fileChanged.connect(self.validate)
         self.output_folder.fileChanged.connect(self.validate)
         self.outputFileGroupBox.clicked.connect(self.validate)
-        
+
         self.bgtApiOutput.fileChanged.connect(self.validate_bgt)
         self.BGTExtentCombobox.layerChanged.connect(self.validate_bgt)
-        
+
         self.bagApiOutput.fileChanged.connect(self.validate_bag)
         self.BGTExtentCombobox.layerChanged.connect(self.validate_bag)
-        
+
         self.gwswApiOutput.fileChanged.connect(self.validate_gwsw)
         self.BGTExtentCombobox.layerChanged.connect(self.validate_gwsw)
 
@@ -101,7 +112,7 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
         self.leidingcodes_koppelen.setChecked(KOPPEL_LEIDINGCODES)
-        
+
         # Run button default disable
         self.pushButtonRun.setEnabled(False)
         self.pushButtonDownloadBGT.setEnabled(False)
@@ -123,23 +134,58 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.inputExtentGroupBox.clicked.connect(self.inputExtentGroupBoxChanged)
         self.inputExtentComboBox.setEnabled(False)
         self.inputExtentComboBox.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        
+
         # Saving results settings
         self.output_folder.setStorageMode(QgsFileWidget.GetDirectory)
+
+    # -----------------------------------------------------------------------
+    #               POPUP HANDLING
+    # -----------------------------------------------------------------------
+
+    def run_startup_popup(self):
+        settings = QSettings()
+        first_start = settings.value("BGTInloopTool/FirstStart", True, type=bool)
+    
+        if not first_start:
+            return  # skip popup next time
+    
+        popup = PopUpUserDialog()
+        popup.exec_()
+    
+        if popup.choice == "yes":
+            settings.setValue("BGTInloopTool/FirstStart", False)
+            open_email_client(
+                "BGT Inlooptool - Nieuwe gebruiker",
+                f"Name: {popup.inputName.text()}\n"
+                f"Email: {popup.inputMail.text()}\n"
+                f"Organisation: {popup.inputOrg.text()}\n"
+                f"Extra: {popup.inputExtra.text()}"
+            )
+    
+        elif popup.choice == "no":
+            settings.setValue("BGTInloopTool/FirstStart", False)
+            # send_email(
+            #     "BGT Inlooptool - Registration Declined",
+            #     "The user clicked 'No' on the registration popup."
+            # )
+    
+        # later or X → do nothing (FirstStart stays True)
+
+
+    # -----------------------------------------------------------------------
+    # Rest of your original validation functions unchanged
+    # -----------------------------------------------------------------------
 
     def inputExtentGroupBoxChanged(self):
         state = self.inputExtentGroupBox.isChecked()
         self.inputExtentComboBox.setEnabled(state)
-        
-    def validate(self):
 
+    def validate(self):
         valid = True
 
         # Check bgt file
         bgt_file = self.bgt_file.filePath()
-        if not os.path.isfile(bgt_file):
-            valid = False
-        elif os.path.splitext(bgt_file)[1] != ".zip":
+        if not os.path.isfile(bgt_file) or os.path.splitext(bgt_file)[1] != ".zip":
             valid = False
 
         # Check pipe file
@@ -153,83 +199,75 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         building_file = self.building_file.filePath()
         if not is_valid_ogr_file(building_file, optional=True):
             valid = False
-        elif building_file != "": 
-            if os.path.splitext(building_file)[1] not in [".gpkg", ".shp"]: #To do: kan BAG al gpkg en shp aan?
+        elif building_file != "":
+            if os.path.splitext(building_file)[1] not in [".gpkg", ".shp"]:
                 valid = False
 
-        # Check kolken file (optional)
+        # Check kolken file
         kolken_file = self.kolken_file.filePath()
         if not is_valid_ogr_file(kolken_file, optional=True):
             valid = False
-        elif kolken_file != "": 
-            if os.path.splitext(kolken_file)[1] not in [".gpkg", ".shp"]: #To do: wat is het input formaat voor kolken?
+        elif kolken_file != "":
+            if os.path.splitext(kolken_file)[1] not in [".gpkg", ".shp"]:
                 valid = False
-            
-        # Check results file previous analysis (optional)
+
+        # Check previous results
         results_file = self.results_file.filePath()
         if not is_valid_ogr_file(results_file, optional=True):
             valid = False
-        elif results_file != "": 
-            if os.path.splitext(results_file)[1] != ".gpkg":
-                valid = False
-            
-        # Check stats file (optional)
+        elif results_file != "" and os.path.splitext(results_file)[1] != ".gpkg":
+            valid = False
+
+        # Check stats
         stats_file = self.stats_file.filePath()
         if not is_valid_ogr_file(stats_file, optional=True):
             valid = False
-        elif stats_file != "": 
-            if os.path.splitext(stats_file)[1] not in [".gpkg", ".shp"]: #To do: zorgen dat het ook gpkg slikt als input
+        elif stats_file != "":
+            if os.path.splitext(stats_file)[1] not in [".gpkg", ".shp"]:
                 valid = False
-        
-        # Check output_folder (optional)
+
+        # Output folder required if checkbox enabled
         output_folder = self.output_folder.filePath()
-        if self.outputFileGroupBox.isChecked():
-            if output_folder == "":
-                valid = False
-        
+        if self.outputFileGroupBox.isChecked() and output_folder == "":
+            valid = False
+
         self.pushButtonRun.setEnabled(valid)
-    
+
     def validate_bgt(self):
         valid = True
-        
+
         extent_file = self.BGTExtentCombobox.currentText()
         if extent_file == "":
             valid = False
-        
+
         bgt_file = self.bgtApiOutput.filePath()
-        if bgt_file == "":
+        if bgt_file == "" or os.path.splitext(bgt_file)[1] != ".zip":
             valid = False
-        elif os.path.splitext(bgt_file)[1] != ".zip":
-            valid = False
-        
+
         self.pushButtonDownloadBGT.setEnabled(valid)
-        
+
     def validate_bag(self):
         valid = True
-        
+
         extent_file = self.BGTExtentCombobox.currentText()
         if extent_file == "":
             valid = False
-        
+
         bag_file = self.bagApiOutput.filePath()
-        if bag_file == "":
+        if bag_file == "" or os.path.splitext(bag_file)[1] != ".gpkg":
             valid = False
-        elif os.path.splitext(bag_file)[1] != ".gpkg":
-            valid = False
-        
+
         self.pushButtonDownloadBAG.setEnabled(valid)
-        
+
     def validate_gwsw(self):
         valid = True
-        
+
         extent_file = self.BGTExtentCombobox.currentText()
         if extent_file == "":
             valid = False
-        
+
         gwsw_file = self.gwswApiOutput.filePath()
-        if gwsw_file == "":
+        if gwsw_file == "" or os.path.splitext(gwsw_file)[1] != ".gpkg":
             valid = False
-        elif os.path.splitext(gwsw_file)[1] != ".gpkg":
-            valid = False
-        
+
         self.pushButtonDownloadGWSW.setEnabled(valid)
