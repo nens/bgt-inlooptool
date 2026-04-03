@@ -8,6 +8,8 @@ ROOT_DIR_FILES = [
     "BGTInloopTool.py",
     "BGTInloopTool_dialog.py",
     "BGTInloopTool_dialog_base.ui",
+    "PopUp_user_dialog.py",
+    "PopUp_user_dialog.ui",
     "constants.py",
     "icon.png",
     "metadata.txt",
