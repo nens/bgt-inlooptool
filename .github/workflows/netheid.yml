@@ -1,0 +1,22 @@
+name: netheid
+on:
+  # Run on pushes to 'master' and pull requests (so: not branches as such, just the pull
+  # request).
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  netheid:
+    name: netheid
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+      - uses: pre-commit/action@v3.0.1
