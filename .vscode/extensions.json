@@ -1,7 +1,7 @@
 {
     "recommendations": [
-        "ms-python.black-formatter",
-        "ms-python.isort",
+        "editorconfig.editorconfig",
+        "charliermarsh.ruff",
         "aaron-bond.better-comments",
         "davidanson.vscode-markdownlint",
         "njpwerner.autodocstring"
