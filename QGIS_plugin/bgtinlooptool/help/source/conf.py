@@ -215,6 +215,4 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ("index", "TemplateClass", "BGTInloopTool Documentation", ["Emile de Badts"], 1)
-]
+man_pages = [("index", "TemplateClass", "BGTInloopTool Documentation", ["Emile de Badts"], 1)]

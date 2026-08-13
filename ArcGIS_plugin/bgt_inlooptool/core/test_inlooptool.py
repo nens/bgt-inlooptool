@@ -96,9 +96,7 @@ class UnitDatabase(unittest.TestCase):
 
         """ Tests if all features are classified"""
         for feature in db.bgt_surfaces:
-            self.assertTrue(
-                feature["type_verharding"] is not None, "type verharding is None"
-            )
+            self.assertTrue(feature["type_verharding"] is not None, "type verharding is None")
 
     def test_import_pipes(self):
         params = InputParameters()
@@ -179,9 +177,7 @@ class UnitDatabase(unittest.TestCase):
     def test_decision_tree(self):
         parameters = InputParameters()
         it = InloopTool(parameters)
-        it._database.create_table(
-            table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA
-        )
+        it._database.create_table(table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA)
         surfaces_layer = it._database.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
         surface = ogr.Feature(surfaces_layer.GetLayerDefn())
 
@@ -267,9 +263,7 @@ class UnitDatabase(unittest.TestCase):
         valid_result = template_test_result.copy()
         valid_result["gemengd_riool"] = 50
         valid_result["hemelwaterriool"] = 50
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Gemengd plus hwa, oud pand "
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Gemengd plus hwa, oud pand ")
 
         # Gemengd plus hwa of infiltratie, oud pand, maar niet afkoppelen hellende daken
         # Altijd gemengd
@@ -300,9 +294,7 @@ class UnitDatabase(unittest.TestCase):
         test_result = it.decision_tree(surface, parameters)
         valid_result = template_test_result.copy()
         valid_result["gemengd_riool"] = 100
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Alleen gemengd in de buurt"
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Alleen gemengd in de buurt")
 
         # Alleen hemelwaterriool in de buurt
         # 100% hemelwaterriool
@@ -313,9 +305,7 @@ class UnitDatabase(unittest.TestCase):
         test_result = it.decision_tree(surface, parameters)
         valid_result = template_test_result.copy()
         valid_result["hemelwaterriool"] = 100
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Alleen hemelwaterriool in de buurt"
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Alleen hemelwaterriool in de buurt")
 
         # Alleen infiltratievoorziening in de buurt
         # 100% infiltratievoorziening
@@ -341,9 +331,7 @@ class UnitDatabase(unittest.TestCase):
         test_result = it.decision_tree(surface, parameters)
         valid_result = template_test_result.copy()
         valid_result["niet_aangesloten"] = 100
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Alleen oppervlaktewater in de buurt"
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Alleen oppervlaktewater in de buurt")
 
         # Wegdeel, gemengd riool
         reset_surface()
@@ -404,9 +392,7 @@ class UnitDatabase(unittest.TestCase):
         test_result = it.decision_tree(surface, parameters)
         valid_result = template_test_result.copy()
         valid_result["infiltratievoorziening"] = 100
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Wegdeel, infiltratie + gemengd + hwa"
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Wegdeel, infiltratie + gemengd + hwa")
 
         # Wegdeel, gemengd + hwa
         reset_surface()
@@ -417,9 +403,7 @@ class UnitDatabase(unittest.TestCase):
         test_result = it.decision_tree(surface, parameters)
         valid_result = template_test_result.copy()
         valid_result["gemengd_riool"] = 100
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Wegdeel, gemengd + hwa (HWA op 40m)"
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Wegdeel, gemengd + hwa (HWA op 40m)")
 
         # Wegdeel, oppervlaktewater
         reset_surface()
@@ -429,9 +413,7 @@ class UnitDatabase(unittest.TestCase):
         test_result = it.decision_tree(surface, parameters)
         valid_result = template_test_result.copy()
         valid_result["niet_aangesloten"] = 100
-        self.assertEquals(
-            test_result, valid_result, "FOUT voor: Wegdeel, oppervlaktewater"
-        )
+        self.assertEquals(test_result, valid_result, "FOUT voor: Wegdeel, oppervlaktewater")
 
     def test_add_buildings(self):
         parameters = InputParameters()

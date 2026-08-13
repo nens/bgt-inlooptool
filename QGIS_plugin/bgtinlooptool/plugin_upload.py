@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding=utf-8
 """This script uploads a plugin package to the plugin repository.
-        Authors: A. Pasotti, V. Picavet
-        git sha              : $TemplateVCSFormat
+Authors: A. Pasotti, V. Picavet
+git sha              : $TemplateVCSFormat
 """
 
 import sys
@@ -40,9 +40,7 @@ def main(parameters, arguments):
 
     try:
         with open(arguments[0], "rb") as handle:
-            plugin_id, version_id = server.plugin.upload(
-                xmlrpc.client.Binary(handle.read())
-            )
+            plugin_id, version_id = server.plugin.upload(xmlrpc.client.Binary(handle.read()))
         print("Plugin ID: %s" % plugin_id)
         print("Version ID: %s" % version_id)
     except xmlrpc.client.ProtocolError as err:
@@ -91,9 +89,7 @@ if __name__ == "__main__":
         help="Username of plugin site",
         metavar="user",
     )
-    parser.add_option(
-        "-p", "--port", dest="port", help="Server port to connect to", metavar="80"
-    )
+    parser.add_option("-p", "--port", dest="port", help="Server port to connect to", metavar="80")
     parser.add_option(
         "-s",
         "--server",

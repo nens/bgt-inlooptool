@@ -161,7 +161,9 @@ class NetworkTask:
         self.setProgress(self.progress() + 100 / self.total_progress)
 
     def run(self):
-        extent_geometry = ogr.CreateGeometryFromWkt(self.extent_geometry_wkt).Buffer(
+        extent_geometry = ogr.CreateGeometryFromWkt(
+            self.extent_geometry_wkt
+        ).Buffer(
             -0.5
         )  # Give the extent geometry a negative buffer of 0.5m, so that the intersect function works properly (when equal, no neighbouring geometries are used)
         bbox = self.wkt_to_bbox()
@@ -298,7 +300,7 @@ class NetworkTask:
             index = 0
             print(f"Extracting data for gemeente {gemeente_name}")
             filter_string = "type NOT LIKE '%Perceelaansluiting%'"
-            encoded_filter = quote(filter_string, safe='')
+            encoded_filter = quote(filter_string, safe="")
 
             while not_all_features_found:
                 request_url = (
@@ -393,7 +395,6 @@ class NetworkTask:
 
 
 if __name__ == "__main__":
-
     extent_wkt = "Polygon ((110870.34528933660476469 455397.70264967781258747, 110927.88217626001278404 454151.07009967073099688, 112143.82838657461979892 454139.56272228603484109, 112093.96308457433769945 455535.79117829399183393, 110870.34528933660476469 455397.70264967781258747))"
     output_zip = r"C:\Users\vdi\Downloads\test_inlooptool\test_bgt_download1.zip"
     output_bag = r"C:\Users\vdi\Downloads\test_inlooptool\bag.gpkg"

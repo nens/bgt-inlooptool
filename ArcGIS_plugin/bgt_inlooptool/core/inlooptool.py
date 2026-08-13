@@ -306,9 +306,7 @@ class InputParameters:
         verhardingsgraad_erf=VERHARDINGSGRAAD_ERF,
         verhardingsgraad_half_verhard=VERHARDINGSGRAAD_HALF_VERHARD,
     ):
-        self.max_afstand_vlak_afwateringsvoorziening = (
-            max_afstand_vlak_afwateringsvoorziening
-        )
+        self.max_afstand_vlak_afwateringsvoorziening = max_afstand_vlak_afwateringsvoorziening
         self.max_afstand_vlak_oppwater = max_afstand_vlak_oppwater
         self.max_afstand_pand_oppwater = max_afstand_pand_oppwater
         self.max_afstand_vlak_kolk = max_afstand_vlak_kolk
@@ -323,9 +321,7 @@ class InputParameters:
         self.download_bgt = download_bgt
         self.download_gwsw = download_gwsw
         self.download_bag = download_bag
-        self.bouwjaar_gescheiden_binnenhuisriolering = (
-            bouwjaar_gescheiden_binnenhuisriolering
-        )
+        self.bouwjaar_gescheiden_binnenhuisriolering = bouwjaar_gescheiden_binnenhuisriolering
         self.verhardingsgraad_erf = verhardingsgraad_erf
         self.verhardingsgraad_half_verhard = verhardingsgraad_half_verhard
 
@@ -352,14 +348,10 @@ class InloopTool:
         feature = ogr.Feature(feature_defn)
 
         # Copy settings from previous runs to the new settings table:
-        prev_settings = self._database.mem_database.GetLayerByName(
-            SETTINGS_TABLE_NAME_PREV
-        )
+        prev_settings = self._database.mem_database.GetLayerByName(SETTINGS_TABLE_NAME_PREV)
 
         if prev_settings is not None:
-            self._database.copy_features_with_matching_fields(
-                prev_settings, settings_table, "run_id"
-            )
+            self._database.copy_features_with_matching_fields(prev_settings, settings_table, "run_id")
 
         max_fid = -1
         for feature in settings_table:
@@ -380,15 +372,9 @@ class InloopTool:
             SETTINGS_TABLE_FIELD_TIJD_START,
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
-        feature.SetField(
-            SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, self.parameters.download_bgt
-        )
-        feature.SetField(
-            SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, self.parameters.download_gwsw
-        )
-        feature.SetField(
-            SETTINGS_TABLE_FIELD_DOWNLOAD_BAG, self.parameters.download_bag
-        )
+        feature.SetField(SETTINGS_TABLE_FIELD_DOWNLOAD_BGT, self.parameters.download_bgt)
+        feature.SetField(SETTINGS_TABLE_FIELD_DOWNLOAD_GWSW, self.parameters.download_gwsw)
+        feature.SetField(SETTINGS_TABLE_FIELD_DOWNLOAD_BAG, self.parameters.download_bag)
         feature.SetField(SETTINGS_TABLE_FIELD_PAD_BGT, bgt_file)
         feature.SetField(SETTINGS_TABLE_FIELD_PAD_GWSW, pipe_file)
         feature.SetField(SETTINGS_TABLE_FIELD_PAD_BAG, building_file)
@@ -494,9 +480,7 @@ class InloopTool:
         self._database.clean_surfaces()
         self._database.merge_surfaces()
         self._database.classify_surfaces(self.parameters)
-        self.relative_hoogteligging_surfaces = (
-            self._database.identify_overlapping_surfaces()
-        )
+        self.relative_hoogteligging_surfaces = self._database.identify_overlapping_surfaces()
 
     def import_pipes(self, file_path, relevant_only=True):
         """
@@ -562,9 +546,7 @@ class InloopTool:
             ]
 
         def bij_water():
-            return (
-                surface["distance_" + OPEN_WATER] < parameters.max_afstand_vlak_oppwater
-            )
+            return surface["distance_" + OPEN_WATER] < parameters.max_afstand_vlak_oppwater
 
         def bij_kolk():
             if parameters.gebruik_kolken:
@@ -575,22 +557,16 @@ class InloopTool:
         def bij_gem_plus_hwa():
             """Ligt het oppervlak in de buurt van een straat waar naast gemengd ook rwa is gelegd?"""
 
-            if surface[
-                "distance_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL
-            ] != PSEUDO_INFINITE and (
-                surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]
-                != PSEUDO_INFINITE
-                or surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]
-                != PSEUDO_INFINITE
+            if surface["distance_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL] != PSEUDO_INFINITE and (
+                surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL] != PSEUDO_INFINITE
+                or surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING] != PSEUDO_INFINITE
             ):
                 return (
                     abs(
                         surface["distance_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]
                         - min(
                             surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL],
-                            surface[
-                                "distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING
-                            ],
+                            surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING],
                         )
                     )
                     <= parameters.max_afstand_afgekoppeld
@@ -633,10 +609,7 @@ class InloopTool:
                 if surface.build_year is None:
                     return False
                 else:
-                    return (
-                        surface.build_year
-                        > parameters.bouwjaar_gescheiden_binnenhuisriolering
-                    )
+                    return surface.build_year > parameters.bouwjaar_gescheiden_binnenhuisriolering
             else:
                 return False
 
@@ -706,12 +679,7 @@ class InloopTool:
                     else:
                         if hwa_vgs_dichterbij_dan_infiltr():
                             pass
-                        elif (
-                            surface[
-                                "distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING
-                            ]
-                            != PSEUDO_INFINITE
-                        ):
+                        elif surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING] != PSEUDO_INFINITE:
                             result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                         else:
                             result[TARGET_TYPE_MAAIVELD] = 100
@@ -735,13 +703,7 @@ class InloopTool:
                         else:
                             if hwa_vgs_dichterbij_dan_infiltr():
                                 result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 100
-                            elif (
-                                surface[
-                                    "distance_"
-                                    + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING
-                                ]
-                                != PSEUDO_INFINITE
-                            ):
+                            elif surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING] != PSEUDO_INFINITE:
                                 result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                             else:
                                 result[TARGET_TYPE_MAAIVELD] = 100
@@ -769,9 +731,7 @@ class InloopTool:
             self._database.kolken.ResetReading()
             self._database.kolken.SetSpatialFilter(None)
 
-        surface_water_buffer_dist = max(
-            [parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater]
-        )
+        surface_water_buffer_dist = max([parameters.max_afstand_pand_oppwater, parameters.max_afstand_vlak_oppwater])
         # print(f"surface_water_buffer_dist: {surface_water_buffer_dist}")
 
         # Distance to pipes
@@ -794,40 +754,30 @@ class InloopTool:
                 if pipe_geom.Intersects(surface_geom_buffer_afwateringsvoorziening):
                     internal_pipe_type = pipe[INTERNAL_PIPE_TYPE_FIELD]
                     if internal_pipe_type != INTERNAL_PIPE_TYPE_IGNORE:
-                        if (
-                            internal_pipe_type not in distances.keys()
-                        ):  # Leiding van dit type is nog niet langsgekomen
+                        if internal_pipe_type not in distances.keys():  # Leiding van dit type is nog niet langsgekomen
                             distances[internal_pipe_type] = {
                                 "distance": pipe_geom.Distance(surface_geom),
                                 "leidingcode": pipe["naam"],
                             }
                         else:
-                            if distances[internal_pipe_type][
-                                "distance"
-                            ] > pipe_geom.Distance(surface_geom):
+                            if distances[internal_pipe_type]["distance"] > pipe_geom.Distance(surface_geom):
                                 distances[internal_pipe_type] = {
                                     "distance": pipe_geom.Distance(surface_geom),
                                     "leidingcode": pipe["naam"],
                                 }
             # Distance to water surface
             if surface.surface_type != SURFACE_TYPE_WATERDEEL:
-                surface_geom_buffer_surface_water = surface_geom.Buffer(
-                    surface_water_buffer_dist
-                )
+                surface_geom_buffer_surface_water = surface_geom.Buffer(surface_water_buffer_dist)
                 min_water_distance = PSEUDO_INFINITE
 
                 for surface_id in self._database.bgt_surfaces_idx.intersection(
                     surface_geom_buffer_surface_water.GetEnvelope()
                 ):
-                    neighbour_surface = self._database.bgt_surfaces.GetFeature(
-                        surface_id
-                    )
+                    neighbour_surface = self._database.bgt_surfaces.GetFeature(surface_id)
                     if neighbour_surface.surface_type == SURFACE_TYPE_WATERDEEL:
                         water_geom = neighbour_surface.geometry().Clone()
                         if water_geom.Intersects(surface_geom_buffer_surface_water):
-                            dist_to_this_water_surface = water_geom.Distance(
-                                surface_geom
-                            )
+                            dist_to_this_water_surface = water_geom.Distance(surface_geom)
                             if dist_to_this_water_surface < min_water_distance:
                                 min_water_distance = dist_to_this_water_surface
 
@@ -839,14 +789,10 @@ class InloopTool:
             # Distance to kolk
             if self.parameters.gebruik_kolken:
                 if surface.surface_type in KOLK_CONNECTABLE_SURFACE_TYPES:
-                    surface_geom_buffer_kolk = surface_geom.Buffer(
-                        parameters.max_afstand_vlak_kolk
-                    )
+                    surface_geom_buffer_kolk = surface_geom.Buffer(parameters.max_afstand_vlak_kolk)
                     min_kolk_distance = PSEUDO_INFINITE
 
-                    for kolk_id in self._database.kolken_idx.intersection(
-                        surface_geom_buffer_kolk.GetEnvelope()
-                    ):
+                    for kolk_id in self._database.kolken_idx.intersection(surface_geom_buffer_kolk.GetEnvelope()):
                         kolk = self._database.kolken.GetFeature(kolk_id)
                         kolk_geom = kolk.geometry().Clone()
                         if kolk_geom.Intersects(surface_geom_buffer_kolk):
@@ -861,16 +807,11 @@ class InloopTool:
                     }
             # Write distances to surfaces layer
             for distance_type in DISTANCE_TYPES:
-
                 if distance_type in distances:
                     if distances[distance_type]["distance"] == PSEUDO_INFINITE:
                         distances[distance_type]["distance"] = None
-                    surface["distance_" + distance_type] = distances[distance_type][
-                        "distance"
-                    ]
-                    surface["code_" + distance_type] = distances[distance_type][
-                        "leidingcode"
-                    ]
+                    surface["distance_" + distance_type] = distances[distance_type]["distance"]
+                    surface["code_" + distance_type] = distances[distance_type]["leidingcode"]
 
             self._database.bgt_surfaces.SetFeature(surface)
             surface = None
@@ -902,16 +843,10 @@ class InloopTool:
                 RESULT_TABLE_FIELD_LAATSTE_WIJZIGING,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
-            feature.SetField(
-                RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid
-            )
+            feature.SetField(RESULT_TABLE_FIELD_BGT_IDENTIFICATIE, surface.identificatie_lokaalid)
 
-            feature.SetField(
-                RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding
-            )
-            feature.SetField(
-                RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding
-            )
+            feature.SetField(RESULT_TABLE_FIELD_TYPE_VERHARDING, surface.type_verharding)
+            feature.SetField(RESULT_TABLE_FIELD_GRAAD_VERHARDING, surface.graad_verharding)
             feature.SetField("surface_type", surface.surface_type)
             feature.SetField("bgt_fysiek_voorkomen", surface.bgt_fysiek_voorkomen)
             feature.SetField("build_year", surface.build_year)
@@ -966,25 +901,19 @@ class InloopTool:
         )
 
         distances = {}
-        for pipe_id in self._database.pipes_idx.intersection(
-            surface_geom_buffer_afwateringsvoorziening.GetEnvelope()
-        ):
+        for pipe_id in self._database.pipes_idx.intersection(surface_geom_buffer_afwateringsvoorziening.GetEnvelope()):
             pipe = self._database.pipes.GetFeature(pipe_id)
             pipe_geom = pipe.geometry().Clone()
             if pipe_geom.Intersects(surface_geom_buffer_afwateringsvoorziening):
                 internal_pipe_type = pipe[INTERNAL_PIPE_TYPE_FIELD]
                 if internal_pipe_type != INTERNAL_PIPE_TYPE_IGNORE:
-                    if (
-                        internal_pipe_type not in distances.keys()
-                    ):  # Leiding van dit type is nog niet langsgekomen
+                    if internal_pipe_type not in distances.keys():  # Leiding van dit type is nog niet langsgekomen
                         distances[internal_pipe_type] = {
                             "distance": pipe_geom.Distance(surface_geom),
                             "leidingcode": pipe["naam"],
                         }
                     else:
-                        if distances[internal_pipe_type][
-                            "distance"
-                        ] > pipe_geom.Distance(surface_geom):
+                        if distances[internal_pipe_type]["distance"] > pipe_geom.Distance(surface_geom):
                             distances[internal_pipe_type] = {
                                 "distance": pipe_geom.Distance(surface_geom),
                                 "leidingcode": pipe["naam"],
@@ -994,9 +923,7 @@ class InloopTool:
 
     def overwrite_by_manual_edits(self):
         result_table = self._database.result_table
-        manual_results_prev = self._database.mem_database.GetLayerByName(
-            RESULT_TABLE_NAME_PREV
-        )
+        manual_results_prev = self._database.mem_database.GetLayerByName(RESULT_TABLE_NAME_PREV)
         bgt_surfaces = self._database.bgt_surfaces
 
         if manual_results_prev is None:
@@ -1019,39 +946,29 @@ class InloopTool:
                             distances[INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]["leidingcode"],
                         )
                     else:
-                        print(
-                            f"No mixed sewerage pipe found for prev_feat {prev_feat.GetFID()}"
-                        )
+                        print(f"No mixed sewerage pipe found for prev_feat {prev_feat.GetFID()}")
 
                 elif (
                     prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > 0
                     or prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL) > 0
                 ):
-                    if prev_feat.GetField(
-                        TARGET_TYPE_HEMELWATERRIOOL
-                    ) > prev_feat.GetField(TARGET_TYPE_VGS_HEMELWATERRIOOL):
+                    if prev_feat.GetField(TARGET_TYPE_HEMELWATERRIOOL) > prev_feat.GetField(
+                        TARGET_TYPE_VGS_HEMELWATERRIOOL
+                    ):
                         if INTERNAL_PIPE_TYPE_HEMELWATERRIOOL in distances:
                             prev_feat.SetField(
                                 RESULT_TABLE_FIELD_CODE_HWA,
-                                distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL][
-                                    "leidingcode"
-                                ],
+                                distances[INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]["leidingcode"],
                             )
                         else:
-                            print(
-                                f"No rainwater pipe found for prev_feat {prev_feat.GetFID()}"
-                            )
+                            print(f"No rainwater pipe found for prev_feat {prev_feat.GetFID()}")
                     elif INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL in distances:
                         prev_feat.SetField(
                             RESULT_TABLE_FIELD_CODE_HWA,
-                            distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL][
-                                "leidingcode"
-                            ],
+                            distances[INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]["leidingcode"],
                         )
                     else:
-                        print(
-                            f"No VGS rainwater pipe found for prev_feat {prev_feat.GetFID()}"
-                        )
+                        print(f"No VGS rainwater pipe found for prev_feat {prev_feat.GetFID()}")
 
                 elif prev_feat.GetField(TARGET_TYPE_VUILWATERRIOOL) > 0:
                     if INTERNAL_PIPE_TYPE_VUILWATERRIOOL in distances:
@@ -1060,22 +977,16 @@ class InloopTool:
                             distances[INTERNAL_PIPE_TYPE_VUILWATERRIOOL]["leidingcode"],
                         )
                     else:
-                        print(
-                            f"No waste water pipe found for prev_feat {prev_feat.GetFID()}"
-                        )
+                        print(f"No waste water pipe found for prev_feat {prev_feat.GetFID()}")
 
                 elif prev_feat.GetField(TARGET_TYPE_INFILTRATIEVOORZIENING) > 0:
                     if INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING in distances:
                         prev_feat.SetField(
                             RESULT_TABLE_FIELD_CODE_INFILTRATIE,
-                            distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING][
-                                "leidingcode"
-                            ],
+                            distances[INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]["leidingcode"],
                         )
                     else:
-                        print(
-                            f"No infiltration pipe found for prev_feat {prev_feat.GetFID()}"
-                        )
+                        print(f"No infiltration pipe found for prev_feat {prev_feat.GetFID()}")
 
             # Collect the features for batch processing
             features_to_update.append(prev_feat)
@@ -1098,9 +1009,7 @@ class InloopTool:
                 manual_results_prev.SetFeature(feat)
 
             # Copy features from manual_results_prev to result_table
-            self._database.copy_features_with_matching_fields(
-                manual_results_prev, result_table, "id"
-            )
+            self._database.copy_features_with_matching_fields(manual_results_prev, result_table, "id")
 
         # Sync the changes to disk
         result_table.SyncToDisk()
@@ -1134,27 +1043,21 @@ class InloopTool:
 
     def intersect_inf_pavement_green_roofs(self):
         result_table = self._database.result_table
-        points_layer = self._database.mem_database.GetLayerByName(
-            INF_PAVEMENT_TABLE_NAME_PREV
-        )
+        points_layer = self._database.mem_database.GetLayerByName(INF_PAVEMENT_TABLE_NAME_PREV)
 
         # Iterate over features in the points_layer
         if points_layer is None:
             print("No infiltrating pavement or green roofs specified.")
         else:
             for point_feature in points_layer:
-                point_geom = (
-                    point_feature.GetGeometryRef()
-                )  # Get the geometry of the current point feature
+                point_geom = point_feature.GetGeometryRef()  # Get the geometry of the current point feature
 
                 # Get the value of the 'type' field for the current point feature
                 feature_type = point_feature.GetField("type")
 
                 # Iterate over features in the result_table
                 for result_feature in result_table:
-                    result_geom = (
-                        result_feature.GetGeometryRef()
-                    )  # Get the geometry of the current result feature
+                    result_geom = result_feature.GetGeometryRef()  # Get the geometry of the current result feature
 
                     # Check if the geometries intersect
                     if result_geom.Intersects(point_geom):
@@ -1180,9 +1083,7 @@ class InloopTool:
         it_layer = self._database.result_table
 
         if not os.path.isfile(stats_abspath):
-            raise FileNotFoundError(
-                f"Shapefile met gebieden voor statistieken niet gevonden: {stats_abspath}"
-            )
+            raise FileNotFoundError(f"Shapefile met gebieden voor statistieken niet gevonden: {stats_abspath}")
 
         stats_ds = ogr.Open(stats_abspath)
         stats_layer = stats_ds.GetLayer()
@@ -1216,9 +1117,7 @@ class InloopTool:
             new_feature.SetGeometry(geom.Clone())
             new_feature.SetField(STATISTICS_TABLE_FIELD_ID, gebied_id)
 
-            intersecting_it_features = self.find_indices_intersecting_features(
-                it_layer, new_feature
-            )
+            intersecting_it_features = self.find_indices_intersecting_features(it_layer, new_feature)
 
             intersection_areas = {}
 
@@ -1227,31 +1126,21 @@ class InloopTool:
                     middle_key = middle[1:]
                     if prefix == "opp":
                         for suffix in field_suffix:
-                            field_name = (
-                                "STATISTICS_TABLE_FIELD_" + prefix + middle + suffix
-                            ).upper()
+                            field_name = ("STATISTICS_TABLE_FIELD_" + prefix + middle + suffix).upper()
                             if field_name not in intersection_areas:
-                                intersection_areas[field_name] = (
-                                    self.calculate_intersection_area(
-                                        intersecting_it_features,
-                                        new_feature,
-                                        middle_key,
-                                        suffix[1:],
-                                    )
+                                intersection_areas[field_name] = self.calculate_intersection_area(
+                                    intersecting_it_features,
+                                    new_feature,
+                                    middle_key,
+                                    suffix[1:],
                                 )
-                            new_feature.SetField(
-                                globals()[field_name], intersection_areas[field_name]
-                            )
+                            new_feature.SetField(globals()[field_name], intersection_areas[field_name])
                     else:
                         for suffix in field_suffix:
                             if middle_key != "totaal":
-                                field_name = (
-                                    "STATISTICS_TABLE_FIELD_" + prefix + middle + suffix
-                                ).upper()
+                                field_name = ("STATISTICS_TABLE_FIELD_" + prefix + middle + suffix).upper()
                                 field_name_opp = field_name.replace("PERC", "OPP")
-                                field_name_tot = field_name_opp.replace(
-                                    middle_key.upper(), "TOTAAL"
-                                )
+                                field_name_tot = field_name_opp.replace(middle_key.upper(), "TOTAAL")
                                 if new_feature[globals()[field_name_tot]] > 0:
                                     perc_value = round(
                                         (
@@ -1261,40 +1150,26 @@ class InloopTool:
                                         ),
                                         2,
                                     )
-                                    new_feature.SetField(
-                                        globals()[field_name], perc_value
-                                    )
+                                    new_feature.SetField(globals()[field_name], perc_value)
 
             for prefix in field_prefix:
                 for suffix_verharding in field_suffix_verharding:
-                    field_name = (
-                        "STATISTICS_TABLE_FIELD_" + prefix + suffix_verharding
-                    ).upper()
+                    field_name = ("STATISTICS_TABLE_FIELD_" + prefix + suffix_verharding).upper()
                     if prefix == "opp":
                         if field_name not in intersection_areas:
-                            intersection_areas[field_name] = (
-                                self.calculate_intersection_area(
-                                    intersecting_it_features,
-                                    new_feature,
-                                    "verharding",
-                                    suffix_verharding[1:],
-                                )
+                            intersection_areas[field_name] = self.calculate_intersection_area(
+                                intersecting_it_features,
+                                new_feature,
+                                "verharding",
+                                suffix_verharding[1:],
                             )
-                        new_feature.SetField(
-                            globals()[field_name], intersection_areas[field_name]
-                        )
+                        new_feature.SetField(globals()[field_name], intersection_areas[field_name])
                     else:
                         field_name_opp = field_name.replace("PERC", "OPP")
-                        field_name_tot = field_name_opp.replace(
-                            suffix_verharding[1:].upper(), "TOTAAL"
-                        )
+                        field_name_tot = field_name_opp.replace(suffix_verharding[1:].upper(), "TOTAAL")
                         if new_feature[globals()[field_name_tot]] > 0:
                             perc_value = round(
-                                (
-                                    100
-                                    * new_feature[globals()[field_name_opp]]
-                                    / new_feature[globals()[field_name_tot]]
-                                ),
+                                (100 * new_feature[globals()[field_name_opp]] / new_feature[globals()[field_name_tot]]),
                                 2,
                             )
                             new_feature.SetField(globals()[field_name], perc_value)
@@ -1334,9 +1209,7 @@ class InloopTool:
 
         return intersecting_fids
 
-    def calculate_intersection_area(
-        self, intersecting_it_features, stats_feature, stat_type, type_verharding
-    ):
+    def calculate_intersection_area(self, intersecting_it_features, stats_feature, stat_type, type_verharding):
         it_layer = self._database.result_table
         area_totals = {
             "totaal": 0,
@@ -1369,10 +1242,7 @@ class InloopTool:
             if not it_geom.IsValid():
                 it_geom = it_geom.MakeValid()
 
-            if (
-                it_feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] == verhardingstype
-                or verhardingstype == ""
-            ):
+            if it_feature[RESULT_TABLE_FIELD_TYPE_VERHARDING] == verhardingstype or verhardingstype == "":
                 if (
                     it_geom
                     and stats_geom
@@ -1385,37 +1255,15 @@ class InloopTool:
                         intersection_area = intersection_geom.GetArea()
                         area_totals["totaal"] += intersection_area
                         area_totals["verharding"] += intersection_area
-                        area_totals["gemengd"] += (
-                            intersection_area
-                            * it_feature[TARGET_TYPE_GEMENGD_RIOOL]
-                            / 100
-                        )
-                        area_totals["hwa"] += (
-                            intersection_area
-                            * it_feature[TARGET_TYPE_HEMELWATERRIOOL]
-                            / 100
-                        )
-                        area_totals["vgs"] += (
-                            intersection_area
-                            * it_feature[TARGET_TYPE_VGS_HEMELWATERRIOOL]
-                            / 100
-                        )
-                        area_totals["dwa"] += (
-                            intersection_area
-                            * it_feature[TARGET_TYPE_VUILWATERRIOOL]
-                            / 100
-                        )
+                        area_totals["gemengd"] += intersection_area * it_feature[TARGET_TYPE_GEMENGD_RIOOL] / 100
+                        area_totals["hwa"] += intersection_area * it_feature[TARGET_TYPE_HEMELWATERRIOOL] / 100
+                        area_totals["vgs"] += intersection_area * it_feature[TARGET_TYPE_VGS_HEMELWATERRIOOL] / 100
+                        area_totals["dwa"] += intersection_area * it_feature[TARGET_TYPE_VUILWATERRIOOL] / 100
                         area_totals["infiltratievoorziening"] += (
-                            intersection_area
-                            * it_feature[TARGET_TYPE_INFILTRATIEVOORZIENING]
-                            / 100
+                            intersection_area * it_feature[TARGET_TYPE_INFILTRATIEVOORZIENING] / 100
                         )
-                        area_totals["open_water"] += (
-                            intersection_area * it_feature[TARGET_TYPE_OPEN_WATER] / 100
-                        )
-                        area_totals["maaiveld"] += (
-                            intersection_area * it_feature[TARGET_TYPE_MAAIVELD] / 100
-                        )
+                        area_totals["open_water"] += intersection_area * it_feature[TARGET_TYPE_OPEN_WATER] / 100
+                        area_totals["maaiveld"] += intersection_area * it_feature[TARGET_TYPE_MAAIVELD] / 100
                     except Exception as e:
                         print(f"Error calculating intersection: {e}")
                         continue
@@ -1446,9 +1294,7 @@ class InloopTool:
                 check_feature.SetField(CHECKS_TABLE_FIELD_TABLE, "4_BGT_inlooptabel")
                 check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN, "")
                 check_feature.SetField(CHECKS_TABLE_FIELD_VALUE, str(round(area, 2)))
-                check_feature.SetField(
-                    CHECKS_TABLE_FIELD_DESCRIPTION, warning_large_area
-                )
+                check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION, warning_large_area)
                 checks_table.CreateFeature(check_feature)
                 check_feature = None  # Cleanup after creating the feature
 
@@ -1465,12 +1311,8 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE, 2)
             check_feature.SetField(CHECKS_TABLE_FIELD_TABLE, "4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN, "BGT Identificatie")
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_VALUE, building["identificatie_lokaalid"]
-            )  # identificatiebagpnd
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_DESCRIPTION, warning_bgt_bag_mismatch
-            )
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE, building["identificatie_lokaalid"])  # identificatiebagpnd
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION, warning_bgt_bag_mismatch)
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
 
@@ -1488,9 +1330,7 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_TABLE, "4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN, "Type verharding")
             check_feature.SetField(CHECKS_TABLE_FIELD_VALUE, surface["type_verharding"])
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_DESCRIPTION, warning_infiltrating_surfaces
-            )
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION, warning_infiltrating_surfaces)
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
 
@@ -1507,12 +1347,8 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE, 4)
             check_feature.SetField(CHECKS_TABLE_FIELD_TABLE, "5_BGT_oppervlakken")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN, "BGT Identificatie")
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_VALUE, surface["identificatie_lokaalid"]
-            )
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_DESCRIPTION, warning_relatieve_hoogteligging
-            )
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE, surface["identificatie_lokaalid"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION, warning_relatieve_hoogteligging)
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
 
@@ -1528,17 +1364,15 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE, 5)
             check_feature.SetField(CHECKS_TABLE_FIELD_TABLE, "4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN, "BGT identificatie")
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_VALUE, it_feature["bgt_identificatie"]
-            )
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_DESCRIPTION, warning_new_BGT_surfaces
-            )
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE, it_feature["bgt_identificatie"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION, warning_new_BGT_surfaces)
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
 
         # Check 6: handmatig gewijzigd BGT vlak heeft een eindregistratie gekregen
-        warning_outdated_changed_surfaces = "Dit handmatig gewijzigde vlak zit niet meer in de BGT data. Controleer of het nog steeds bestaat."
+        warning_outdated_changed_surfaces = (
+            "Dit handmatig gewijzigde vlak zit niet meer in de BGT data. Controleer of het nog steeds bestaat."
+        )
         for it_feature in self.outdated_changed_surfaces:
             fid += 1
             geom = it_feature.GetGeometryRef()
@@ -1549,12 +1383,8 @@ class InloopTool:
             check_feature.SetField(CHECKS_TABLE_FIELD_CODE, 6)
             check_feature.SetField(CHECKS_TABLE_FIELD_TABLE, "4_BGT_inlooptabel")
             check_feature.SetField(CHECKS_TABLE_FIELD_COLUMN, "BGT identificatie")
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_VALUE, it_feature["bgt_identificatie"]
-            )
-            check_feature.SetField(
-                CHECKS_TABLE_FIELD_DESCRIPTION, warning_outdated_changed_surfaces
-            )
+            check_feature.SetField(CHECKS_TABLE_FIELD_VALUE, it_feature["bgt_identificatie"])
+            check_feature.SetField(CHECKS_TABLE_FIELD_DESCRIPTION, warning_outdated_changed_surfaces)
             checks_table.CreateFeature(check_feature)
             check_feature = None  # Cleanup after creating the feature
 
@@ -1572,18 +1402,10 @@ class Database:
         self.srs = osr.SpatialReference()
         self.srs.ImportFromEPSG(epsg)
         self.mem_database = MEM_DRIVER.CreateDataSource("")
-        self.create_table(
-            table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA
-        )
-        self.create_table(
-            table_name=SETTINGS_TABLE_NAME, table_schema=SETTINGS_TABLE_SCHEMA
-        )
-        self.create_table(
-            table_name=STATISTICS_TABLE_NAME, table_schema=STATISTICS_TABLE_SCHEMA
-        )
-        self.create_table(
-            table_name=CHECKS_TABLE_NAME, table_schema=CHECKS_TABLE_SCHEMA
-        )
+        self.create_table(table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA)
+        self.create_table(table_name=SETTINGS_TABLE_NAME, table_schema=SETTINGS_TABLE_SCHEMA)
+        self.create_table(table_name=STATISTICS_TABLE_NAME, table_schema=STATISTICS_TABLE_SCHEMA)
+        self.create_table(table_name=CHECKS_TABLE_NAME, table_schema=CHECKS_TABLE_SCHEMA)
         self.non_matching_buildings = []
 
     @property
@@ -1647,9 +1469,7 @@ class Database:
         :param table_schema:
         :param table_name:
         """
-        lyr = self.mem_database.CreateLayer(
-            table_name, self.srs, geom_type=table_schema.geometry_type
-        )
+        lyr = self.mem_database.CreateLayer(table_name, self.srs, geom_type=table_schema.geometry_type)
 
         for fieldname, datatype in table_schema.fields.items():
             field_defn = ogr.FieldDefn(fieldname, datatype)
@@ -1660,24 +1480,14 @@ class Database:
     def import_it_results(self, file_path):
         prev_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(prev_gpkg_abspath):
-            raise FileNotFoundError(
-                "Resultaten GeoPackage vorige run niet gevonden: {}".format(
-                    prev_gpkg_abspath
-                )
-            )
+            raise FileNotFoundError("Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath))
         it_ds = ogr.Open(file_path)
         # TODO more thorough checks of validity of input geopackage
         try:
-            self.mem_database.CopyLayer(
-                it_ds.GetLayerByName("4_BGT_inlooptabel"), RESULT_TABLE_NAME_PREV
-            )
+            self.mem_database.CopyLayer(it_ds.GetLayerByName("4_BGT_inlooptabel"), RESULT_TABLE_NAME_PREV)
         except Exception:
             # TODO more specific exception
-            raise FileInputError(
-                "Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(
-                    prev_gpkg_abspath
-                )
-            )
+            raise FileInputError("Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(prev_gpkg_abspath))
 
     def clean_it_results(self):
         """
@@ -1700,33 +1510,19 @@ class Database:
     def import_settings_results(self, file_path):
         prev_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(prev_gpkg_abspath):
-            raise FileNotFoundError(
-                "Resultaten GeoPackage vorige run niet gevonden: {}".format(
-                    prev_gpkg_abspath
-                )
-            )
+            raise FileNotFoundError("Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath))
         it_ds = ogr.Open(file_path)
         # TODO more thorough checks of validity of input geopackage
         try:
-            self.mem_database.CopyLayer(
-                it_ds.GetLayerByName("7_Rekeninstellingen"), SETTINGS_TABLE_NAME_PREV
-            )
+            self.mem_database.CopyLayer(it_ds.GetLayerByName("7_Rekeninstellingen"), SETTINGS_TABLE_NAME_PREV)
         except Exception:
             # TODO more specific exception
-            raise FileInputError(
-                "Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(
-                    prev_gpkg_abspath
-                )
-            )
+            raise FileInputError("Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(prev_gpkg_abspath))
 
     def import_inf_pavement_green_roofs(self, file_path):
         prev_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(prev_gpkg_abspath):
-            raise FileNotFoundError(
-                "Resultaten GeoPackage vorige run niet gevonden: {}".format(
-                    prev_gpkg_abspath
-                )
-            )
+            raise FileNotFoundError("Resultaten GeoPackage vorige run niet gevonden: {}".format(prev_gpkg_abspath))
         it_ds = ogr.Open(file_path)
         # TODO more thorough checks of validity of input geopackage/shapefile
         try:
@@ -1736,11 +1532,7 @@ class Database:
             )
         except Exception:
             # TODO more specific exception
-            raise FileInputError(
-                "Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(
-                    prev_gpkg_abspath
-                )
-            )
+            raise FileInputError("Ongeldige input: {} is geen geldige Resultaten GeoPackage".format(prev_gpkg_abspath))
 
     def import_pipes(self, file_path):
         """
@@ -1750,22 +1542,14 @@ class Database:
         """
         gwsw_gpkg_abspath = os.path.abspath(file_path)
         if not os.path.isfile(gwsw_gpkg_abspath):
-            raise FileNotFoundError(
-                "GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath)
-            )
+            raise FileNotFoundError("GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath))
         lines_ds = ogr.Open(file_path)
         # TODO more thorough checks of validity of input geopackage
         try:
-            self.mem_database.CopyLayer(
-                lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME
-            )
+            self.mem_database.CopyLayer(lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME)
         except Exception:
             # TODO more specific exception
-            raise FileInputError(
-                "Ongeldige input: {} is geen geldige GWSW GeoPackage".format(
-                    gwsw_gpkg_abspath
-                )
-            )
+            raise FileInputError("Ongeldige input: {} is geen geldige GWSW GeoPackage".format(gwsw_gpkg_abspath))
 
     def import_surfaces_raw(self, file_path, extent_wkt):
         """
@@ -1775,16 +1559,12 @@ class Database:
         """
         bgt_zip_file_abspath = os.path.abspath(file_path)
         if not os.path.isfile(bgt_zip_file_abspath):
-            raise FileNotFoundError(
-                "BGT zip niet gevonden: {}".format(bgt_zip_file_abspath)
-            )
+            raise FileNotFoundError("BGT zip niet gevonden: {}".format(bgt_zip_file_abspath))
 
         try:
             nr_layers_with_features = 0
             for stype in ALL_USED_SURFACE_TYPES:
-                surface_source_fn = os.path.join(
-                    "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
-                )
+                surface_source_fn = os.path.join("/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype))
                 if stype in MULTIPLE_GEOMETRY_SURFACE_TYPES:
                     surface_source_gfs_fn = os.path.join(GFS_DIR, f"bgt_{stype}.gfs")
                     if not os.path.isfile(surface_source_gfs_fn):
@@ -1798,9 +1578,7 @@ class Database:
                 if surface_source is None:
                     continue  # TODO Warning
                 else:
-                    src_layer = surface_source.GetLayerByName(
-                        "{stype}".format(stype=stype)
-                    )
+                    src_layer = surface_source.GetLayerByName("{stype}".format(stype=stype))
                     if src_layer is None:
                         continue  # TODO Warning
                     else:
@@ -1814,9 +1592,7 @@ class Database:
                             f"raw import of {stype} layer has {self.mem_database.GetLayerByName(stype).GetFeatureCount()} features"
                         )
             if nr_layers_with_features == 0:
-                raise FileInputError(
-                    f"BGT zip file is leeg of bevat alleen lagen zonder features"
-                )
+                raise FileInputError(f"BGT zip file is leeg of bevat alleen lagen zonder features")
         except FileInputError:
             raise
         except Exception:
@@ -1894,9 +1670,7 @@ class Database:
         """
         for surface_type in ALL_USED_SURFACE_TYPES:
             layer = self.mem_database.GetLayerByName(surface_type)
-            if (
-                layer is None
-            ):  # this happens if this particular layer in the bgt input has no features
+            if layer is None:  # this happens if this particular layer in the bgt input has no features
                 continue
             layer.ResetReading()
             delete_fids = []
@@ -1904,9 +1678,7 @@ class Database:
                 geom = feature.GetGeometryRef()
                 if geom is None:
                     # If no geometry is found, skip this feature
-                    print(
-                        f"Warning: Feature {feature.GetFID()} in layer {surface_type} has no geometry. Skipping."
-                    )
+                    print(f"Warning: Feature {feature.GetFID()} in layer {surface_type} has no geometry. Skipping.")
                     continue
                 geom_type = geom.GetGeometryType()
                 if geom_type == ogr.wkbPolygon:
@@ -1933,9 +1705,7 @@ class Database:
                     continue
             for fid in delete_fids:
                 layer.DeleteFeature(fid)
-            print(
-                f"cleaned import of {surface_type} layer has {layer.GetFeatureCount()} features"
-            )
+            print(f"cleaned import of {surface_type} layer has {layer.GetFeatureCount()} features")
 
             layer = None
 
@@ -1961,10 +1731,7 @@ class Database:
                 elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
                     gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
                     gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split("/")[-1]
-                    if (
-                        gwsw_stelsel_type_clean
-                        == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL
-                    ):
+                    if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
                         internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
                 pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
                 layer.SetFeature(pipe_feat)
@@ -2041,17 +1808,13 @@ class Database:
 
     def merge_surfaces(self):
         """Merge and standardize all imported surfaces to one layer"""
-        self.create_table(
-            table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA
-        )
+        self.create_table(table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA)
         dest_layer = self.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
         id_counter = 1
         previous_fcount = 0
         for stype in ALL_USED_SURFACE_TYPES:
             input_layer = self.mem_database.GetLayerByName(stype)
-            if (
-                input_layer is None
-            ):  # this happens if this particular layer in the bgt input has no features
+            if input_layer is None:  # this happens if this particular layer in the bgt input has no features
                 continue
             for feature in input_layer:
                 if hasattr(feature, "eindRegistratie"):
@@ -2063,9 +1826,7 @@ class Database:
                 new_feature = ogr.Feature(dest_layer.GetLayerDefn())
                 new_feature.SetField("id", id_counter)
                 id_counter += 1
-                new_feature.SetField(
-                    "identificatie_lokaalid", feature["identificatie.lokaalID"]
-                )
+                new_feature.SetField("identificatie_lokaalid", feature["identificatie.lokaalID"])
                 new_feature.SetField("surface_type", stype)
 
                 if stype in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
@@ -2073,9 +1834,7 @@ class Database:
 
                 if stype == SURFACE_TYPE_PAND:
                     new_feature["identificatiebagpnd"] = feature["identificatieBAGPND"]
-                new_feature.SetField(
-                    "relatieve_hoogteligging", feature["relatieveHoogteligging"]
-                )
+                new_feature.SetField("relatieve_hoogteligging", feature["relatieveHoogteligging"])
 
                 target_geometry = ogr.ForceToPolygon(feature.geometry())
                 target_geometry.AssignSpatialReference(self.srs)
@@ -2083,9 +1842,7 @@ class Database:
                 dest_layer.CreateFeature(new_feature)
                 target_geometry = None
                 new_feature = None
-            print(
-                f"added {dest_layer.GetFeatureCount()-previous_fcount} features from {stype} layer"
-            )
+            print(f"added {dest_layer.GetFeatureCount() - previous_fcount} features from {stype} layer")
             previous_fcount = dest_layer.GetFeatureCount()
         dest_layer = None
 
@@ -2104,12 +1861,8 @@ class Database:
 
         # Loop through all surfaces in the layer
         for feature in layer:
-            geom1 = (
-                feature.GetGeometryRef()
-            )  # Get the geometry of the current feature (surface)
-            hoogteligging1 = feature.GetField(
-                "relatieve_hoogteligging"
-            )  # Get the "hoogteligging" field
+            geom1 = feature.GetGeometryRef()  # Get the geometry of the current feature (surface)
+            hoogteligging1 = feature.GetField("relatieve_hoogteligging")  # Get the "hoogteligging" field
 
             # Loop through all other surfaces in the layer to check for overlaps
             layer.ResetReading()  # Reset the reading to iterate over all features again
@@ -2118,21 +1871,15 @@ class Database:
                     # Skip comparing the surface with itself
                     continue
 
-                geom2 = (
-                    other_feature.GetGeometryRef()
-                )  # Get the geometry of the other feature
-                if geom1.Intersects(
-                    geom2
-                ):  # Check if the geometries intersect (overlap)
+                geom2 = other_feature.GetGeometryRef()  # Get the geometry of the other feature
+                if geom1.Intersects(geom2):  # Check if the geometries intersect (overlap)
                     hoogteligging2 = other_feature.GetField(
                         "relatieve_hoogteligging"
                     )  # Get the hoogteligging of the other feature
                     # Compare the two overlapping features and keep the one with the higher hoogteligging
                     if hoogteligging1 > hoogteligging2:
                         if feature not in highest_surfaces:
-                            highest_surfaces.append(
-                                feature
-                            )  # Add the feature if it's not already in the list
+                            highest_surfaces.append(feature)  # Add the feature if it's not already in the list
                     elif hoogteligging1 < hoogteligging2:
                         if other_feature not in highest_surfaces:
                             highest_surfaces.append(
@@ -2165,9 +1912,7 @@ class Database:
         for surface in surfaces:
             if surface["surface_type"] == SURFACE_TYPE_PAND:
                 if surface["identificatiebagpnd"] in building_dict.keys():
-                    surface["build_year"] = building_dict[
-                        surface["identificatiebagpnd"]
-                    ]
+                    surface["build_year"] = building_dict[surface["identificatiebagpnd"]]
                     surfaces.SetFeature(surface)
                 else:
                     self.non_matching_buildings.append(surface)
@@ -2178,17 +1923,13 @@ class Database:
         print("... done")
         return
 
-    def copy_features_with_matching_fields(
-        self, src_layer, dst_layer, primary_key_field
-    ):
+    def copy_features_with_matching_fields(self, src_layer, dst_layer, primary_key_field):
         # Get source layer definition
         src_defn = src_layer.GetLayerDefn()
 
         # Get the names of the fields in the destination layer
         dst_defn = dst_layer.GetLayerDefn()
-        dst_field_names = [
-            dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())
-        ]
+        dst_field_names = [dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())]
 
         # Iterate through the features in the source layer
         for src_feat in src_layer:
@@ -2300,9 +2041,7 @@ class Database:
         except FileNotFoundError:
             print(f"The template {original_file_path} does not exist.")
         except PermissionError:
-            print(
-                f"Permission denied. Unable to copy the template {original_file_path} to {new_file_path}."
-            )
+            print(f"Permission denied. Unable to copy the template {original_file_path} to {new_file_path}.")
         except Exception as e:
             print(f"An error occurred when copying the template: {e}")
 
@@ -2315,9 +2054,7 @@ class Database:
 
         dst_layer = dst_gpkg.GetLayerByName(dst_layer_name)
         if dst_layer is None:
-            raise ValueError(
-                f"Layer '{dst_layer_name}' not found in destination GeoPackage."
-            )
+            raise ValueError(f"Layer '{dst_layer_name}' not found in destination GeoPackage.")
 
         layer_defn = db_layer.GetLayerDefn()
         dst_layer_defn = dst_layer.GetLayerDefn()
@@ -2328,9 +2065,7 @@ class Database:
             )
 
         field_mapping = {
-            dst_layer_defn.GetFieldDefn(i).GetName(): layer_defn.GetFieldIndex(
-                dst_layer_defn.GetFieldDefn(i).GetName()
-            )
+            dst_layer_defn.GetFieldDefn(i).GetName(): layer_defn.GetFieldIndex(dst_layer_defn.GetFieldDefn(i).GetName())
             for i in range(dst_layer_defn.GetFieldCount())
         }
 
@@ -2339,13 +2074,9 @@ class Database:
             dst_feature = ogr.Feature(dst_layer_defn)
             for dst_field_name, src_field_index in field_mapping.items():
                 if src_field_index != -1:  # Ensure the field exists in the source layer
-                    dst_feature.SetField(
-                        dst_field_name, feature.GetField(src_field_index)
-                    )
+                    dst_feature.SetField(dst_field_name, feature.GetField(src_field_index))
                 else:
-                    print(
-                        f"Warning: Source field '{dst_field_name}' not found in the source layer. Skipping field."
-                    )
+                    print(f"Warning: Source field '{dst_field_name}' not found in the source layer. Skipping field.")
             # for dst_field_name, src_field_index in field_mapping.items():
             # dst_feature.SetField(dst_field_name, feature.GetField(src_field_index))
             geom = feature.GetGeometryRef()
@@ -2376,7 +2107,7 @@ class Database:
         FOR EACH ROW
         BEGIN
         UPDATE "4_BGT_inlooptabel" SET laatste_wijziging = datetime('now', '+1 hour') WHERE id = old.id;
-        END 
+        END
         """
 
         sql_changed_tf = """

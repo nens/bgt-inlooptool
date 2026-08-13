@@ -10,7 +10,6 @@ from bgt_inlooptool.pyt_download_basis_data import DownloadBasisData
 
 
 class Toolbox(object):
-
     def __init__(self):
         self.label = "BGT Inloop Toolbox voor ArcGIS"
         self.alias = "Toolbox"

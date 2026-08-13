@@ -41,6 +41,7 @@ ogr.UseExceptions()
 import webbrowser
 import urllib.parse
 
+
 def open_email_client(subject, body):
     subject_encoded = urllib.parse.quote(subject)
     body_encoded = urllib.parse.quote(body)
@@ -61,9 +62,7 @@ def is_valid_ogr_file(path: str, optional: bool = False):
 #                             MAIN TOOL DIALOG
 # ---------------------------------------------------------------------------
 
-FORM_CLASS, _ = uic.loadUiType(
-    os.path.join(os.path.dirname(__file__), "BGTInloopTool_dialog_base.ui")
-)
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), "BGTInloopTool_dialog_base.ui"))
 
 
 class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
@@ -96,18 +95,14 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
         self.BGTExtentCombobox.layerChanged.connect(self.validate_gwsw)
 
         # Setting defaults
-        self.max_afstand_vlak_afwateringsvoorziening.setValue(
-            MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING
-        )
+        self.max_afstand_vlak_afwateringsvoorziening.setValue(MAX_AFSTAND_VLAK_AFWATERINGSVOORZIENING)
         self.max_afstand_vlak_oppwater.setValue(MAX_AFSTAND_VLAK_OPPWATER)
         self.max_afstand_pand_oppwater.setValue(MAX_AFSTAND_PAND_OPPWATER)
         self.max_afstand_vlak_kolk.setValue(MAX_AFSTAND_VLAK_KOLK)
         self.max_afstand_afgekoppeld.setValue(MAX_AFSTAND_AFGEKOPPELD)
         self.max_afstand_drievoudig.setValue(MAX_AFSTAND_DRIEVOUDIG)
         self.bouwjaar_gescheiden_binnenhuisriolering.setMaximum(10000)
-        self.bouwjaar_gescheiden_binnenhuisriolering.setValue(
-            BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING
-        )
+        self.bouwjaar_gescheiden_binnenhuisriolering.setValue(BOUWJAAR_GESCHEIDEN_BINNENHUISRIOLERING)
         self.verhardingsgraad_erf.setValue(VERHARDINGSGRAAD_ERF)
         self.verhardingsgraad_half_verhard.setValue(VERHARDINGSGRAAD_HALF_VERHARD)
         self.afkoppelen_hellende_daken.setChecked(AFKOPPELEN_HELLENDE_DAKEN)
@@ -145,13 +140,13 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
     def run_startup_popup(self):
         settings = QSettings()
         first_start = settings.value("BGTInloopTool/FirstStart", True, type=bool)
-    
+
         if not first_start:
             return  # skip popup next time
-    
+
         popup = PopUpUserDialog()
         popup.exec_()
-    
+
         if popup.choice == "yes":
             settings.setValue("BGTInloopTool/FirstStart", False)
             open_email_client(
@@ -159,18 +154,17 @@ class BGTInloopToolDialog(QtWidgets.QDialog, FORM_CLASS):
                 f"Name: {popup.inputName.text()}\n"
                 f"Email: {popup.inputMail.text()}\n"
                 f"Organisation: {popup.inputOrg.text()}\n"
-                f"Extra: {popup.inputExtra.text()}"
+                f"Extra: {popup.inputExtra.text()}",
             )
-    
+
         elif popup.choice == "no":
             settings.setValue("BGTInloopTool/FirstStart", False)
             # send_email(
             #     "BGT Inlooptool - Registration Declined",
             #     "The user clicked 'No' on the registration popup."
             # )
-    
-        # later or X → do nothing (FirstStart stays True)
 
+        # later or X → do nothing (FirstStart stays True)
 
     # -----------------------------------------------------------------------
     # Rest of your original validation functions unchanged

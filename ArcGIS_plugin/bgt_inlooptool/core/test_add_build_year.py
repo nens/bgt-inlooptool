@@ -4,6 +4,7 @@ Created on Wed Sep 27 09:36:30 2023
 
 @author: ruben.vanderzaag
 """
+
 # System imports
 import os
 import sys
@@ -19,6 +20,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 from .rtree_installer import unpack_rtree
+
 if not str(Path(__file__).parent) in sys.path:  # bgt_inlooptool\\core
     rtree_path = unpack_rtree()
     sys.path.append(str(rtree_path))
@@ -49,7 +51,8 @@ GFS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gfs")
 gdal.UseExceptions()
 ogr.UseExceptions()
 
-#Merge BGT Zip
+
+# Merge BGT Zip
 def __init__(self, epsg=28992):
     """
     Constructor
@@ -59,9 +62,8 @@ def __init__(self, epsg=28992):
     self.srs = osr.SpatialReference()
     self.srs.ImportFromEPSG(epsg)
     self.mem_database = MEM_DRIVER.CreateDataSource("")
-    self.create_table(
-        table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA
-    )
+    self.create_table(table_name=RESULT_TABLE_NAME, table_schema=RESULT_TABLE_SCHEMA)
+
 
 @property
 def result_table(self):
@@ -70,12 +72,14 @@ def result_table(self):
     """
     return self.mem_database.GetLayerByName(RESULT_TABLE_NAME)
 
+
 @property
 def bgt_surfaces(self):
     """Get reference to BGT Surface layer
     :rtype ogr.Layer
     """
     return self.mem_database.GetLayerByName(SURFACES_TABLE_NAME)
+
 
 @property
 def pipes(self):
@@ -84,12 +88,14 @@ def pipes(self):
     """
     return self.mem_database.GetLayerByName(PIPES_TABLE_NAME)
 
+
 @property
 def kolken(self):
     """Get reference to Kolken layer
     :rtype ogr.Layer
     """
     return self.mem_database.GetLayerByName(KOLKEN_TABLE_NAME)
+
 
 @property
 def buildings(self):
@@ -98,20 +104,20 @@ def buildings(self):
     """
     return self.mem_database.GetLayerByName(BUILDINGS_TABLE_NAME)
 
+
 def create_table(table_name, table_schema):
     """Create or replace the result table
     :param table_schema:
     :param table_name:
     """
-    lyr = mem_database.CreateLayer(
-        table_name, srs, geom_type=table_schema.geometry_type
-    )
+    lyr = mem_database.CreateLayer(table_name, srs, geom_type=table_schema.geometry_type)
 
     for fieldname, datatype in table_schema.fields.items():
         field_defn = ogr.FieldDefn(fieldname, datatype)
         lyr.CreateField(field_defn)
 
     lyr = None
+
 
 def import_pipes(self, file_path):
     """
@@ -121,22 +127,15 @@ def import_pipes(self, file_path):
     """
     gwsw_gpkg_abspath = os.path.abspath(file_path)
     if not os.path.isfile(gwsw_gpkg_abspath):
-        raise FileNotFoundError(
-            "GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath)
-        )
+        raise FileNotFoundError("GWSW GeoPackage niet gevonden: {}".format(gwsw_gpkg_abspath))
     lines_ds = ogr.Open(file_path)
     # TODO more thorough checks of validity of input geopackage
     try:
-        self.mem_database.CopyLayer(
-            lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME
-        )
+        self.mem_database.CopyLayer(lines_ds.GetLayerByName(SOURCE_PIPES_TABLE_NAME), PIPES_TABLE_NAME)
     except Exception:
         # TODO more specific exception
-        raise FileInputError(
-            "Ongeldige input: {} is geen geldige GWSW GeoPackage".format(
-                gwsw_gpkg_abspath
-            )
-        )
+        raise FileInputError("Ongeldige input: {} is geen geldige GWSW GeoPackage".format(gwsw_gpkg_abspath))
+
 
 def import_surfaces_raw(file_path):
     """
@@ -146,16 +145,12 @@ def import_surfaces_raw(file_path):
     """
     bgt_zip_file_abspath = os.path.abspath(file_path)
     if not os.path.isfile(bgt_zip_file_abspath):
-        raise FileNotFoundError(
-            "BGT zip niet gevonden: {}".format(bgt_zip_file_abspath)
-        )
+        raise FileNotFoundError("BGT zip niet gevonden: {}".format(bgt_zip_file_abspath))
 
     try:
         nr_layers_with_features = 0
         for stype in ALL_USED_SURFACE_TYPES:
-            surface_source_fn = os.path.join(
-                "/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype)
-            )
+            surface_source_fn = os.path.join("/vsizip/" + file_path, "bgt_{stype}.gml".format(stype=stype))
             if stype in MULTIPLE_GEOMETRY_SURFACE_TYPES:
                 surface_source_gfs_fn = os.path.join(GFS_DIR, f"bgt_{stype}.gfs")
                 if not os.path.isfile(surface_source_gfs_fn):
@@ -169,26 +164,24 @@ def import_surfaces_raw(file_path):
             if surface_source is None:
                 continue  # TODO Warning
             else:
-                src_layer = surface_source.GetLayerByName(
-                    "{stype}".format(stype=stype)
-                )
+                src_layer = surface_source.GetLayerByName("{stype}".format(stype=stype))
                 if src_layer is None:
                     continue  # TODO Warning
                 else:
                     nr_layers_with_features += 1
                     mem_database.CopyLayer(src_layer=src_layer, new_name=stype)
-                    print(f"raw import of {stype} layer has {mem_database.GetLayerByName(stype).GetFeatureCount()} features")
+                    print(
+                        f"raw import of {stype} layer has {mem_database.GetLayerByName(stype).GetFeatureCount()} features"
+                    )
         if nr_layers_with_features == 0:
-            raise FileInputError(
-                f"BGT zip file is leeg of bevat alleen lagen zonder features"
-            )
+            raise FileInputError(f"BGT zip file is leeg of bevat alleen lagen zonder features")
     except FileInputError:
         raise
     except Exception:
         raise FileInputError(f"Probleem met laag {stype}.gml in BGT zip file")
 
-def import_kolken(self, file_path):
 
+def import_kolken(self, file_path):
     """
     Copy point features from a ogr layer
 
@@ -205,6 +198,7 @@ def import_kolken(self, file_path):
         # TODO more specific exception
         raise FileInputError("Ongeldige input: {}".format(kolken_abspath))
 
+
 def add_index_to_inputs(self, pipes=True, bgt_surfaces=True, kolken=True):
     """
     add index to input layers if rtree is installed
@@ -215,10 +209,11 @@ def add_index_to_inputs(self, pipes=True, bgt_surfaces=True, kolken=True):
     if kolken:
         self.kolken_idx = create_index(self.kolken)
 
+
 def remove_input_features_outside_clip_extent(self, extent_wkt):
 
     extent_geometry = ogr.CreateGeometryFromWkt(extent_wkt)
-    
+
     pipes = self.pipes
     bgt_surfaces = self.bgt_surfaces
 
@@ -230,7 +225,7 @@ def remove_input_features_outside_clip_extent(self, extent_wkt):
         pipe_geom = pipe.geometry()
         if pipe_geom.Intersects(extent_geometry):
             intersecting_pipes.append(pipe_fid)
-  
+
     for surface in bgt_surfaces:
         surface_fid = surface.GetFID()
         surface_geom = surface.geometry()
@@ -249,6 +244,7 @@ def remove_input_features_outside_clip_extent(self, extent_wkt):
 
     pipes = None
     bgt_surfaces = None
+
 
 def clean_surfaces(self):
     """
@@ -290,11 +286,10 @@ def clean_surfaces(self):
                 continue
         for fid in delete_fids:
             layer.DeleteFeature(fid)
-        print(
-            f"cleaned import of {surface_type} layer has {layer.GetFeatureCount()} features"
-        )
+        print(f"cleaned import of {surface_type} layer has {layer.GetFeatureCount()} features")
 
         layer = None
+
 
 def classify_pipes(self, delete=True):
     """Assign pipe type based on GWSW pipe type. Optionally, delete pipes of type INTERNAL_PIPE_TYPE_IGNORE"""
@@ -318,10 +313,7 @@ def classify_pipes(self, delete=True):
             elif internal_pipe_type == INTERNAL_PIPE_TYPE_HEMELWATERRIOOL:
                 gwsw_stelsel_type_uri = pipe_feat[GWSW_STELSEL_TYPE_FIELD]
                 gwsw_stelsel_type_clean = gwsw_pipe_type_uri.split("/")[-1]
-                if (
-                    gwsw_stelsel_type_clean
-                    == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL
-                ):
+                if gwsw_stelsel_type_clean == GWSW_STELSEL_TYPE_VERBETERDHEMELWATERSTELSEL:
                     internal_pipe_type = INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL
             pipe_feat[INTERNAL_PIPE_TYPE_FIELD] = internal_pipe_type
             layer.SetFeature(pipe_feat)
@@ -331,6 +323,7 @@ def classify_pipes(self, delete=True):
             layer.DeleteFeature(fid)
 
     layer = None
+
 
 def classify_surfaces(self, parameters):
     """Determine NWRW surface type of all imported surfaces"""
@@ -396,19 +389,16 @@ def classify_surfaces(self, parameters):
             layer.SetFeature(feature)
     layer = None
 
+
 def merge_surfaces(self):
     """Merge and standardize all imported surfaces to one layer"""
-    create_table(
-        table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA
-    )
+    create_table(table_name=SURFACES_TABLE_NAME, table_schema=SURFACES_TABLE_SCHEMA)
     dest_layer = mem_database.GetLayerByName(SURFACES_TABLE_NAME)
     id_counter = 1
     previous_fcount = 0
     for stype in ALL_USED_SURFACE_TYPES:
         input_layer = mem_database.GetLayerByName(stype)
-        if (
-            input_layer is None
-        ):  # this happens if this particular layer in the bgt input has no features
+        if input_layer is None:  # this happens if this particular layer in the bgt input has no features
             continue
         for feature in input_layer:
             if hasattr(feature, "eindRegistratie"):
@@ -420,9 +410,7 @@ def merge_surfaces(self):
             new_feature = ogr.Feature(dest_layer.GetLayerDefn())
             new_feature.SetField("id", id_counter)
             id_counter += 1
-            new_feature.SetField(
-                "identificatie_lokaalid", feature["identificatie.lokaalID"]
-            )
+            new_feature.SetField("identificatie_lokaalid", feature["identificatie.lokaalID"])
             new_feature.SetField("surface_type", stype)
 
             if stype in SURFACE_TYPES_MET_FYSIEK_VOORKOMEN:
@@ -437,11 +425,10 @@ def merge_surfaces(self):
             dest_layer.CreateFeature(new_feature)
             target_geometry = None
             new_feature = None
-        print(
-            f"added {dest_layer.GetFeatureCount()-previous_fcount} features from {stype} layer"
-        )
+        print(f"added {dest_layer.GetFeatureCount() - previous_fcount} features from {stype} layer")
         previous_fcount = dest_layer.GetFeatureCount()
     dest_layer = None
+
 
 def add_build_year_to_surface(self, file_path, field_name="bouwjaar"):
 
@@ -463,9 +450,7 @@ def add_build_year_to_surface(self, file_path, field_name="bouwjaar"):
     for surface in surfaces:
         if surface["surface_type"] == SURFACE_TYPE_PAND:
             if surface["identificatiebagpnd"] in building_dict.keys():
-                surface["build_year"] = building_dict[
-                    surface["identificatiebagpnd"]
-                ]
+                surface["build_year"] = building_dict[surface["identificatiebagpnd"]]
                 surfaces.SetFeature(surface)
         surface = None
 
@@ -473,6 +458,7 @@ def add_build_year_to_surface(self, file_path, field_name="bouwjaar"):
     surfaces = None
     print("... done")
     return
+
 
 def _write_to_disk(self, file_path):
     """Copy self.mem_database to file_path"""
@@ -511,6 +497,7 @@ def create_index(layer):
 
     return index
 
+
 def ogr_to_dataframe(layer):
     # Get the layer's feature definitions
     layer_defn = layer.GetLayerDefn()
@@ -530,12 +517,15 @@ def ogr_to_dataframe(layer):
     df = pd.DataFrame(data, columns=field_names)
 
     return df
-import pandas as pd
-dest_layer_merge_df = ogr_to_dataframe(dest_layer)
-layer_clean_df = ogr_to_dataframe(layer) 
-layer_classify_df =ogr_to_dataframe(layer) 
 
-import_surfaces_raw(file_path) #check
-clean_surfaces() #check
-merge_surfaces() #check
+
+import pandas as pd
+
+dest_layer_merge_df = ogr_to_dataframe(dest_layer)
+layer_clean_df = ogr_to_dataframe(layer)
+layer_classify_df = ogr_to_dataframe(layer)
+
+import_surfaces_raw(file_path)  # check
+clean_surfaces()  # check
+merge_surfaces()  # check
 classify_surfaces(parameters)

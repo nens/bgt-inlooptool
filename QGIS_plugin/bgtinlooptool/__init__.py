@@ -22,6 +22,7 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
+
 import logging
 import sys
 
@@ -44,11 +45,13 @@ def ensure_rtree_install():
 
     try:
         import rtree
+
         logger.info("Rtree is importable at %s", rtree.__file__)
         return
     except ImportError:
         logger.info("Rtree is not importable, we're installing it")
         from .core import rtree_installer
+
         search_path = current_dir / "core" / "whls"
         wheel_filename = rtree_installer.get_wheel_filename(
             search_path=search_path,
@@ -57,14 +60,11 @@ def ensure_rtree_install():
             abi_tag_suffix="m",
         )
         logger.info("Found %s to be the best matching package file", wheel_filename)
-        rtree_installer.unpack_whl(
-            wheel_filename,
-            package_name="rtree",
-            extract_dir=custom_lib_dir
-        )
+        rtree_installer.unpack_whl(wheel_filename, package_name="rtree", extract_dir=custom_lib_dir)
     # Re-try import
     try:
         import rtree
+
         logger.info("Rtree is now importable at %s", rtree.__file__)
         return
     except ImportError:
@@ -74,7 +74,6 @@ def ensure_rtree_install():
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
-
     """Load BGTInloopTool class from file BGTInloopTool.
 
     :param iface: A QGIS interface instance.
@@ -83,4 +82,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     setup_logging()
     ensure_rtree_install()
     from .BGTInloopTool import BGTInloopTool
+
     return BGTInloopTool(iface)

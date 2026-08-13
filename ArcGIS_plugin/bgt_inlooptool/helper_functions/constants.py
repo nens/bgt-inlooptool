@@ -10,6 +10,7 @@ CBS_GEMEENTES_API_URL = "https://service.pdok.nl/kadaster/bestuurlijkegebieden/w
 NOT_FOUND_GEMEENTES = []  # Initialize the list for not found gemeentes (GWSW server)
 WFS_FEATURE_LIMIT = 50000
 
+
 class VisualizeLayer(NamedTuple):
     symbology_param: arcpy.Parameter
     visualize_field: Union[str, None]
