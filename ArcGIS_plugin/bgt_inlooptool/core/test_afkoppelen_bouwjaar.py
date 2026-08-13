@@ -4,6 +4,7 @@ Created on Tue Sep 26 08:42:41 2023
 
 @author: ruben.vanderzaag
 """
+
 from core.table_schemas import *
 from core.constants import *
 from core.defaults import *
@@ -12,7 +13,7 @@ from osgeo import ogr
 import pandas as pd
 
 # Path to the Geopackage file
-gpkg_path = 'bgt_zeewolde3.gpkg'
+gpkg_path = "bgt_zeewolde3.gpkg"
 
 # Open the Geopackage
 gpkg_ds_BGT = ogr.Open(gpkg_path, 0)  # 0 means read-only mode
@@ -25,9 +26,9 @@ else:
     layername = {}
     # Iterate over all layers in the Geopackage and print their names
     for i in range(gpkg_ds_BGT.GetLayerCount()):
-        locals()["BGT_layer_"+str(i)] = gpkg_ds_BGT.GetLayerByIndex(i)
-        layer = locals()["BGT_layer_"+str(i)]
-        #layer = gpkg_ds.GetLayerByIndex(i)
+        locals()["BGT_layer_" + str(i)] = gpkg_ds_BGT.GetLayerByIndex(i)
+        layer = locals()["BGT_layer_" + str(i)]
+        # layer = gpkg_ds.GetLayerByIndex(i)
         print(f"Layer {i}: {layer.GetName()}")
 
 
@@ -51,19 +52,20 @@ for feature in surfaces:
 df = pd.DataFrame(data)
 
 for surface in df:
-    print('succes')
-    #print(surface["plus-status"])
-    
+    print("succes")
+    # print(surface["plus-status"])
+
 for surface in surfaces:
     print(surface["plus-status"])
-
 
 
 for index, surface in df.iterrows():
     print(f"Index: {index}")
 
+
 def is_water():
     return surface[RESULT_TABLE_FIELD_TYPE_VERHARDING] == VERHARDINGSTYPE_WATER
+
 
 def verhard():
     """Is het oppervlak (mogelijk/deels) verhard?"""
@@ -79,10 +81,12 @@ def verhard():
     else:
         return False
 
+
 def bij_hov():
     """Ligt het oppervlak dichtbij een hemelwaterontvangende voorziening?"""
     distances = [surface["distance_" + dt] for dt in DISTANCE_TYPES]
     return min(distances) != PSEUDO_INFINITE
+
 
 def is_bouwwerk():
     return surface.surface_type in [
@@ -90,10 +94,10 @@ def is_bouwwerk():
         SURFACE_TYPE_GEBOUWINSTALLATIE,
     ]
 
+
 def bij_water():
-    return (
-        surface["distance_" + OPEN_WATER] < parameters.max_afstand_vlak_oppwater
-    )
+    return surface["distance_" + OPEN_WATER] < parameters.max_afstand_vlak_oppwater
+
 
 def bij_kolk():
     if parameters.gebruik_kolken:
@@ -101,31 +105,27 @@ def bij_kolk():
     else:
         return True
 
+
 def bij_gem_plus_hwa():
     """Ligt het oppervlak in de buurt van een straat waar naast gemengd ook rwa is gelegd?"""
 
-    if surface[
-        "distance_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL
-    ] != PSEUDO_INFINITE and (
-        surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL]
-        != PSEUDO_INFINITE
-        or surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]
-        != PSEUDO_INFINITE
+    if surface["distance_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL] != PSEUDO_INFINITE and (
+        surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL] != PSEUDO_INFINITE
+        or surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING] != PSEUDO_INFINITE
     ):
         return (
             abs(
                 surface["distance_" + INTERNAL_PIPE_TYPE_GEMENGD_RIOOL]
                 - min(
                     surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL],
-                    surface[
-                        "distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING
-                    ],
+                    surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING],
                 )
             )
             <= parameters.max_afstand_afgekoppeld
         )
     else:
         return False
+
 
 def gem_dichtst_bij():
     """Ligt het gemengde riool dichterbij dan HWA/VGS-HWA/Infiltratieriool?"""
@@ -134,6 +134,7 @@ def gem_dichtst_bij():
         surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING],
     )
 
+
 def hwa_dichterbij_dan_hwavgs_en_infiltr():
     """Ligt het HWA riool dichterbij dan het VGS-HWA en het infiltratieriool?"""
     return surface["distance_" + INTERNAL_PIPE_TYPE_HEMELWATERRIOOL] < min(
@@ -141,20 +142,25 @@ def hwa_dichterbij_dan_hwavgs_en_infiltr():
         surface["distance_" + INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL],
     )
 
+
 def bij_drievoudig_stelsel_crit1():
     return False
+
 
 def bij_drievoudig_stelsel_crit2():
     return False
 
+
 def bij_drievoudig_stelsel_crit3():
     return False
+
 
 def hwa_vgs_dichterbij_dan_infiltr():
     return (
         surface["distance_" + INTERNAL_PIPE_TYPE_VGS_HEMELWATERRIOOL]
         < surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING]
     )
+
 
 def nieuw_pand():
     """Is het bouwjaar van het pand later dan de ondergrens voor gescheiden binnenhuis riolering?"""
@@ -164,10 +170,8 @@ def nieuw_pand():
         if surface.build_year is None:
             return False
         else:
-            return (
-                surface.build_year
-                > parameters.bouwjaar_gescheiden_binnenhuisriolering
-            )
+            return surface.build_year > parameters.bouwjaar_gescheiden_binnenhuisriolering
+
 
 def hellend_dak():
     return True
@@ -177,7 +181,7 @@ for distance_type in DISTANCE_TYPES:
     field_name = "distance_" + distance_type
     field_type = ogr.OFTReal
     field_width = 50
-    new_field_defn = ogr.FieldDefn(field_name,field_type)
+    new_field_defn = ogr.FieldDefn(field_name, field_type)
     new_field_defn.SetWidth(field_width)
     surfaces.CreateField(new_field_defn)
     if surface["distance_" + distance_type] is None:
@@ -240,12 +244,7 @@ elif is_bouwwerk():
             else:
                 if hwa_vgs_dichterbij_dan_infiltr():
                     pass
-                elif (
-                    surface[
-                        "distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING
-                    ]
-                    != PSEUDO_INFINITE
-                ):
+                elif surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING] != PSEUDO_INFINITE:
                     result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                 else:
                     result[TARGET_TYPE_MAAIVELD] = 100
@@ -269,13 +268,7 @@ elif verhard():
                 else:
                     if hwa_vgs_dichterbij_dan_infiltr():
                         result[TARGET_TYPE_VGS_HEMELWATERRIOOL] = 100
-                    elif (
-                        surface[
-                            "distance_"
-                            + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING
-                        ]
-                        != PSEUDO_INFINITE
-                    ):
+                    elif surface["distance_" + INTERNAL_PIPE_TYPE_INFILTRATIEVOORZIENING] != PSEUDO_INFINITE:
                         result[TARGET_TYPE_INFILTRATIEVOORZIENING] = 100
                     else:
                         result[TARGET_TYPE_MAAIVELD] = 100

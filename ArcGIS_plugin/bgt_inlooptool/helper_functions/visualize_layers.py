@@ -30,9 +30,7 @@ class VisualizeLayers:
         """
         try:
             # add data to the map
-            output_layer = self.map.addDataFromPath(
-                visualize_settings.symbology_param.valueAsText
-            )
+            output_layer = self.map.addDataFromPath(visualize_settings.symbology_param.valueAsText)
             output_layer.name = visualize_settings.layer_name
             return output_layer
         except Exception:
@@ -44,9 +42,7 @@ class VisualizeLayers:
         """
         try:
             # add symbology if it is available
-            layer_file = arcpy.mp.LayerFile(
-                visualize_settings.symbology_param.symbology
-            )
+            layer_file = arcpy.mp.LayerFile(visualize_settings.symbology_param.symbology)
             for layer in layer_file.listLayers():
                 sym_layer = layer
                 break

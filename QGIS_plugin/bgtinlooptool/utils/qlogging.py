@@ -12,6 +12,7 @@ TODO: there probably needs to be some tweaking of log levels. Perhaps the
 verbosity ought to be made configurable.
 
 """
+
 from os.path import join
 import logging
 
@@ -30,14 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 def has_handler(logger, handler_class):
-    """ Somehow isinstance() does not do the trick. """
+    """Somehow isinstance() does not do the trick."""
+
     def path(cls):
         return ".".join([cls.__module__, cls.__name__])
+
     return path(handler_class) in (path(h.__class__) for h in logger.handlers)
 
 
 class ConsoleHandler(logging.StreamHandler):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setLevel(logging.DEBUG)
@@ -45,7 +47,6 @@ class ConsoleHandler(logging.StreamHandler):
 
 
 class FileHandler(logging.FileHandler):
-
     @staticmethod
     def get_filename():
         return join(QgsApplication.qgisSettingsDirPath(), LOGFILE_NAME)
@@ -63,6 +64,7 @@ class FileHandler(logging.FileHandler):
 
 class QgisHandler(logging.Handler):
     """logging handler to get python log messages into the qgis MessageLog."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setLevel(logging.INFO)

@@ -29,8 +29,9 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
     """
     Converts a download zip archive of BGT .gml files to a BGT surfaces layer
     """
-    INPUT = 'INPUT'
-    OUTPUT = 'OUTPUT'
+
+    INPUT = "INPUT"
+    OUTPUT = "OUTPUT"
 
     def createInstance(self):
         return BGTDownload2QgisAlgorithm()
@@ -43,21 +44,21 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'bgt_download2qgis'
+        return "bgt_download2qgis"
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return 'BGT zip file naar BGT oppervlakkenlaag'
+        return "BGT zip file naar BGT oppervlakkenlaag"
 
     def group(self):
         """
         Returns the name of the group this algorithm belongs to. This string
         should be localised.
         """
-        return 'BGT Oppervlakken'
+        return "BGT Oppervlakken"
 
     def groupId(self):
         """
@@ -67,7 +68,7 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'bgt_inlooptool'
+        return "bgt_inlooptool"
 
     def shortHelpString(self):
         """
@@ -75,8 +76,10 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
         should provide a basic description about what the algorithm does and the
         parameters and outputs associated with it..
         """
-        return ("Converteert een zip archief met BGT lagen in .gml formaat naar een QGIS vectorlaag zoals gebruikt door "
-                "de BGT Inlooptool")
+        return (
+            "Converteert een zip archief met BGT lagen in .gml formaat naar een QGIS vectorlaag zoals gebruikt door "
+            "de BGT Inlooptool"
+        )
 
     def initAlgorithm(self, config=None):
         """
@@ -85,40 +88,24 @@ class BGTDownload2QgisAlgorithm(QgsProcessingAlgorithm):
         """
         # We add the input vector features source. It can have any kind of
         # geometry.
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.INPUT,
-                "Gedownloade BGT ZIP"
-            )
-        )
+        self.addParameter(QgsProcessingParameterFile(self.INPUT, "Gedownloade BGT ZIP"))
 
         self.addOutput(
-            QgsProcessingOutputVectorLayer(
-                self.OUTPUT,
-                'BGT Oppervlakken',
-                type=QgsProcessing.TypeVectorPolygon
-            )
+            QgsProcessingOutputVectorLayer(self.OUTPUT, "BGT Oppervlakken", type=QgsProcessing.TypeVectorPolygon)
         )
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
-        source = self.parameterAsFile(
-            parameters,
-            self.INPUT,
-            context
-        )
+        source = self.parameterAsFile(parameters, self.INPUT, context)
 
         # Create a dictionary to hold the unique values from the
         # dissolve_field and the sum of the values from the sum_field
 
         inlooptool = InloopTool(InputParameters())
         inlooptool.import_surfaces(file_path=source)
-        bgt_surfaces_qgis_vector_layer = as_qgis_memory_layer(
-            inlooptool._database.bgt_surfaces,
-            "BGT Oppervlakken"
-        )
+        bgt_surfaces_qgis_vector_layer = as_qgis_memory_layer(inlooptool._database.bgt_surfaces, "BGT Oppervlakken")
         bgt_surfaces_qgis_vector_layer.loadNamedStyle(BGT_STYLE)
         QgsProject.instance().addMapLayer(bgt_surfaces_qgis_vector_layer)
 

@@ -10,9 +10,8 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import QRegExp
 from qgis.PyQt.QtGui import QRegExpValidator
 
-FORM_CLASS, _ = uic.loadUiType(
-    os.path.join(os.path.dirname(__file__), "PopUp_user_dialog.ui")
-)
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), "PopUp_user_dialog.ui"))
+
 
 class PopUpUserDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
@@ -36,7 +35,7 @@ class PopUpUserDialog(QtWidgets.QDialog, FORM_CLASS):
         # Connect validation
         self.inputMail.textChanged.connect(self.validate)
         self.inputOrg.textChanged.connect(self.validate)
-    
+
     def on_yes(self):
         self.choice = "yes"
         self.accept()
@@ -49,7 +48,6 @@ class PopUpUserDialog(QtWidgets.QDialog, FORM_CLASS):
         self.choice = "later"
         self.accept()
 
-    
     def validate(self):
         email_ok = self.inputMail.hasAcceptableInput()
         org_ok = len(self.inputOrg.text().strip()) > 0

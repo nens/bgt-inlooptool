@@ -25,12 +25,7 @@ class GeneralUse:
 
         tb = sys.exc_info()[2]
         tbinfo = traceback.format_tb(tb)[0]
-        pymsg = (
-            "PYTHON ERRORS:\nTraceback info:\n"
-            + tbinfo
-            + "\nError Info:\n"
-            + str(sys.exc_info()[1])
-        )
+        pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
         msgs = "\nArcPy ERRORS:\n" + arcpy.GetMessages(2) + "\n"
         arcpy.AddError(pymsg)
         arcpy.AddError(msgs)

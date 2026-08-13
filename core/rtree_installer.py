@@ -33,9 +33,7 @@ def get_wheel_filename(
     python_major_version = sys.version_info[0]
     python_minor_version = sys.version_info[1]
     python_minor_version_proxy = python_minor_version
-    while (
-        python_minor_version_proxy > 0
-    ):  # proxy is used to find earlier version if current version is not available
+    while python_minor_version_proxy > 0:  # proxy is used to find earlier version if current version is not available
         python_version_str = str(python_major_version) + str(python_minor_version_proxy)
         python_tag = python_tag_prefix + python_version_str
         abi_tag = python_tag + abi_tag_suffix

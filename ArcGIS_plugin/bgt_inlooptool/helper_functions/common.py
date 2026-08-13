@@ -18,27 +18,17 @@ def layers_to_gdb(input_dataset, output_gdb):
     """
     try:
         if not arcpy.Exists(output_gdb):
-            arcpy.CreateFileGDB_management(
-                os.path.dirname(output_gdb), os.path.basename(output_gdb)
-            )
+            arcpy.CreateFileGDB_management(os.path.dirname(output_gdb), os.path.basename(output_gdb))
         arcpy.env.workspace = output_gdb
         arcpy.env.overwriteOutput = True
 
         desc = arcpy.Describe(input_dataset)
 
         fc_name = os.path.basename(input_dataset).replace(".", "_")
-        if not hasattr(
-            desc, "featureType"
-        ):  # providing a gpkg table to describe returns an empty describe object
-            out_dataset = str(
-                arcpy.conversion.TableToTable(input_dataset, output_gdb, fc_name)
-            )
+        if not hasattr(desc, "featureType"):  # providing a gpkg table to describe returns an empty describe object
+            out_dataset = str(arcpy.conversion.TableToTable(input_dataset, output_gdb, fc_name))
         else:
-            out_dataset = str(
-                arcpy.FeatureClassToFeatureClass_conversion(
-                    input_dataset, output_gdb, fc_name
-                )
-            )
+            out_dataset = str(arcpy.FeatureClassToFeatureClass_conversion(input_dataset, output_gdb, fc_name))
 
         return out_dataset
     except Exception:
@@ -144,9 +134,7 @@ def get_wkt_extent(input_fc):
 
     has_z_value = desc_fc.hasZ
     if has_z_value:  # extent omzetten naar POLYGON en niet naar MULTIPOLYGON Z!
-        input_fc = arcpy.FeatureClassToFeatureClass_conversion(
-            input_fc, dir_name, new_fc_name
-        )
+        input_fc = arcpy.FeatureClassToFeatureClass_conversion(input_fc, dir_name, new_fc_name)
 
     with arcpy.da.SearchCursor(input_fc, ["Shape@WKT"]) as cursor:
         for x, row in enumerate(cursor, 1):
@@ -154,9 +142,7 @@ def get_wkt_extent(input_fc):
                 input_extent_mask_wkt = row[0]
 
     if x > 1:
-        arcpy.AddWarning(
-            "Let op in de input area zitten meerdere features! Alleen de eerste wordt meegenomen!"
-        )
+        arcpy.AddWarning("Let op in de input area zitten meerdere features! Alleen de eerste wordt meegenomen!")
 
     return input_extent_mask_wkt
 
@@ -264,7 +250,6 @@ class BaseTool(object):
 
 
 if __name__ == "__main__":
-
     # ws = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg'
     # dataset = r'C:\Users\hsc\OneDrive - Tauw Group bv\ArcGIS\Projects\bgt_inlooptool\hollands_kroon\bgt_inlooptabel.gpkg\main.bgt_inlooptabel'
 
