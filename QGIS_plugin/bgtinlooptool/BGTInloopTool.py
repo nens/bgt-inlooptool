@@ -660,6 +660,22 @@ class DownloadBGTTask(QgsTask):
         self.output_zip = output_zip
         self.extent_geometry_wkt = extent_geometry_wkt
 
+    def get_bounding_box_from_wkt(self, wkt_string):
+        # Create a QgsGeometry from the WKT
+        geometry = QgsGeometry.fromWkt(wkt_string)
+
+        # Check if the geometry is a valid MultiPolygon
+        if geometry.isMultipart():
+            # Get the bounding box of the geometry (this works for MultiPolygon too)
+            bbox = geometry.boundingBox()
+
+            # Convert the bounding box into a WKT string (as a polygon with 1 ring)
+            bbox_wkt = f"POLYGON(({bbox.xMinimum()} {bbox.yMinimum()}, {bbox.xMaximum()} {bbox.yMinimum()}, {bbox.xMaximum()} {bbox.yMaximum()}, {bbox.xMinimum()} {bbox.yMaximum()}, {bbox.xMinimum()} {bbox.yMinimum()}))"
+
+            return bbox_wkt
+        else:
+            return wkt_string  # If it's not a MultiPolygon, return the original WKT
+
     def increase_progress(self):
         self.setProgress(self.progress() + 100 / self.total_progress)
 
@@ -950,22 +966,6 @@ class BGTInloopTool:
             extent_geometry_wkt = extent_geometry.asWkt()
 
         return extent_geometry_wkt
-
-    def get_bounding_box_from_wkt(self, wkt_string):
-        # Create a QgsGeometry from the WKT
-        geometry = QgsGeometry.fromWkt(wkt_string)
-
-        # Check if the geometry is a valid MultiPolygon
-        if geometry.isMultipart():
-            # Get the bounding box of the geometry (this works for MultiPolygon too)
-            bbox = geometry.boundingBox()
-
-            # Convert the bounding box into a WKT string (as a polygon with 1 ring)
-            bbox_wkt = f"POLYGON(({bbox.xMinimum()} {bbox.yMinimum()}, {bbox.xMaximum()} {bbox.yMinimum()}, {bbox.xMaximum()} {bbox.yMaximum()}, {bbox.xMinimum()} {bbox.yMaximum()}, {bbox.xMinimum()} {bbox.yMinimum()}))"
-
-            return bbox_wkt
-        else:
-            return wkt_string  # If it's not a MultiPolygon, return the original WKT
 
     def download_bgt_from_api(self):
         # Step 1: Validate extent layer
