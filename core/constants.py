@@ -41,9 +41,7 @@ NON_CONNECTABLE_SURFACE_TYPES = {
 }
 
 if CONNECTABLE_SURFACE_TYPES.union(NON_CONNECTABLE_SURFACE_TYPES) != ALL_USED_SURFACE_TYPES:
-    raise ValueError(
-        "Surface type definitions are inconsistent."
-    )
+    raise ValueError("Surface type definitions are inconsistent.")
 
 KOLK_CONNECTABLE_SURFACE_TYPES = {
     SURFACE_TYPE_WEGDEEL,
