@@ -564,7 +564,7 @@ class NetworkTask(QgsTask):
 
             while not_all_features_found:
                 request_url = (
-                    f"https://geodata.gwsw.nl/geoserver/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"
+                    f"https://geoserver.gwsw.nl/{gemeente_name}-default/wfs/?&request=GetFeature&typeName={gemeente_name}-default:default_lijn&srsName=epsg:28992&OutputFormat=application/json"
                     + f"&cql_filter={encoded_filter}"
                     + (f"&startIndex={index}" if index > 0 else "")
                 )
